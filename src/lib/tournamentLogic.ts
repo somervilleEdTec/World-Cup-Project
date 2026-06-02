@@ -6,7 +6,13 @@ import { picksFromActuals } from './pickUtils';
 import { isKnockout, kickoffReached } from './pickLocks';
 import { ActualResult, Match, Pick, TournamentBonusPick } from '../types';
 
-export { isGroupStage, isKnockout, kickoffReached, shouldLockGroup } from './pickLocks';
+export {
+  isGroupStage,
+  isKnockout,
+  isKnockoutFixtureLocked,
+  kickoffReached,
+  shouldLockGroup
+} from './pickLocks';
 
 export function requiresProgressionPick(match: Match, pick: Pick): boolean {
   return isKnockout(match) && pick.homeScore === pick.awayScore;

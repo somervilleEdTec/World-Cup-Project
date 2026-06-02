@@ -1,6 +1,6 @@
 import { groupMatches } from '../data/tournament';
 import { getFirstMatchKickoff } from './kickoffOverrides';
-import { Match, Pick } from '../types';
+import { ActualResult, Match, Pick } from '../types';
 
 export const GROUP_MATCH_COUNT = groupMatches.length;
 
@@ -20,6 +20,15 @@ export function kickoffReached(isoKickoff: string, nowIso = new Date().toISOStri
   return new Date(nowIso).getTime() >= new Date(isoKickoff).getTime();
 }
 
+/** Knockout picks lock at fixture kickoff; also when an official result exists (match played). */
+export function isKnockoutFixtureLocked(
+  match: Match,
+  nowIso = new Date().toISOString(),
+  actual?: ActualResult
+): boolean {
+  return kickoffReached(match.kickoff, nowIso) || actual !== undefined;
+}
+
 export function shouldLockGroup(nowIso = new Date().toISOString()): boolean {
   return kickoffReached(getFirstMatchKickoff(), nowIso);
 }
@@ -31,19 +40,25 @@ export function isGroupLocked(metaGroupLocked: boolean, nowIso = new Date().toIS
 export function assertMatchEditable(
   match: Match,
   metaGroupLocked: boolean,
-  nowIso = new Date().toISOString()
+  nowIso = new Date().toISOString(),
+  actual?: ActualResult
 ): void {
   if (isGroupStage(match) && isGroupLocked(metaGroupLocked, nowIso)) {
     throw new Error('Group-stage predictions are locked.');
   }
-  if (isKnockout(match) && kickoffReached(match.kickoff, nowIso)) {
+  if (isKnockout(match) && isKnockoutFixtureLocked(match, nowIso, actual)) {
     throw new Error('This knockout fixture is locked.');
   }
 }
 
-export function isMatchEditable(match: Match, metaGroupLocked: boolean, nowIso = new Date().toISOString()): boolean {
+export function isMatchEditable(
+  match: Match,
+  metaGroupLocked: boolean,
+  nowIso = new Date().toISOString(),
+  actual?: ActualResult
+): boolean {
   try {
-    assertMatchEditable(match, metaGroupLocked, nowIso);
+    assertMatchEditable(match, metaGroupLocked, nowIso, actual);
     return true;
   } catch {
     return false;
