@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { Request, Response } from 'express';
 import cors from 'cors';
 import { z } from 'zod';
 import { login, register, requireUser } from './services/auth';
@@ -24,7 +24,7 @@ function authToken(req: express.Request): string | undefined {
   return undefined;
 }
 
-app.post('/api/auth/register', (req, res) => {
+app.post('/api/auth/register', (req: Request, res: Response) => {
   try {
     const schema = z.object({ email: z.string().email(), password: z.string().min(8), displayName: z.string().min(2) });
     const payload = schema.parse(req.body);
@@ -35,7 +35,7 @@ app.post('/api/auth/register', (req, res) => {
   }
 });
 
-app.post('/api/auth/login', (req, res) => {
+app.post('/api/auth/login', (req: Request, res: Response) => {
   try {
     const schema = z.object({ email: z.string().email(), password: z.string().min(8) });
     const payload = schema.parse(req.body);
@@ -46,7 +46,7 @@ app.post('/api/auth/login', (req, res) => {
   }
 });
 
-app.get('/api/predictions/state', (req, res) => {
+app.get('/api/predictions/state', (req: Request, res: Response) => {
   try {
     const user = requireUser(authToken(req));
     res.json(getUserPredictionState(user.id));
@@ -55,7 +55,7 @@ app.get('/api/predictions/state', (req, res) => {
   }
 });
 
-app.post('/api/predictions/draft', (req, res) => {
+app.post('/api/predictions/draft', (req: Request, res: Response) => {
   try {
     const user = requireUser(authToken(req));
     const schema = z.object({
@@ -71,17 +71,17 @@ app.post('/api/predictions/draft', (req, res) => {
   }
 });
 
-app.post('/api/predictions/review/:matchId', (req, res) => {
+app.post('/api/predictions/review/:matchId', (req: Request, res: Response) => {
   try {
     const user = requireUser(authToken(req));
-    markReviewed(user.id, req.params.matchId);
+    markReviewed(user.id, String(req.params.matchId));
     res.json({ ok: true });
   } catch (error) {
     res.status(400).json({ error: error instanceof Error ? error.message : 'Review failed' });
   }
 });
 
-app.post('/api/predictions/bonus', (req, res) => {
+app.post('/api/predictions/bonus', (req: Request, res: Response) => {
   try {
     const user = requireUser(authToken(req));
     const schema = z.object({
@@ -97,7 +97,7 @@ app.post('/api/predictions/bonus', (req, res) => {
   }
 });
 
-app.post('/api/predictions/commit', (req, res) => {
+app.post('/api/predictions/commit', (req: Request, res: Response) => {
   try {
     const user = requireUser(authToken(req));
     commitDraft(user.id, new Date().toISOString());
@@ -107,16 +107,16 @@ app.post('/api/predictions/commit', (req, res) => {
   }
 });
 
-app.post('/api/system/locks/run', (_req, res) => {
+app.post('/api/system/locks/run', (_req: Request, res: Response) => {
   runAutoLocks(new Date().toISOString());
   res.json({ ok: true });
 });
 
-app.get('/api/leaderboard', (_req, res) => {
+app.get('/api/leaderboard', (_req: Request, res: Response) => {
   res.json(computeLeaderboard());
 });
 
-app.get('/api/admin/sync-status', (req, res) => {
+app.get('/api/admin/sync-status', (req: Request, res: Response) => {
   try {
     const user = requireUser(authToken(req));
     if (!user.isAdmin) return res.status(403).json({ error: 'Admin only' });
@@ -126,7 +126,7 @@ app.get('/api/admin/sync-status', (req, res) => {
   }
 });
 
-app.post('/api/admin/sync/run', async (req, res) => {
+app.post('/api/admin/sync/run', async (req: Request, res: Response) => {
   try {
     const user = requireUser(authToken(req));
     if (!user.isAdmin) return res.status(403).json({ error: 'Admin only' });
@@ -139,7 +139,7 @@ app.post('/api/admin/sync/run', async (req, res) => {
   }
 });
 
-app.post('/api/admin/results/override', (req, res) => {
+app.post('/api/admin/results/override', (req: Request, res: Response) => {
   try {
     const user = requireUser(authToken(req));
     if (!user.isAdmin) return res.status(403).json({ error: 'Admin only' });
@@ -168,7 +168,7 @@ app.post('/api/admin/results/override', (req, res) => {
   }
 });
 
-app.post('/api/admin/leaderboard/recompute', (req, res) => {
+app.post('/api/admin/leaderboard/recompute', (req: Request, res: Response) => {
   try {
     const user = requireUser(authToken(req));
     if (!user.isAdmin) return res.status(403).json({ error: 'Admin only' });
