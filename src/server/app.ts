@@ -127,7 +127,7 @@ export function createApp(): Express {
       await setBonusDraft(user.id, schema.parse(req.body));
       res.json({ ok: true });
     } catch (error) {
-      res.status(400).json({ error: error instanceof Error ? error.message : 'Invalid bonus picks' });
+      res.status(400).json({ error: error instanceof Error ? error.message : 'Invalid bonus predictions' });
     }
   });
 

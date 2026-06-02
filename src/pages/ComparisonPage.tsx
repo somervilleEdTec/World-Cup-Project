@@ -14,7 +14,7 @@ import { MatchComparisonView } from '../types';
 
 function formatPick(entry: MatchComparisonView['entries'][number]): string {
   if (entry.hidden) return 'Hidden until lock';
-  if (!entry.pick) return 'No committed pick';
+  if (!entry.pick) return 'No prediction';
   const { homeScore, awayScore, progressingTeamId } = entry.pick;
   if (homeScore === awayScore && progressingTeamId) {
     const team = teams.find((t) => t.id === progressingTeamId);
@@ -91,7 +91,7 @@ export function ComparisonPage() {
       <section className="card">
         <h2>Comparison</h2>
         <p className="warning">{error}</p>
-        <p>Log in to compare picks with other players.</p>
+        <p>Log in to compare predictions with other players.</p>
       </section>
     );
   }
@@ -149,12 +149,12 @@ export function ComparisonPage() {
       </article>
 
       <article className="card comparison-table-wrap">
-        <h3>Player picks</h3>
+        <h3>Player predictions</h3>
         <table className="comparison-table">
           <thead>
             <tr>
               <th>Player</th>
-              <th>Committed pick</th>
+              <th>Prediction</th>
             </tr>
           </thead>
           <tbody>

@@ -127,10 +127,10 @@ export async function getMatchComparison(
 
   const actual = results[match.id];
   const message = canViewOthers
-    ? 'Showing committed picks for this fixture.'
+    ? 'Showing predictions for this fixture.'
     : isGroupStage(match)
-      ? 'Other players’ picks appear after the first tournament kickoff (group lock).'
-      : 'Other players’ committed knockout picks are shown once saved.';
+      ? 'Other players’ predictions appear after the first tournament kickoff (group lock).'
+      : 'Other players’ knockout predictions are shown once saved.';
 
   return {
     actualResult: actual

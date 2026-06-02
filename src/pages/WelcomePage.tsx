@@ -5,11 +5,11 @@ export function WelcomePage() {
     <section className="stack">
       <article className="card">
         <h2>Welcome</h2>
-        <p>World Cup Boys — Welcome to the Shiva Bowl. Pick tournament results, group scores, and knockout fixtures.</p>
+        <p>World Cup Boys — Welcome to the Shiva Bowl. Enter tournament results, group scores, and knockout predictions.</p>
       </article>
 
       <article className="card quick-links">
-        <Link to="/my-picks">Go to My Picks</Link>
+        <Link to="/my-picks">Go to My Predictions</Link>
         <Link to="/league-table">View League Table</Link>
         <Link to="/comparison">Open Comparison</Link>
       </article>
@@ -29,21 +29,21 @@ export function WelcomePage() {
       </article>
 
       <article className="card">
-        <h3>Tournament result picks</h3>
+        <h3>Tournament result predictions</h3>
         <ul>
           <li>Champion: +10</li>
           <li>Runner-up: +8</li>
           <li>Third place (bronze match winner): +6</li>
           <li>Fourth place (bronze match loser): +4</li>
         </ul>
-        <p>Pick these on the Tournament Results tab. They lock at the first match kickoff.</p>
+        <p>Enter these on the Tournament Results tab. They lock at the first match kickoff.</p>
       </article>
 
       <article className="card">
         <h3>Locks</h3>
         <ul>
-          <li>Tournament result picks lock at the first match kickoff.</li>
-          <li>Group-stage picks lock at the first match kickoff.</li>
+          <li>Tournament result predictions lock at the first match kickoff.</li>
+          <li>Group-stage predictions lock at the first match kickoff.</li>
           <li>Each knockout fixture locks at its own kickoff (rolling lock).</li>
           <li>Knockout draws require choosing which team progresses (extra time / penalties).</li>
         </ul>
@@ -55,7 +55,7 @@ export function WelcomePage() {
           <li>Most exact scores</li>
           <li>Most correct results</li>
           <li>Most exact group-position calls</li>
-          <li>Most correct tournament result picks</li>
+          <li>Most correct tournament result predictions</li>
           <li>Earliest valid save timestamp</li>
         </ol>
       </article>

@@ -2,7 +2,7 @@ import { Match } from '../types';
 import { isGroupLocked } from './pickLocks';
 import { isGroupStage, isKnockout } from './tournamentLogic';
 
-/** Whether other players' committed picks for this fixture may be shown. */
+/** Whether other players' predictions for this fixture may be shown. */
 export function canViewOthersPicks(
   match: Match,
   nowIso = new Date().toISOString(),

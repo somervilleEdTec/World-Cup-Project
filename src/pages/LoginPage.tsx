@@ -32,7 +32,7 @@ export function LoginPage() {
   return (
     <section className="card narrow">
       <h2>{mode === 'login' ? 'Log In' : 'Sign Up'}</h2>
-      <p>Sign in to manage your World Cup Boys picks.</p>
+      <p>Sign in to manage your World Cup Boys predictions.</p>
       <form onSubmit={onSubmit} className="form-grid">
         <label>
           Name

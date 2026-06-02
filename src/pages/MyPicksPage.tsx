@@ -147,7 +147,7 @@ export function MyPicksPage() {
       });
       await refresh();
     } catch (err) {
-      setGroupMessage(err instanceof Error ? err.message : 'Could not save pick');
+      setGroupMessage(err instanceof Error ? err.message : 'Could not save prediction');
     }
   };
 
@@ -193,10 +193,10 @@ export function MyPicksPage() {
 
     try {
       await saveBonusDraft(payload);
-      setBonusMessage('Tournament result picks saved. They lock at the first match kickoff.');
+      setBonusMessage('Tournament result predictions saved. They lock at the first match kickoff.');
       await refresh();
     } catch (err) {
-      setBonusMessage(err instanceof Error ? err.message : 'Could not save tournament picks');
+      setBonusMessage(err instanceof Error ? err.message : 'Could not save tournament predictions');
     }
   };
 
@@ -210,16 +210,16 @@ export function MyPicksPage() {
   return (
     <section className="stack">
       <article className="card">
-        <h2>My Picks</h2>
+        <h2>My Predictions</h2>
         <p>
           {tournamentLocked
-            ? 'Group-stage and tournament result picks are now locked.'
+            ? 'Group-stage and tournament result predictions are now locked.'
             : 'Scores save automatically. Lock a group when you are happy with it.'}
         </p>
         <div className="missing-picks">
-          <h3>You have the following missing picks:</h3>
+          <h3>You have the following missing predictions:</h3>
           {missingPicks.length === 0 ? (
-            <p className="success">None — all current picks are complete.</p>
+            <p className="success">None — all current predictions are complete.</p>
           ) : (
             <ul className="missing-picks-list">
               {missingPicks.map((item) => (
@@ -344,11 +344,11 @@ export function MyPicksPage() {
 
       {phase === 'bonus' && (
         <article className="card">
-          <h3>Tournament result picks</h3>
-          <p>Pick the top four teams. These lock at the first match kickoff — no group picks required.</p>
-          {tournamentLocked && <p className="warning">Tournament result picks are locked.</p>}
+          <h3>Tournament result predictions</h3>
+          <p>Choose the top four teams. These lock at the first match kickoff — no group predictions required.</p>
+          {tournamentLocked && <p className="warning">Tournament result predictions are locked.</p>}
           {state.bonusCommitted && !tournamentLocked && (
-            <p className="success">Your tournament result picks are saved.</p>
+            <p className="success">Your tournament result predictions are saved.</p>
           )}
           {tournamentLocked && state.bonusCommitted ? (
             <div className="bonus-readonly fixture-scores-summary fixture-scores-locked">
@@ -378,7 +378,7 @@ export function MyPicksPage() {
               <TeamSelect label="Third" name="thirdTeamId" value={bonus.thirdTeamId} disabled={tournamentLocked} />
               <TeamSelect label="Fourth" name="fourthTeamId" value={bonus.fourthTeamId} disabled={tournamentLocked} />
               <button type="submit" disabled={tournamentLocked}>
-                Save tournament picks
+                Save tournament predictions
               </button>
               {bonusMessage && (
                 <p className={bonusMessage.includes('saved') ? 'success' : 'warning'}>{bonusMessage}</p>
@@ -391,10 +391,10 @@ export function MyPicksPage() {
       {activeKoPhase && (
         <article className="card">
           <h3>{activeKoPhase.label}</h3>
-          <p>Only officially confirmed fixtures are listed — not projected from your group picks.</p>
+          <p>Only officially confirmed fixtures are listed — not projected from your group predictions.</p>
           {!koPicksAllowed && (
             <p className="warning">
-              Complete and save all 72 group-stage match scores before knockout picks can be saved (
+              Complete and save all 72 group-stage match scores before knockout predictions can be saved (
               {state.groupPicksCommittedCount ?? 0}/{state.groupPicksRequired ?? 72} saved).
             </p>
           )}

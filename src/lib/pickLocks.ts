@@ -34,7 +34,7 @@ export function assertMatchEditable(
   nowIso = new Date().toISOString()
 ): void {
   if (isGroupStage(match) && isGroupLocked(metaGroupLocked, nowIso)) {
-    throw new Error('Group-stage picks are locked.');
+    throw new Error('Group-stage predictions are locked.');
   }
   if (isKnockout(match) && kickoffReached(match.kickoff, nowIso)) {
     throw new Error('This knockout fixture is locked.');
@@ -52,7 +52,7 @@ export function isMatchEditable(match: Match, metaGroupLocked: boolean, nowIso =
 
 export function assertBonusEditable(metaGroupLocked: boolean, nowIso = new Date().toISOString()): void {
   if (isGroupLocked(metaGroupLocked, nowIso)) {
-    throw new Error('Tournament bonus picks are locked.');
+    throw new Error('Tournament bonus predictions are locked.');
   }
 }
 
@@ -86,7 +86,7 @@ export function assertAllGroupPicksCommitted(
   const count = countCommittedGroupPicks(committedPicks);
   if (!allGroupPicksCommitted(committedPicks)) {
     throw new Error(
-      `All ${GROUP_MATCH_COUNT} group-stage picks must be committed before first kickoff (currently ${count}/${GROUP_MATCH_COUNT}).`
+      `All ${GROUP_MATCH_COUNT} group-stage predictions must be saved before first kickoff (currently ${count}/${GROUP_MATCH_COUNT}).`
     );
   }
 }

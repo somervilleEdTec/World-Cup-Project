@@ -165,7 +165,7 @@ export async function setGroupAccepted(
   const meta = await getMeta(userId);
   const groupLocked = (meta?.group_locked ?? 0) === 1;
   if (groupLocked || shouldLockGroup(nowIso)) {
-    throw new Error('Group-stage picks are locked.');
+    throw new Error('Group-stage predictions are locked.');
   }
 
   const lockedGroups = parseAcceptedGroups(meta?.accepted_groups);

@@ -5,7 +5,7 @@ const resultKey = (home: number, away: number): 'H' | 'A' | 'D' =>
 
 export type PickAccuracy = 'exact' | 'result' | 'miss' | 'none';
 
-/** Compares a committed pick to the official result for comparison highlighting. */
+/** Compares a prediction to the official result for comparison highlighting. */
 export function classifyPickAccuracy(
   pick: Pick | undefined,
   actual: ActualResult | undefined
