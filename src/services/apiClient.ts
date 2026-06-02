@@ -56,11 +56,8 @@ export async function saveBonusDraft(bonus: TournamentBonusPick) {
   return request('/api/predictions/bonus', { method: 'POST', body: JSON.stringify(bonus) });
 }
 
-export async function setGroupAccepted(groupId: string, accepted: boolean) {
-  return request(`/api/predictions/groups/${groupId}/accept`, {
-    method: 'POST',
-    body: JSON.stringify({ accepted })
-  });
+export async function lockGroup(groupId: string) {
+  return request(`/api/predictions/groups/${groupId}/lock`, { method: 'POST' });
 }
 
 export async function commitDraft() {

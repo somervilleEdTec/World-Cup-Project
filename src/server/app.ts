@@ -93,12 +93,22 @@ export function createApp(): Express {
     }
   });
 
+  app.post('/api/predictions/groups/:groupId/lock', async (req: Request, res: Response) => {
+    try {
+      const user = await requireUser(authToken(req));
+      await setGroupAccepted(user.id, String(req.params.groupId).toUpperCase(), true);
+      res.json({ ok: true });
+    } catch (error) {
+      res.status(400).json({ error: error instanceof Error ? error.message : 'Group lock failed' });
+    }
+  });
+
   app.post('/api/predictions/groups/:groupId/accept', async (req: Request, res: Response) => {
     try {
       const user = await requireUser(authToken(req));
-      const schema = z.object({ accepted: z.boolean() });
-      const payload = schema.parse(req.body);
-      await setGroupAccepted(user.id, String(req.params.groupId).toUpperCase(), payload.accepted);
+      const schema = z.object({ accepted: z.literal(true) });
+      schema.parse(req.body);
+      await setGroupAccepted(user.id, String(req.params.groupId).toUpperCase(), true);
       res.json({ ok: true });
     } catch (error) {
       res.status(400).json({ error: error instanceof Error ? error.message : 'Group accept failed' });

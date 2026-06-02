@@ -362,3 +362,21 @@ td {
   border-bottom: 1px solid #d8e0ec;
   padding-bottom: 0.5rem;
 }
+
+.missing-picks {
+  margin: 0.75rem 0;
+}
+
+.missing-picks h3 {
+  margin: 0 0 0.5rem;
+  font-size: 1rem;
+}
+
+.missing-picks-list {
+  margin: 0;
+  padding-left: 1.25rem;
+}
+
+.missing-picks-list li {
+  margin-bottom: 0.25rem;
+}
