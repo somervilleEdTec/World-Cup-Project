@@ -18,7 +18,11 @@ function progressingTeamId(
   return undefined;
 }
 
-function fixtureTeamIds(internalId: string, homeName: string, awayName: string): { home: string; away: string } | null {
+function fixtureTeamIds(
+  internalId: string,
+  homeName: string | null | undefined,
+  awayName: string | null | undefined
+): { home: string; away: string } | null {
   const match = getMatches().find((m) => m.id === internalId);
   if (match && match.homeTeamId !== 'tbd' && match.awayTeamId !== 'tbd') {
     return { home: match.homeTeamId, away: match.awayTeamId };

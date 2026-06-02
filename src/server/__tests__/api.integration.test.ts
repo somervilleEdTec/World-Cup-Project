@@ -106,6 +106,32 @@ describe('API integration', () => {
     expect(String(draft.body.error)).toMatch(/locked/i);
   });
 
+  it('returns mapping diagnostics for admin', async () => {
+    await request(app)
+      .post('/api/auth/register')
+      .send({ email: 'diag@example.com', password: 'password1', displayName: 'Diag' });
+
+    const { getDb } = await import('../database');
+    await getDb().run(`UPDATE users SET is_admin = 1 WHERE email = ?`, ['diag@example.com']);
+
+    const login = await request(app)
+      .post('/api/auth/login')
+      .send({ email: 'diag@example.com', password: 'password1' });
+    const token = login.body.token as string;
+
+    const res = await request(app)
+      .get('/api/admin/mapping-diagnostics')
+      .set('Authorization', `Bearer ${token}`);
+
+    if (process.env.FOOTBALL_DATA_TOKEN) {
+      expect(res.status).toBe(200);
+      expect(res.body.summary.groupStageTotal).toBe(72);
+      expect(res.body.totals.providerFixtures).toBe(104);
+    } else {
+      expect(res.status).toBe(400);
+    }
+  });
+
   it('returns health check', async () => {
     const res = await request(app).get('/api/health');
     expect(res.status).toBe(200);

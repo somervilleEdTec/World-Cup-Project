@@ -79,6 +79,10 @@ export async function runFixtureSync() {
   return request('/api/admin/fixtures/sync', { method: 'POST' });
 }
 
+export async function fetchMappingDiagnostics() {
+  return request('/api/admin/mapping-diagnostics');
+}
+
 export async function fetchSyncStatus() {
   return request('/api/admin/sync-status');
 }

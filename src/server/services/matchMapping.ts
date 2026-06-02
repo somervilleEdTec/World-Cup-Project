@@ -62,6 +62,38 @@ export async function internalIdFromProvider(provider: string, providerId: strin
   return row?.internal_id ?? null;
 }
 
+export type MappingFailureReason =
+  | 'already_mapped'
+  | 'missing_home_team'
+  | 'missing_away_team'
+  | 'unmapped_home_team'
+  | 'unmapped_away_team'
+  | 'no_matching_internal_fixture';
+
+export function explainMappingFailure(
+  homeName: string | null | undefined,
+  awayName: string | null | undefined,
+  existingId: string | null
+): MappingFailureReason | 'mappable' {
+  if (existingId) return 'already_mapped';
+  if (!homeName) return 'missing_home_team';
+  if (!awayName) return 'missing_away_team';
+
+  const homeId = teamIdFromProviderName(homeName);
+  const awayId = teamIdFromProviderName(awayName);
+  if (!homeId) return 'unmapped_home_team';
+  if (!awayId) return 'unmapped_away_team';
+
+  const allMatches = getMatches();
+  const found = allMatches.find(
+    (m) =>
+      (m.homeTeamId === homeId && m.awayTeamId === awayId) ||
+      (m.homeTeamId === awayId && m.awayTeamId === homeId)
+  );
+  if (!found) return 'no_matching_internal_fixture';
+  return 'mappable';
+}
+
 /** Map provider fixture to internal id by registered mapping or home/away team names. */
 export async function resolveInternalMatchId(
   provider: string,
@@ -70,7 +102,9 @@ export async function resolveInternalMatchId(
   awayName: string | null | undefined
 ): Promise<string | null> {
   const existing = await internalIdFromProvider(provider, providerId);
-  if (existing) return existing;
+  const failure = explainMappingFailure(homeName, awayName, existing);
+  if (failure === 'already_mapped') return existing;
+  if (failure !== 'mappable') return null;
 
   const homeId = teamIdFromProviderName(homeName);
   const awayId = teamIdFromProviderName(awayName);

@@ -17,6 +17,8 @@ Verified against [FINAL_PLAN.md](./FINAL_PLAN.md) acceptance criteria (functiona
 | All 72 group picks committed before first kickoff | Done | Gates KO + bonus; progress in UI |
 | Bonus after all groups accepted | Done | Server gate in `setBonusDraft` |
 | football-data kickoffs + live results | Done | Startup + jobs + admin full sync |
+| All 72 group picks committed before KO/bonus | Done | Server + UI gates |
+| Mapping diagnostics | Done | `GET /api/admin/mapping-diagnostics`, `npm run diagnose:mappings` |
 | Tie-breaker #5 earliest commit | Done | `leaderboard.ts` sorts by `committed_at` |
 | football-data sync + manual override | Done | `sync.ts`, admin routes |
 | Real kickoffs (optional) | Ops | `npm run seed:fixtures` |

@@ -1,9 +1,35 @@
 import { FormEvent, useState } from 'react';
-import { fetchSyncStatus, manualOverride, recomputeLeaderboard, runFixtureSync, runSync } from '../services/apiClient';
+import {
+  fetchMappingDiagnostics,
+  fetchSyncStatus,
+  manualOverride,
+  recomputeLeaderboard,
+  runFixtureSync,
+  runSync
+} from '../services/apiClient';
+
+interface DiagnosticsReport {
+  summary: {
+    mapped: number;
+    skipped: number;
+    groupStageMapped: number;
+    groupStageTotal: number;
+    knockoutMapped: number;
+    knockoutTotal: number;
+  };
+  skipReasons: Record<string, number>;
+  unmappedTeamNames: Array<{ name: string; count: number }>;
+  totals: {
+    kickoffsInDatabase: number;
+    providerMappingsInDatabase: number;
+  };
+  notes: string[];
+}
 
 export function AdminPage() {
   const [message, setMessage] = useState<string>('');
   const [status, setStatus] = useState<{ last_success_at?: string | null; last_error?: string | null; last_attempt_at?: string | null } | null>(null);
+  const [diagnostics, setDiagnostics] = useState<DiagnosticsReport | null>(null);
 
   const loadStatus = async () => {
     try {
@@ -15,14 +41,24 @@ export function AdminPage() {
     }
   };
 
+  const loadDiagnostics = async () => {
+    try {
+      const report = (await fetchMappingDiagnostics()) as DiagnosticsReport;
+      setDiagnostics(report);
+      setMessage('Mapping diagnostics loaded.');
+    } catch (err) {
+      setMessage(err instanceof Error ? err.message : 'Diagnostics failed');
+    }
+  };
+
   const triggerSync = async () => {
     try {
       const response = (await runSync()) as {
-        kickoffs: { mapped: number; skipped: number };
+        kickoffs: { mapped: number; skipped: number; skipReasons?: Record<string, number> };
         results: { updated: number; ok: boolean };
       };
       setMessage(
-        `Full sync: ${response.kickoffs.mapped} kickoffs, ${response.results.updated} results updated.`
+        `Full sync: ${response.kickoffs.mapped} kickoffs (${response.kickoffs.skipped} skipped), ${response.results.updated} results updated.`
       );
       await loadStatus();
     } catch (err) {
@@ -69,9 +105,10 @@ export function AdminPage() {
     <section className="stack">
       <article className="card">
         <h2>Admin</h2>
-        <p>Sync monitoring, manual result override, and leaderboard recompute.</p>
+        <p>Sync monitoring, mapping diagnostics, manual result override, and leaderboard recompute.</p>
         <div className="button-row">
           <button type="button" onClick={loadStatus}>Load Sync Status</button>
+          <button type="button" onClick={loadDiagnostics}>Mapping diagnostics</button>
           <button type="button" onClick={triggerSync}>Run full football-data sync</button>
           <button type="button" onClick={triggerFixtureSync}>Import kickoffs only</button>
           <button type="button" onClick={recompute}>Recompute leaderboard</button>
@@ -82,6 +119,52 @@ export function AdminPage() {
             <li>Last success: {status.last_success_at ?? 'n/a'}</li>
             <li>Last error: {status.last_error ?? 'none'}</li>
           </ul>
+        )}
+        {diagnostics && (
+          <div>
+            <h3>Mapping diagnostics</h3>
+            <ul>
+              <li>
+                Group stage mapped: {diagnostics.summary.groupStageMapped}/{diagnostics.summary.groupStageTotal}
+              </li>
+              <li>
+                Knockout mapped: {diagnostics.summary.knockoutMapped}/{diagnostics.summary.knockoutTotal}
+              </li>
+              <li>
+                Overall: {diagnostics.summary.mapped} mapped, {diagnostics.summary.skipped} skipped
+              </li>
+              <li>Kickoffs in DB: {diagnostics.totals.kickoffsInDatabase}</li>
+            </ul>
+            {Object.keys(diagnostics.skipReasons).length > 0 && (
+              <>
+                <h4>Skip reasons</h4>
+                <ul>
+                  {Object.entries(diagnostics.skipReasons).map(([reason, count]) => (
+                    <li key={reason}>
+                      {reason}: {count}
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
+            {diagnostics.unmappedTeamNames.length > 0 && (
+              <>
+                <h4>Unmapped team names (add aliases)</h4>
+                <ul>
+                  {diagnostics.unmappedTeamNames.map((row) => (
+                    <li key={row.name}>
+                      {row.name} ({row.count})
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
+            <ul>
+              {diagnostics.notes.map((note) => (
+                <li key={note}>{note}</li>
+              ))}
+            </ul>
+          </div>
         )}
         <p>{message}</p>
       </article>

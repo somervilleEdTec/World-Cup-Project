@@ -27,6 +27,7 @@ npm run build
 npm run migrate   # SQLite or Postgres (see DATABASE_URL)
 ```
 
+Go-live checklist: **[docs/GO_LIVE.md](docs/GO_LIVE.md)**  
 Production setup: **[docs/DEPLOY.md](docs/DEPLOY.md)**. Import real kickoffs:
 
 ```bash
@@ -76,6 +77,7 @@ sqlite3 data.db "UPDATE users SET is_admin = 1 WHERE email = 'you@example.com';"
 | [docs/HANDOVER.md](docs/HANDOVER.md) | Technical handover |
 | [docs/TODO.md](docs/TODO.md) | Backlog (P0–P2 done; P3 open) |
 | [docs/DEPLOY.md](docs/DEPLOY.md) | Production deployment |
+| [docs/GO_LIVE.md](docs/GO_LIVE.md) | Pre-launch checklist |
 | [docs/FINAL_PLAN.md](docs/FINAL_PLAN.md) | Locked competition rules |
 | [docs/PROJECT_PLAN.md](docs/PROJECT_PLAN.md) | Original exploration (superseded for rules) |
 

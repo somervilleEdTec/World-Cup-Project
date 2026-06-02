@@ -3,8 +3,8 @@
 **Last updated:** 2026-06-02  
 **Repository:** https://github.com/somervilleEdTec/World-Cup-Project  
 **Active branch:** `main` (P0/P1 merged); P2 on `cursor/p2-operations-complete-21eb`  
-**Release:** `v0.1.0` — P0/P1 baseline  
-**Deploy guide:** [docs/DEPLOY.md](./DEPLOY.md)  
+**Release:** `v1.0.0` — functional go-live build  
+**Deploy guide:** [docs/DEPLOY.md](./DEPLOY.md) · **Go-live:** [docs/GO_LIVE.md](./GO_LIVE.md)  
 **Prior PR:** https://github.com/somervilleEdTec/World-Cup-Project/pull/1 (planning scaffold, superseded for implementation)
 
 ---

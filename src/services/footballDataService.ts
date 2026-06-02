@@ -14,6 +14,9 @@ interface FootballDataMatch {
   id: number;
   status: string;
   utcDate: string;
+  stage?: string;
+  group?: string | null;
+  matchday?: number | null;
   homeTeam: FootballDataTeam;
   awayTeam: FootballDataTeam;
   score: {
@@ -71,6 +74,9 @@ export interface FootballDataFixtureRow {
   awayName: string | null;
   kickoff: string;
   status: string;
+  stage?: string;
+  group?: string;
+  matchday?: number;
 }
 
 export async function fetchCompetitionFixtures(apiToken: string): Promise<FootballDataFixtureRow[]> {
@@ -89,7 +95,10 @@ export async function fetchCompetitionFixtures(apiToken: string): Promise<Footba
     homeName: match.homeTeam.shortName ?? match.homeTeam.name,
     awayName: match.awayTeam.shortName ?? match.awayTeam.name,
     kickoff: new Date(match.utcDate).toISOString(),
-    status: match.status
+    status: match.status,
+    stage: match.stage,
+    group: match.group ?? undefined,
+    matchday: match.matchday ?? undefined
   }));
 }
 

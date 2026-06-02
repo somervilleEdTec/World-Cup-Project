@@ -18,6 +18,8 @@
     "jobs": "tsx src/server/jobs.ts",
     "migrate": "tsx scripts/migrate.ts",
     "seed:fixtures": "tsx scripts/seed-from-football-data.ts",
+    "diagnose:mappings": "tsx scripts/diagnose-mappings.ts",
+    "start:production": "bash scripts/start-production.sh",
     "dev:full": "vite --host 0.0.0.0"
   },
   "repository": {

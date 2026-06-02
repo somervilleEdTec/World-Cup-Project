@@ -12,6 +12,7 @@ import {
   setGroupAccepted
 } from './services/predictions';
 import { computeLeaderboard } from './services/leaderboard';
+import { buildMappingDiagnostics } from './services/mappingDiagnostics';
 import { getSyncStatus, runFullFootballDataSync, syncKickoffsFromFootballData } from './services/sync';
 import { getMatchComparison, getNextMatchComparison, listUpcomingMatches } from './services/comparison';
 import { getDb } from './database';
@@ -190,6 +191,18 @@ export function createApp(): Express {
       return res.json(result);
     } catch (error) {
       return res.status(401).json({ error: error instanceof Error ? error.message : 'Unauthorized' });
+    }
+  });
+
+  app.get('/api/admin/mapping-diagnostics', async (req: Request, res: Response) => {
+    try {
+      const user = await requireUser(authToken(req));
+      if (!user.isAdmin) return res.status(403).json({ error: 'Admin only' });
+      const apiToken = process.env.FOOTBALL_DATA_TOKEN;
+      if (!apiToken) return res.status(400).json({ error: 'FOOTBALL_DATA_TOKEN missing' });
+      return res.json(await buildMappingDiagnostics(apiToken));
+    } catch (error) {
+      return res.status(400).json({ error: error instanceof Error ? error.message : 'Diagnostics failed' });
     }
   });
 
