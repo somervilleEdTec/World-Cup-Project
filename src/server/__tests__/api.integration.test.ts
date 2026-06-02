@@ -169,6 +169,32 @@ describe('API integration', () => {
     }
   });
 
+  it('saves tournament bonus picks before group stage is complete', async () => {
+    await request(app).post('/api/auth/register').send(registerPayload('Bonus Early'));
+
+    const login = await request(app)
+      .post('/api/auth/login')
+      .send({ displayName: 'Bonus Early', password: 'abc' });
+    const token = login.body.token as string;
+
+    const { teams } = await import('../../data/tournament');
+    const bonus = await request(app)
+      .post('/api/predictions/bonus')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        winnerTeamId: teams[0].id,
+        runnerUpTeamId: teams[1].id,
+        thirdTeamId: teams[2].id,
+        fourthTeamId: teams[3].id
+      });
+    expect(bonus.status).toBe(200);
+
+    const state = await request(app)
+      .get('/api/predictions/state')
+      .set('Authorization', `Bearer ${token}`);
+    expect(state.body.bonusDraft).toBeTruthy();
+  });
+
   it('returns health check', async () => {
     const res = await request(app).get('/api/health');
     expect(res.status).toBe(200);
