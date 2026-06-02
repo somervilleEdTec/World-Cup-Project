@@ -23,19 +23,19 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return data as T;
 }
 
-export async function register(email: string, password: string, displayName: string) {
-  return request<{ user: { id: string; email: string } }>('/api/auth/register', {
+export async function register(displayName: string, password: string, joinPassword: string) {
+  return request<{ user: { id: string; displayName: string } }>('/api/auth/register', {
     method: 'POST',
-    body: JSON.stringify({ email, password, displayName })
+    body: JSON.stringify({ displayName, password, joinPassword })
   });
 }
 
-export async function login(email: string, password: string) {
-  return request<{ token: string; user: { id: string; email: string; displayName: string; isAdmin: boolean } }>(
+export async function login(displayName: string, password: string) {
+  return request<{ token: string; user: { id: string; displayName: string; isAdmin: boolean } }>(
     '/api/auth/login',
     {
       method: 'POST',
-      body: JSON.stringify({ email, password })
+      body: JSON.stringify({ displayName, password })
     }
   );
 }

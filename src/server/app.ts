@@ -35,12 +35,12 @@ export function createApp(): Express {
   app.post('/api/auth/register', async (req: Request, res: Response) => {
     try {
       const schema = z.object({
-        email: z.string().email(),
-        password: z.string().min(8),
-        displayName: z.string().min(2)
+        displayName: z.string().min(2),
+        password: z.string().min(1).max(6),
+        joinPassword: z.string().min(1)
       });
       const payload = schema.parse(req.body);
-      const user = await register(payload.email, payload.password, payload.displayName);
+      const user = await register(payload.displayName, payload.password, payload.joinPassword);
       res.json({ user });
     } catch (error) {
       res.status(400).json({ error: error instanceof Error ? error.message : 'Bad request' });
@@ -49,9 +49,9 @@ export function createApp(): Express {
 
   app.post('/api/auth/login', async (req: Request, res: Response) => {
     try {
-      const schema = z.object({ email: z.string().email(), password: z.string().min(8) });
+      const schema = z.object({ displayName: z.string().min(1), password: z.string().min(1).max(6) });
       const payload = schema.parse(req.body);
-      const response = await login(payload.email, payload.password);
+      const response = await login(payload.displayName, payload.password);
       res.json(response);
     } catch (error) {
       res.status(401).json({ error: error instanceof Error ? error.message : 'Unauthorized' });

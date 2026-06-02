@@ -64,13 +64,15 @@ These are **intentional** — do not “fix” back without owner sign-off:
 
 ## 5. Owner-reported UI issues (fill in with owner)
 
-> **Product owner:** add items below (or paste in chat for the agent to copy here).
-
-| # | Page / flow | What’s wrong | Expected |
-|---|-------------|--------------|----------|
-| 1 | | | |
-| 2 | | | |
-| 3 | | | |
+| # | Page / flow | What’s wrong | Expected | Status |
+|---|-------------|--------------|----------|--------|
+| 1 | Login / Register | Email required; complex password rules | Name + simple password (≤6 chars); sign-up password `MadSlags1` | Fixed on `main` |
+| 2 | My Picks — Group | “Save match” on every fixture | Enter scores only; auto-save on blur | Fixed on `main` |
+| 3 | My Picks — Group | Projected table is a plain ordered list | Standard league table (GP, W, D, L, GF, GA, Pts) | Fixed on `main` |
+| 4 | My Picks — Group | Accept group doesn’t lock in all results | Accept commits all group match picks at once | Fixed on `main` |
+| 5 | My Picks — Group | Four nav buttons touch with no gap | Small spacing between buttons | Fixed on `main` |
+| 6 | My Picks — tabs | Bonus picks below group flow | Own tab: **Tournament Results**, then Group Stage, Knockout Stage | Fixed on `main` |
+| 7 | Database | Old test users/data | Fresh start — run `npm run db:purge` locally | Script added |
 
 ---
 

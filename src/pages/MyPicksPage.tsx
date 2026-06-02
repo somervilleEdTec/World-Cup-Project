@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useMemo, useState } from 'react';
+import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import { groupMatches, teams } from '../data/tournament';
 import { TeamLabel } from '../components/TeamLabel';
 import {
@@ -10,7 +10,7 @@ import {
   setGroupAccepted
 } from '../services/apiClient';
 import { ALL_GROUP_IDS, GROUP_MATCH_COUNT } from '../lib/pickLocks';
-import { computeGroupPositions, shouldLockGroup } from '../lib/tournamentLogic';
+import { computeGroupStandings, shouldLockGroup } from '../lib/tournamentLogic';
 import { Match, Pick, TournamentBonusPick } from '../types';
 
 const groupSequence = ALL_GROUP_IDS;
@@ -47,7 +47,7 @@ interface RemoteState {
   confirmedKnockoutFixtures?: Match[];
 }
 
-type PicksPhase = 'group' | 'knockout';
+type PicksPhase = 'bonus' | 'group' | 'knockout';
 
 const initialState: RemoteState = {
   committedPicks: {},
@@ -57,11 +57,99 @@ const initialState: RemoteState = {
   commitState: { groupLocked: false }
 };
 
+function MatchScoreInputs({
+  match,
+  pick,
+  disabled,
+  onSave,
+  onScoresChange
+}: {
+  match: Match;
+  pick?: Pick;
+  disabled: boolean;
+  onSave: (pick: Pick) => Promise<void>;
+  onScoresChange?: (pick: Pick) => void;
+}) {
+  const [homeScore, setHomeScore] = useState(pick?.homeScore ?? 0);
+  const [awayScore, setAwayScore] = useState(pick?.awayScore ?? 0);
+  const [progressingTeamId, setProgressingTeamId] = useState(pick?.progressingTeamId ?? '');
+
+  useEffect(() => {
+    setHomeScore(pick?.homeScore ?? 0);
+    setAwayScore(pick?.awayScore ?? 0);
+    setProgressingTeamId(pick?.progressingTeamId ?? '');
+  }, [pick?.homeScore, pick?.awayScore, pick?.progressingTeamId]);
+
+  const buildPick = useCallback(
+    (): Pick => ({
+      matchId: match.id,
+      homeScore,
+      awayScore,
+      progressingTeamId: homeScore === awayScore ? progressingTeamId || undefined : undefined
+    }),
+    [awayScore, homeScore, match.id, progressingTeamId]
+  );
+
+  useEffect(() => {
+    onScoresChange?.(buildPick());
+  }, [buildPick, onScoresChange]);
+
+  const persist = useCallback(async () => {
+    if (disabled) return;
+    await onSave(buildPick());
+  }, [buildPick, disabled, onSave]);
+
+  const homeTeam = teams.find((team) => team.id === match.homeTeamId);
+  const awayTeam = teams.find((team) => team.id === match.awayTeamId);
+  const isDraw = homeScore === awayScore;
+
+  return (
+    <>
+      <div className="score-inputs">
+        <input
+          type="number"
+          min="0"
+          value={homeScore}
+          disabled={disabled}
+          onChange={(event) => setHomeScore(Number(event.target.value))}
+          onBlur={() => void persist()}
+        />
+        <input
+          type="number"
+          min="0"
+          value={awayScore}
+          disabled={disabled}
+          onChange={(event) => setAwayScore(Number(event.target.value))}
+          onBlur={() => void persist()}
+        />
+      </div>
+      {isDraw && match.stage !== 'GROUP' && (
+        <label>
+          Draw selected — choose the team that progresses.
+          <select
+            value={progressingTeamId}
+            disabled={disabled}
+            onChange={(event) => {
+              setProgressingTeamId(event.target.value);
+            }}
+            onBlur={() => void persist()}
+          >
+            <option value="">Select progressing team</option>
+            {homeTeam && <option value={homeTeam.id}>{homeTeam.name}</option>}
+            {awayTeam && <option value={awayTeam.id}>{awayTeam.name}</option>}
+          </select>
+        </label>
+      )}
+    </>
+  );
+}
+
 export function MyPicksPage() {
   const [groupIndex, setGroupIndex] = useState(0);
   const [phase, setPhase] = useState<PicksPhase>('group');
   const [message, setMessage] = useState<string>('');
   const [state, setState] = useState<RemoteState>(initialState);
+  const [pendingGroupPicks, setPendingGroupPicks] = useState<Record<string, Pick>>({});
 
   const nowIso = new Date().toISOString();
 
@@ -86,9 +174,12 @@ export function MyPicksPage() {
   const activeGroupMatches = groupMatches.filter((match) => match.group === activeGroup);
   const groupLocked = state.commitState.groupLocked || shouldLockGroup(nowIso);
 
-  const mergedPicks = { ...state.committedPicks, ...state.draftPicks };
+  const mergedPicks = { ...state.committedPicks, ...state.draftPicks, ...pendingGroupPicks };
   const confirmedKnockoutFixtures = state.confirmedKnockoutFixtures ?? [];
-  const groupPreview = useMemo(() => computeGroupPositions(activeGroup, mergedPicks), [activeGroup, mergedPicks]);
+  const groupStandings = useMemo(
+    () => computeGroupStandings(activeGroup, mergedPicks),
+    [activeGroup, mergedPicks]
+  );
 
   const groupComplete = activeGroupMatches.every((match) => mergedPicks[match.id] !== undefined);
   const groupAccepted = state.acceptedGroups.includes(activeGroup);
@@ -101,20 +192,29 @@ export function MyPicksPage() {
   const koPicksAllowed = allGroupPicksCommitted || groupLocked;
   const hasConfirmedKnockout = confirmedKnockoutFixtures.length > 0;
 
-  const saveMatch = async (event: FormEvent<HTMLFormElement>, match: Match) => {
-    event.preventDefault();
-    const form = new FormData(event.currentTarget);
-    const homeScore = Number(form.get('homeScore'));
-    const awayScore = Number(form.get('awayScore'));
-    const progressingTeamId = (form.get('progressingTeamId') as string) || undefined;
-
+  const saveMatchPick = async (pick: Pick) => {
     try {
-      await saveDraftPick({ matchId: match.id, homeScore, awayScore, progressingTeamId });
-      setMessage('Draft saved. Remember to commit changes.');
+      await saveDraftPick(pick);
+      setPendingGroupPicks((current) => {
+        const next = { ...current };
+        delete next[pick.matchId];
+        return next;
+      });
       await refresh();
     } catch (err) {
-      setMessage(err instanceof Error ? err.message : 'Could not save draft');
+      setMessage(err instanceof Error ? err.message : 'Could not save pick');
     }
+  };
+
+  const flushGroupPicks = async () => {
+    for (const match of activeGroupMatches) {
+      const pick = pendingGroupPicks[match.id];
+      if (pick) {
+        await saveDraftPick(pick);
+      }
+    }
+    setPendingGroupPicks({});
+    await refresh();
   };
 
   const submitBonus = async (event: FormEvent<HTMLFormElement>) => {
@@ -157,15 +257,18 @@ export function MyPicksPage() {
             : ''}
         </p>
         <div className="button-row">
+          <button type="button" className={phase === 'bonus' ? 'active-tab' : ''} onClick={() => setPhase('bonus')}>
+            Tournament Results
+          </button>
           <button type="button" className={phase === 'group' ? 'active-tab' : ''} onClick={() => setPhase('group')}>
-            Group stage
+            Group Stage
           </button>
           <button
             type="button"
             className={phase === 'knockout' ? 'active-tab' : ''}
             onClick={() => setPhase('knockout')}
           >
-            Knockout stage
+            Knockout Stage
             {hasConfirmedKnockout ? ` (${confirmedKnockoutFixtures.length})` : ''}
           </button>
         </div>
@@ -177,154 +280,193 @@ export function MyPicksPage() {
       </article>
 
       {phase === 'group' && (
-      <article className="card">
-        <h3>Group {activeGroup} predictions</h3>
-        {activeGroupMatches.map((match) => {
-          const homeTeam = teams.find((team) => team.id === match.homeTeamId);
-          const awayTeam = teams.find((team) => team.id === match.awayTeamId);
-          const pick = mergedPicks[match.id];
-          return (
-            <form key={match.id} onSubmit={(event) => saveMatch(event, match)} className="fixture-card">
-              <div className="fixture-row">
-                {homeTeam && <TeamLabel team={homeTeam} />} <strong>vs</strong> {awayTeam && <TeamLabel team={awayTeam} />}
-              </div>
-              <div className="score-inputs">
-                <input name="homeScore" type="number" min="0" required defaultValue={pick?.homeScore ?? 0} />
-                <input name="awayScore" type="number" min="0" required defaultValue={pick?.awayScore ?? 0} />
-              </div>
-              <button type="submit" disabled={groupLocked}>
-                Save match
-              </button>
-            </form>
-          );
-        })}
-
-        <h4>Projected table (Group {activeGroup})</h4>
-        <ol>
-          {groupPreview.map((teamId) => {
-            const team = teams.find((entry) => entry.id === teamId);
+        <article className="card">
+          <h3>Group {activeGroup} predictions</h3>
+          <p className="kicker">Scores save automatically when you leave each field.</p>
+          {activeGroupMatches.map((match) => {
+            const homeTeam = teams.find((team) => team.id === match.homeTeamId);
+            const awayTeam = teams.find((team) => team.id === match.awayTeamId);
+            const pick = mergedPicks[match.id];
             return (
-              <li key={teamId}>{team ? <TeamLabel team={team} /> : teamId}</li>
+              <div key={match.id} className="fixture-card">
+                <div className="fixture-row">
+                  {homeTeam && <TeamLabel team={homeTeam} />} <strong>vs</strong>{' '}
+                  {awayTeam && <TeamLabel team={awayTeam} />}
+                </div>
+                <MatchScoreInputs
+                  match={match}
+                  pick={pick}
+                  disabled={groupLocked}
+                  onSave={saveMatchPick}
+                  onScoresChange={(updated) =>
+                    setPendingGroupPicks((current) => ({ ...current, [match.id]: updated }))
+                  }
+                />
+              </div>
             );
           })}
-        </ol>
 
-        <div className="button-row">
-          <button
-            type="button"
-            disabled={!groupComplete || groupLocked}
-            onClick={async () => {
-              try {
-                await setGroupAccepted(activeGroup, true);
-                await refresh();
-              } catch (err) {
-                setMessage(err instanceof Error ? err.message : 'Could not accept group');
-              }
-            }}
-          >
-            Accept group table
-          </button>
-          <button
-            type="button"
-            disabled={groupLocked}
-            onClick={async () => {
-              try {
-                await setGroupAccepted(activeGroup, false);
-                await refresh();
-              } catch (err) {
-                setMessage(err instanceof Error ? err.message : 'Could not amend group');
-              }
-            }}
-          >
-            Amend
-          </button>
-        </div>
-        {!groupAccepted && groupComplete && <p className="warning">Accept this group before moving on.</p>}
-        {groupAccepted && <p className="success">Group {activeGroup} accepted.</p>}
+          <h4>Projected table (Group {activeGroup})</h4>
+          <div className="comparison-table-wrap">
+            <table className="comparison-table league-table">
+              <thead>
+                <tr>
+                  <th>Pos</th>
+                  <th>Team</th>
+                  <th>GP</th>
+                  <th>W</th>
+                  <th>D</th>
+                  <th>L</th>
+                  <th>GF</th>
+                  <th>GA</th>
+                  <th>Pts</th>
+                </tr>
+              </thead>
+              <tbody>
+                {groupStandings.map((row, index) => {
+                  const team = teams.find((entry) => entry.id === row.teamId);
+                  return (
+                    <tr key={row.teamId}>
+                      <td>{index + 1}</td>
+                      <td>{team ? <TeamLabel team={team} /> : row.teamId}</td>
+                      <td>{row.gp}</td>
+                      <td>{row.w}</td>
+                      <td>{row.d}</td>
+                      <td>{row.l}</td>
+                      <td>{row.gf}</td>
+                      <td>{row.ga}</td>
+                      <td>{row.pts}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
 
-        <div className="button-row">
-          <button type="button" disabled={groupIndex === 0} onClick={() => setGroupIndex((value) => value - 1)}>
-            Previous Group
-          </button>
-          <button
-            type="button"
-            disabled={groupIndex === groupSequence.length - 1 || !groupAccepted}
-            onClick={() => setGroupIndex((value) => value + 1)}
-          >
-            Next Group
-          </button>
-        </div>
-      </article>
+          <div className="button-row">
+            <button
+              type="button"
+              disabled={!groupComplete || groupLocked}
+              onClick={async () => {
+                try {
+                  await flushGroupPicks();
+                  await setGroupAccepted(activeGroup, true);
+                  setMessage(`Group ${activeGroup} accepted and all match results locked in.`);
+                  await refresh();
+                } catch (err) {
+                  setMessage(err instanceof Error ? err.message : 'Could not accept group');
+                }
+              }}
+            >
+              Accept group table
+            </button>
+            <button
+              type="button"
+              disabled={groupLocked}
+              onClick={async () => {
+                try {
+                  await setGroupAccepted(activeGroup, false);
+                  await refresh();
+                } catch (err) {
+                  setMessage(err instanceof Error ? err.message : 'Could not amend group');
+                }
+              }}
+            >
+              Amend
+            </button>
+            <button type="button" disabled={groupIndex === 0} onClick={() => setGroupIndex((value) => value - 1)}>
+              Previous Group
+            </button>
+            <button
+              type="button"
+              disabled={groupIndex === groupSequence.length - 1 || !groupAccepted}
+              onClick={() => setGroupIndex((value) => value + 1)}
+            >
+              Next Group
+            </button>
+          </div>
+          {!groupAccepted && groupComplete && <p className="warning">Accept this group before moving on.</p>}
+          {groupAccepted && <p className="success">Group {activeGroup} accepted.</p>}
+        </article>
       )}
 
-      {phase === 'group' && (
-      <article className="card">
-        <h3>Tournament bonus picks</h3>
-        <p>Select winner, runner-up, third, and fourth from all teams (repeats allowed).</p>
-        {!allGroupPicksCommitted && !groupLocked && (
-          <p className="warning">Commit all {groupPicksRequired} group-stage picks before saving bonus picks.</p>
-        )}
-        {!allGroupsAccepted && (
-          <p className="warning">Complete and accept all 12 groups before saving tournament bonus picks.</p>
-        )}
-        <form onSubmit={submitBonus} className="form-grid">
-          <label>
-            Winner
-            <select name="winnerTeamId" defaultValue={bonus.winnerTeamId}>
-              {teams.map((team) => (
-                <option key={`winner-${team.id}`} value={team.id}>{team.name}</option>
-              ))}
-            </select>
-          </label>
-          <label>
-            Runner-up
-            <select name="runnerUpTeamId" defaultValue={bonus.runnerUpTeamId}>
-              {teams.map((team) => (
-                <option key={`runner-${team.id}`} value={team.id}>{team.name}</option>
-              ))}
-            </select>
-          </label>
-          <label>
-            Third
-            <select name="thirdTeamId" defaultValue={bonus.thirdTeamId}>
-              {teams.map((team) => (
-                <option key={`third-${team.id}`} value={team.id}>{team.name}</option>
-              ))}
-            </select>
-          </label>
-          <label>
-            Fourth
-            <select name="fourthTeamId" defaultValue={bonus.fourthTeamId}>
-              {teams.map((team) => (
-                <option key={`fourth-${team.id}`} value={team.id}>{team.name}</option>
-              ))}
-            </select>
-          </label>
-          <button type="submit" disabled={groupLocked || !allGroupsAccepted || !allGroupPicksCommitted}>
-            Save bonus picks
-          </button>
-        </form>
-      </article>
+      {phase === 'bonus' && (
+        <article className="card">
+          <h3>Tournament bonus picks</h3>
+          <p>Select winner, runner-up, third, and fourth from all teams (repeats allowed).</p>
+          {!allGroupPicksCommitted && !groupLocked && (
+            <p className="warning">Commit all {groupPicksRequired} group-stage picks before saving bonus picks.</p>
+          )}
+          {!allGroupsAccepted && (
+            <p className="warning">Complete and accept all 12 groups before saving tournament bonus picks.</p>
+          )}
+          <form onSubmit={submitBonus} className="form-grid">
+            <label>
+              Winner
+              <select name="winnerTeamId" defaultValue={bonus.winnerTeamId}>
+                {teams.map((team) => (
+                  <option key={`winner-${team.id}`} value={team.id}>
+                    {team.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Runner-up
+              <select name="runnerUpTeamId" defaultValue={bonus.runnerUpTeamId}>
+                {teams.map((team) => (
+                  <option key={`runner-${team.id}`} value={team.id}>
+                    {team.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Third
+              <select name="thirdTeamId" defaultValue={bonus.thirdTeamId}>
+                {teams.map((team) => (
+                  <option key={`third-${team.id}`} value={team.id}>
+                    {team.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Fourth
+              <select name="fourthTeamId" defaultValue={bonus.fourthTeamId}>
+                {teams.map((team) => (
+                  <option key={`fourth-${team.id}`} value={team.id}>
+                    {team.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <button type="submit" disabled={groupLocked || !allGroupsAccepted || !allGroupPicksCommitted}>
+              Save bonus picks
+            </button>
+          </form>
+        </article>
       )}
 
       {phase === 'knockout' && (
-      <article className="card">
-        <h3>Knockout fixture picks</h3>
-        <p>Only officially confirmed fixtures are listed — not projected from your group picks.</p>
-        {!koPicksAllowed && (
-          <p className="warning">
-            Commit all {groupPicksRequired} group-stage picks before first kickoff to save knockout predictions.
-          </p>
-        )}
-        {hasConfirmedKnockout && !koPicksAllowed && (
-          <p className="warning">Finish committing your group-stage picks to enable saving knockout scores.</p>
-        )}
-        {!hasConfirmedKnockout && (
-          <p className="warning">
-            No knockout fixtures are confirmed yet. They unlock as group games finish and FIFA assigns teams.
-          </p>
-        )}
-        {confirmedKnockoutFixtures.map((match) => {
+        <article className="card">
+          <h3>Knockout fixture picks</h3>
+          <p>Only officially confirmed fixtures are listed — not projected from your group picks.</p>
+          <p className="kicker">Scores save automatically when you leave each field.</p>
+          {!koPicksAllowed && (
+            <p className="warning">
+              Commit all {groupPicksRequired} group-stage picks before first kickoff to save knockout predictions.
+            </p>
+          )}
+          {hasConfirmedKnockout && !koPicksAllowed && (
+            <p className="warning">Finish committing your group-stage picks to enable saving knockout scores.</p>
+          )}
+          {!hasConfirmedKnockout && (
+            <p className="warning">
+              No knockout fixtures are confirmed yet. They unlock as group games finish and FIFA assigns teams.
+            </p>
+          )}
+          {confirmedKnockoutFixtures.map((match) => {
             const homeTeam = teams.find((team) => team.id === match.homeTeamId);
             const awayTeam = teams.find((team) => team.id === match.awayTeamId);
             const homeOk = homeTeam && homeTeam.id !== 'tbd';
@@ -333,7 +475,7 @@ export function MyPicksPage() {
             const locked = new Date(nowIso).getTime() >= new Date(match.kickoff).getTime();
 
             return (
-              <form key={match.id} onSubmit={(event) => saveMatch(event, match)} className="fixture-card">
+              <div key={match.id} className="fixture-card">
                 <p className="kicker">{match.stage}</p>
                 <div className="fixture-row">
                   {homeOk ? <TeamLabel team={homeTeam!} /> : <span>TBD</span>} <strong>vs</strong>{' '}
@@ -341,37 +483,12 @@ export function MyPicksPage() {
                 </div>
                 <p>Locks in: {formatCountdown(match.kickoff, nowIso)}</p>
                 <p className="warning">This match locks at kickoff. Commit your changes before deadline.</p>
-                <div className="score-inputs">
-                  <input
-                    name="homeScore"
-                    type="number"
-                    min="0"
-                    required
-                    defaultValue={pick?.homeScore ?? 0}
-                    disabled={locked}
-                  />
-                  <input
-                    name="awayScore"
-                    type="number"
-                    min="0"
-                    required
-                    defaultValue={pick?.awayScore ?? 0}
-                    disabled={locked}
-                  />
-                </div>
-                {(pick?.homeScore ?? 0) === (pick?.awayScore ?? 0) && (
-                  <label>
-                    Draw selected — choose the team that progresses.
-                    <select name="progressingTeamId" defaultValue={pick?.progressingTeamId} disabled={locked} required>
-                      <option value="">Select progressing team</option>
-                      {homeTeam && <option value={homeTeam.id}>{homeTeam.name}</option>}
-                      {awayTeam && <option value={awayTeam.id}>{awayTeam.name}</option>}
-                    </select>
-                  </label>
-                )}
-                <button type="submit" disabled={locked || !koPicksAllowed}>
-                  Save knockout pick
-                </button>
+                <MatchScoreInputs
+                  match={match}
+                  pick={pick}
+                  disabled={locked || !koPicksAllowed}
+                  onSave={saveMatchPick}
+                />
                 {state.affectedMatches.includes(match.id) && (
                   <button
                     type="button"
@@ -383,10 +500,10 @@ export function MyPicksPage() {
                     Mark reviewed
                   </button>
                 )}
-              </form>
+              </div>
             );
           })}
-      </article>
+        </article>
       )}
 
       <article className="card">

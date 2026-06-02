@@ -1,8 +1,10 @@
 // @vitest-environment node
-import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
+import { describe, it, expect, afterAll, beforeEach } from 'vitest';
 import request from 'supertest';
 import { setupTestServer, teardownTestServer } from '../testHarness';
 import type { Express } from 'express';
+
+const JOIN_PASSWORD = 'MadSlags1';
 
 let app: Express;
 
@@ -14,16 +16,20 @@ afterAll(async () => {
   await teardownTestServer();
 });
 
+function registerPayload(displayName: string, password = 'abc') {
+  return { displayName, password, joinPassword: JOIN_PASSWORD };
+}
+
 describe('API integration', () => {
   it('registers, logs in, saves draft, commits, and reads leaderboard', async () => {
     const register = await request(app)
       .post('/api/auth/register')
-      .send({ email: 'alice@example.com', password: 'password1', displayName: 'Alice' });
+      .send(registerPayload('Alice'));
     expect(register.status).toBe(200);
 
     const login = await request(app)
       .post('/api/auth/login')
-      .send({ email: 'alice@example.com', password: 'password1' });
+      .send({ displayName: 'Alice', password: 'abc' });
     expect(login.status).toBe(200);
     const token = login.body.token as string;
     expect(token).toBeTruthy();
@@ -62,19 +68,25 @@ describe('API integration', () => {
     expect(leaderboard.body[0].name).toBe('Alice');
   });
 
+  it('rejects registration without valid join password', async () => {
+    const res = await request(app)
+      .post('/api/auth/register')
+      .send({ displayName: 'Bob', password: 'bob', joinPassword: 'wrong' });
+    expect(res.status).toBe(400);
+    expect(String(res.body.error)).toMatch(/sign-up password/i);
+  });
+
   it('rejects unauthenticated prediction access', async () => {
     const res = await request(app).get('/api/predictions/state');
     expect(res.status).toBe(401);
   });
 
   it('rejects knockout draft until fixture is officially confirmed', async () => {
-    await request(app)
-      .post('/api/auth/register')
-      .send({ email: 'ko-fixture@example.com', password: 'password1', displayName: 'KO Fixture' });
+    await request(app).post('/api/auth/register').send(registerPayload('KO Fixture'));
 
     const login = await request(app)
       .post('/api/auth/login')
-      .send({ email: 'ko-fixture@example.com', password: 'password1' });
+      .send({ displayName: 'KO Fixture', password: 'abc' });
     const token = login.body.token as string;
 
     const { groupMatches } = await import('../../data/tournament');
@@ -99,13 +111,11 @@ describe('API integration', () => {
   });
 
   it('rejects knockout draft until all group picks are committed', async () => {
-    await request(app)
-      .post('/api/auth/register')
-      .send({ email: 'ko-gate@example.com', password: 'password1', displayName: 'KO Gate' });
+    await request(app).post('/api/auth/register').send(registerPayload('KO Gate'));
 
     const login = await request(app)
       .post('/api/auth/login')
-      .send({ email: 'ko-gate@example.com', password: 'password1' });
+      .send({ displayName: 'KO Gate', password: 'abc' });
     const token = login.body.token as string;
 
     const koDraft = await request(app)
@@ -117,13 +127,11 @@ describe('API integration', () => {
   });
 
   it('rejects group draft saves after group lock time', async () => {
-    await request(app)
-      .post('/api/auth/register')
-      .send({ email: 'locked@example.com', password: 'password1', displayName: 'Locked' });
+    await request(app).post('/api/auth/register').send(registerPayload('Locked'));
 
     const login = await request(app)
       .post('/api/auth/login')
-      .send({ email: 'locked@example.com', password: 'password1' });
+      .send({ displayName: 'Locked', password: 'abc' });
     const token = login.body.token as string;
 
     const { runAutoLocks } = await import('../services/predictions');
@@ -138,16 +146,14 @@ describe('API integration', () => {
   });
 
   it('returns mapping diagnostics for admin', async () => {
-    await request(app)
-      .post('/api/auth/register')
-      .send({ email: 'diag@example.com', password: 'password1', displayName: 'Diag' });
+    await request(app).post('/api/auth/register').send(registerPayload('Diag'));
 
     const { getDb } = await import('../database');
-    await getDb().run(`UPDATE users SET is_admin = 1 WHERE email = ?`, ['diag@example.com']);
+    await getDb().run(`UPDATE users SET is_admin = 1 WHERE display_name = ?`, ['Diag']);
 
     const login = await request(app)
       .post('/api/auth/login')
-      .send({ email: 'diag@example.com', password: 'password1' });
+      .send({ displayName: 'Diag', password: 'abc' });
     const token = login.body.token as string;
 
     const res = await request(app)
@@ -170,16 +176,14 @@ describe('API integration', () => {
   });
 
   it('allows admin result override when is_admin set', async () => {
-    await request(app)
-      .post('/api/auth/register')
-      .send({ email: 'admin@example.com', password: 'password1', displayName: 'Admin' });
+    await request(app).post('/api/auth/register').send(registerPayload('Admin'));
 
     const { getDb } = await import('../database');
-    await getDb().run(`UPDATE users SET is_admin = 1 WHERE email = ?`, ['admin@example.com']);
+    await getDb().run(`UPDATE users SET is_admin = 1 WHERE display_name = ?`, ['Admin']);
 
     const login = await request(app)
       .post('/api/auth/login')
-      .send({ email: 'admin@example.com', password: 'password1' });
+      .send({ displayName: 'Admin', password: 'abc' });
     const token = login.body.token as string;
 
     const override = await request(app)

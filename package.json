@@ -17,6 +17,7 @@
     "server": "tsx src/server/index.ts",
     "jobs": "tsx src/server/jobs.ts",
     "migrate": "tsx scripts/migrate.ts",
+    "db:purge": "tsx scripts/purge-database.ts",
     "copy:flags": "node scripts/copy-flag-assets.mjs",
     "postinstall": "node scripts/copy-flag-assets.mjs",
     "seed:fixtures": "tsx scripts/seed-from-football-data.ts",
