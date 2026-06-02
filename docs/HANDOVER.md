@@ -4,9 +4,9 @@
 **Repository:** https://github.com/somervilleEdTec/World-Cup-Project  
 **Active branch:** `main`  
 **Phase:** Go-live ready (UI polish + KO-environment hardening merged)  
-**Deploy:** [docs/DEPLOY.md](./DEPLOY.md) · **Go-live:** [docs/GO_LIVE.md](./GO_LIVE.md) · **KO test seed:** [docs/KO_ENVIRONMENT.md](./KO_ENVIRONMENT.md)
+**Deploy:** [docs/DEPLOY.md](./DEPLOY.md) · **Go-live:** [docs/GO_LIVE.md](./GO_LIVE.md) · **KO test seed:** [docs/KO_ENVIRONMENT.md](./KO_ENVIRONMENT.md) · **Final-prediction scenario:** [docs/FINAL_PREDICTION_HANDOVER.md](./FINAL_PREDICTION_HANDOVER.md)
 
-**Next agent starts here:** [docs/STRESS_TEST_HANDOVER.md](./STRESS_TEST_HANDOVER.md) · Prompt: [docs/AGENT_PROMPT.md](./AGENT_PROMPT.md)
+**Next agent starts here:** [docs/FINAL_PREDICTION_HANDOVER.md](./FINAL_PREDICTION_HANDOVER.md) (simulated end-of-tournament debug) · [docs/STRESS_TEST_HANDOVER.md](./STRESS_TEST_HANDOVER.md) · Prompt: [docs/AGENT_PROMPT.md](./AGENT_PROMPT.md)
 
 ---
 

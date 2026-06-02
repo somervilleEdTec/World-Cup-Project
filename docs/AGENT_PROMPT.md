@@ -18,6 +18,7 @@ You are helping with **World Cup Boys** (“Welcome to the Shiva Bowl”) — FI
 2. [docs/GO_LIVE.md](./GO_LIVE.md) — launch checklist
 3. [docs/FINAL_PLAN.md](./FINAL_PLAN.md) — competition rules (**do not change** without owner)
 4. [docs/KO_ENVIRONMENT.md](./KO_ENVIRONMENT.md) — optional local KO test seed only
+5. **[docs/FINAL_PREDICTION_HANDOVER.md](./FINAL_PREDICTION_HANDOVER.md)** — if debugging “one final prediction left” scenario
 
 ## Local setup (Windows — owner)
 
@@ -34,6 +35,14 @@ Optional KO test database:
 ```powershell
 npm run seed:ko-environment
 ```
+
+**Final-prediction debug scenario** (all results through 3rd place; each user still needs the final):
+
+```powershell
+npm run seed:before-final
+```
+
+Read [docs/FINAL_PREDICTION_HANDOVER.md](./FINAL_PREDICTION_HANDOVER.md).
 
 ## Current UX summary
 
