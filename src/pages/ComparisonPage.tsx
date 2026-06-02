@@ -7,6 +7,7 @@ import {
   fetchMatchComparison,
   fetchNextMatchComparison
 } from '../services/apiClient';
+import { formatFixtureScore } from '../components/FixtureScoreSummary';
 import { MatchComparisonView } from '../types';
 
 function formatPick(entry: MatchComparisonView['entries'][number]): string {
@@ -114,6 +115,16 @@ export function ComparisonPage() {
           {awayTeam && awayTeam.id !== 'tbd' ? <TeamLabel team={awayTeam} /> : <span>TBD</span>}
         </div>
         <p>Kickoff: {formatKickoff(data.match.kickoff)}</p>
+        {data.actualResult && (
+          <p className="fixture-actual">
+            <strong>Official result:</strong>{' '}
+            {formatFixtureScore(
+              data.actualResult.homeScore,
+              data.actualResult.awayScore,
+              data.actualResult.progressingTeamId
+            )}
+          </p>
+        )}
         <p>{data.visibility.message}</p>
       </article>
 

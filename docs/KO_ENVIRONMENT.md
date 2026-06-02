@@ -13,7 +13,8 @@ Use this branch to evaluate **league rankings** and **knockout pick entry** with
 | Admin | `Test 1` (for Admin page if needed) |
 | Group picks | 72 random scores per user (0–3 goals each side) |
 | Tournament picks | Random winner / runner-up / third / fourth per user |
-| Official results | All 72 group games + full knockout bracket, random 0–3 per team, manual-override source |
+| Official results | All 72 group games (random 0–3 per team). **R32 only** by default — not later KO rounds |
+| Locks | Group + tournament bonus picks locked in DB (simulated post–first kickoff) |
 
 Sign-up password for **new** registrations is unchanged (`MadSlags1` by default). Seeded users are created by the script, not the register form.
 
@@ -73,7 +74,20 @@ npm run seed:ko-environment -- --no-purge
 - Official results use source `ko-environment-seed` in the `results` table — same path as Admin manual override, not football-data.org.
 - Group results are retried until all **16 R32** fixtures have both teams (valid third-place mapping).
 - Knockout **predictions** are not pre-filled; you enter those in the UI to test the flow.
+- **My Picks** shows **Your prediction** and **Official result** side by side when a result exists.
+- **Comparison** lists all fixtures with known teams (not only future kickoffs) and shows others’ group picks once the tournament is locked.
+- Optional: seed every knockout result (all 32 fixtures unlocked) with `npm run seed:ko-environment -- --full-bracket`
 - To return to normal development: `git checkout main`.
+
+## Bug evaluation (environment vs product)
+
+| Symptom | Cause | Fix |
+|---------|--------|-----|
+| Can edit tournament / group picks after “results are in” | Lock is by **first kickoff time**, not by results. Old seed did not set `group_locked`. | Seed now runs `runAutoLocks`. **Before 11 Jun 2026** on a fresh `main` DB, picks are still editable by design. |
+| All 32 KO fixtures in My Picks | Seed inserted results for every KO round (`--full-bracket` behaviour). | Default seed is **group results only** → **16 R32** fixtures. |
+| Comparison hides other players’ group picks | Visibility used calendar only, ignored DB `group_locked`. | **Product fix:** comparison respects `group_locked` + seed applies lock. |
+| Comparison fixture list empty / missing played games | Picker only listed **future** kickoffs. | **Product fix:** all fixtures with known teams. |
+| No official score on My Picks | Feature gap. | **Product fix:** prediction state includes `officialResults`; UI shows both lines. |
 
 ## Quality check (optional)
 

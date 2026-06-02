@@ -14,7 +14,7 @@ import {
 import { computeLeaderboard } from './services/leaderboard';
 import { buildMappingDiagnostics } from './services/mappingDiagnostics';
 import { getSyncStatus, runFullFootballDataSync, syncKickoffsFromFootballData } from './services/sync';
-import { getMatchComparison, getNextMatchComparison, listUpcomingMatches } from './services/comparison';
+import { getMatchComparison, getNextMatchComparison, listComparisonFixtures } from './services/comparison';
 import { getDb } from './database';
 
 function authToken(req: express.Request): string | undefined {
@@ -149,7 +149,7 @@ export function createApp(): Express {
   app.get('/api/comparison/fixtures', async (req: Request, res: Response) => {
     try {
       await requireUser(authToken(req));
-      return res.json(await listUpcomingMatches(new Date().toISOString()));
+      return res.json(await listComparisonFixtures());
     } catch (error) {
       return res.status(401).json({ error: error instanceof Error ? error.message : 'Unauthorized' });
     }

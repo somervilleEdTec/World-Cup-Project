@@ -200,6 +200,20 @@ select {
   margin-bottom: 0.4rem;
 }
 
+.fixture-scores-summary {
+  margin: 0.35rem 0 0.65rem;
+  font-size: 0.95rem;
+}
+
+.fixture-scores-summary p {
+  margin: 0.2rem 0;
+}
+
+.fixture-actual {
+  color: #0f4c81;
+  font-weight: 600;
+}
+
 .score-inputs {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 90px));

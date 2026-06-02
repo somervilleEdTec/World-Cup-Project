@@ -87,6 +87,7 @@ export async function getUserPredictionState(userId: string) {
     groupPicksRequired: GROUP_MATCH_COUNT,
     allGroupPicksCommitted: allGroupPicksCommitted(committedPicks),
     confirmedKnockoutFixtures,
+    officialResults: results,
     commitState: {
       version: meta?.commit_version ?? 1,
       committedAt: meta?.committed_at ?? new Date().toISOString(),

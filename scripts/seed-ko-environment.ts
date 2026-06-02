@@ -13,13 +13,15 @@ import { picksFromActuals } from '../src/lib/pickUtils.js';
 import { closeDatabase, getDb, initDatabase } from '../src/server/database/index.js';
 import { resetDatabase } from '../src/server/database/migrate.js';
 import { register } from '../src/server/services/auth.js';
-import { saveDraftPick, setBonusDraft } from '../src/server/services/predictions.js';
+import { runAutoLocks, saveDraftPick, setBonusDraft } from '../src/server/services/predictions.js';
 import { computeLeaderboard } from '../src/server/services/leaderboard.js';
 import type { ActualResult, Pick, TournamentBonusPick } from '../src/types.js';
 
 const TEST_USER_COUNT = 10;
 const TEST_PASSWORD = 'summer';
 const ADMIN_DISPLAY_NAME = 'Test 1';
+/** Simulates tournament after first kickoff — locks group + bonus picks in DB. */
+const SIMULATED_NOW_ISO = '2026-07-20T00:00:00Z';
 
 function randomInt(maxInclusive: number): number {
   return Math.floor(Math.random() * (maxInclusive + 1));
@@ -190,8 +192,15 @@ async function main() {
 
   // eslint-disable-next-line no-console
   console.log('\nGenerating official results (manual override, no API token)…');
+  const fullBracket = process.argv.includes('--full-bracket');
   const groupActuals = await generateOfficialGroupResults();
-  const allActuals = await generateOfficialKnockoutResults(groupActuals);
+  const allActuals = fullBracket
+    ? await generateOfficialKnockoutResults(groupActuals)
+    : groupActuals;
+
+  await runAutoLocks(SIMULATED_NOW_ISO);
+  // eslint-disable-next-line no-console
+  console.log(`Applied tournament locks (simulated date ${SIMULATED_NOW_ISO}).`);
 
   const confirmed = buildConfirmedKnockoutFixtures(allActuals);
   const leaderboard = await computeLeaderboard();
@@ -203,7 +212,9 @@ async function main() {
   // eslint-disable-next-line no-console
   console.log(`Admin login: ${ADMIN_DISPLAY_NAME} / ${TEST_PASSWORD}`);
   // eslint-disable-next-line no-console
-  console.log(`Official results: ${Object.keys(allActuals).length} matches`);
+  console.log(
+    `Official results: ${Object.keys(allActuals).length} matches (${fullBracket ? 'full bracket' : 'group stage only'})`
+  );
   // eslint-disable-next-line no-console
   console.log(`Confirmed KO fixtures for picks UI: ${confirmed.length}`);
   // eslint-disable-next-line no-console

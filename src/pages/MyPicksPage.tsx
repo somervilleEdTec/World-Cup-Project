@@ -1,12 +1,13 @@
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState, type WheelEvent } from 'react';
 import { groupMatches, teams } from '../data/tournament';
 import { TeamLabel } from '../components/TeamLabel';
+import { FixtureScoreSummary } from '../components/FixtureScoreSummary';
 import { fetchPredictionState, lockGroup, saveBonusDraft, saveDraftPick } from '../services/apiClient';
 import { TeamSelect } from '../components/TeamSelect';
 import { ALL_GROUP_IDS } from '../lib/pickLocks';
 import { computeMissingPicks } from '../lib/missingPicks';
 import { computeGroupStandings, shouldLockGroup } from '../lib/tournamentLogic';
-import { Match, Pick, TournamentBonusPick } from '../types';
+import { ActualResult, Match, Pick, TournamentBonusPick } from '../types';
 
 const groupSequence = ALL_GROUP_IDS;
 const AUTOSAVE_MS = 450;
@@ -41,6 +42,7 @@ interface RemoteState {
   bonusCommitted?: TournamentBonusPick;
   commitState: { groupLocked: boolean };
   confirmedKnockoutFixtures?: Match[];
+  officialResults?: Record<string, ActualResult>;
 }
 
 type PicksPhase = 'bonus' | 'group' | 'knockout';
@@ -254,6 +256,7 @@ export function MyPicksPage() {
   const savedPicks = { ...state.committedPicks, ...state.draftPicks };
   const mergedPicks = { ...savedPicks, ...pendingGroupPicks };
   const confirmedKnockoutFixtures = state.confirmedKnockoutFixtures ?? [];
+  const officialResults = state.officialResults ?? {};
   const groupStandings = useMemo(
     () => computeGroupStandings(activeGroup, { ...savedPicks, ...pendingGroupPicks }),
     [activeGroup, pendingGroupPicks, savedPicks]
@@ -394,6 +397,7 @@ export function MyPicksPage() {
                   {homeTeam && <TeamLabel team={homeTeam} />} <strong>vs</strong>{' '}
                   {awayTeam && <TeamLabel team={awayTeam} />}
                 </div>
+                <FixtureScoreSummary pick={pick} actual={officialResults[match.id]} />
                 <MatchScoreInputs
                   match={match}
                   pick={pick}
@@ -540,6 +544,7 @@ export function MyPicksPage() {
                   {awayOk ? <TeamLabel team={awayTeam!} /> : <span>TBD</span>}
                 </div>
                 <p>Locks in: {formatCountdown(match.kickoff, nowIso)}</p>
+                <FixtureScoreSummary pick={pick} actual={officialResults[match.id]} />
                 <MatchScoreInputs
                   match={match}
                   pick={pick}

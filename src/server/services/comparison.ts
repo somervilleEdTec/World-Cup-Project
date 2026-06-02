@@ -19,6 +19,11 @@ export interface ComparisonEntry {
 }
 
 export interface MatchComparisonResponse {
+  actualResult: {
+    homeScore: number;
+    awayScore: number;
+    progressingTeamId?: string;
+  } | null;
   match: {
     id: string;
     stage: string;
@@ -49,10 +54,19 @@ function rowToPick(row: {
   };
 }
 
-export async function listUpcomingMatches(nowIso = new Date().toISOString()) {
+async function isTournamentGroupPhaseLocked(db: ReturnType<typeof getDb>): Promise<boolean> {
+  const row = await db.get<{ locked: number }>(
+    `SELECT 1 AS locked FROM prediction_meta WHERE group_locked = 1 LIMIT 1`
+  );
+  return Boolean(row?.locked);
+}
+
+/** All fixtures with known teams (past and upcoming) for the comparison picker. */
+export async function listComparisonFixtures() {
   const results = await getResultsMap();
   return getMatches({}, results)
-    .filter((m) => new Date(m.kickoff).getTime() > new Date(nowIso).getTime())
+    .filter((m) => m.homeTeamId !== 'tbd' && m.awayTeamId !== 'tbd')
+    .sort((a, b) => new Date(a.kickoff).getTime() - new Date(b.kickoff).getTime())
     .map((m) => ({
       id: m.id,
       stage: m.stage,
@@ -73,9 +87,10 @@ export async function getMatchComparison(
   const match = getMatches({}, results).find((m) => m.id === matchId);
   if (!match) return null;
 
-  const canViewOthers = canViewOthersPicks(match, nowIso);
+  const groupPhaseLocked = (await isTournamentGroupPhaseLocked(db)) || shouldLockGroup(nowIso);
+  const canViewOthers = canViewOthersPicks(match, nowIso, groupPhaseLocked);
   const matchLocked = kickoffReached(match.kickoff, nowIso);
-  const groupLocked = shouldLockGroup(nowIso);
+  const groupLocked = groupPhaseLocked;
 
   const users = await db.all<{ id: string; display_name: string }>(
     `SELECT id, display_name FROM users ORDER BY display_name`
@@ -110,6 +125,7 @@ export async function getMatchComparison(
     };
   });
 
+  const actual = results[match.id];
   const message = canViewOthers
     ? 'Showing committed picks for this fixture.'
     : isGroupStage(match)
@@ -117,6 +133,13 @@ export async function getMatchComparison(
       : 'Other players’ committed knockout picks are shown once saved.';
 
   return {
+    actualResult: actual
+      ? {
+          homeScore: actual.homeScore,
+          awayScore: actual.awayScore,
+          progressingTeamId: actual.progressingTeamId
+        }
+      : null,
     match: {
       id: match.id,
       stage: match.stage,
@@ -137,11 +160,18 @@ export async function getMatchComparison(
 
 export async function getNextMatchComparison(currentUserId: string, nowIso = new Date().toISOString()) {
   const results = await getResultsMap();
-  const allMatches = getMatches({}, results);
-  const nextId = getNextUpcomingMatchId(
-    nowIso,
-    allMatches.map((m) => ({ id: m.id, kickoff: m.kickoff }))
+  const allMatches = getMatches({}, results).filter(
+    (m) => m.homeTeamId !== 'tbd' && m.awayTeamId !== 'tbd'
   );
+  const nextId =
+    getNextUpcomingMatchId(
+      nowIso,
+      allMatches.map((m) => ({ id: m.id, kickoff: m.kickoff }))
+    ) ??
+    allMatches
+      .filter((m) => results[m.id] !== undefined)
+      .sort((a, b) => new Date(b.kickoff).getTime() - new Date(a.kickoff).getTime())[0]?.id ??
+    allMatches.sort((a, b) => new Date(a.kickoff).getTime() - new Date(b.kickoff).getTime())[0]?.id;
   if (!nextId) return null;
   return getMatchComparison(nextId, currentUserId, nowIso);
 }

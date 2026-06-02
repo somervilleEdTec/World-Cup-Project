@@ -1,10 +1,16 @@
 import { Match } from '../types';
-import { isGroupStage, isKnockout, shouldLockGroup } from './tournamentLogic';
+import { isGroupLocked } from './pickLocks';
+import { isGroupStage, isKnockout } from './tournamentLogic';
 
 /** Whether other players' committed picks for this fixture may be shown. */
-export function canViewOthersPicks(match: Match, nowIso = new Date().toISOString()): boolean {
+export function canViewOthersPicks(
+  match: Match,
+  nowIso = new Date().toISOString(),
+  /** True when the tournament group phase has locked (DB flag or first kickoff passed). */
+  groupPhaseLocked = false
+): boolean {
   if (isGroupStage(match)) {
-    return shouldLockGroup(nowIso);
+    return isGroupLocked(groupPhaseLocked, nowIso);
   }
   if (isKnockout(match)) {
     return true;

@@ -25,6 +25,10 @@ describe('comparison visibility', () => {
     expect(canViewOthersPicks(groupMatch, '2026-06-11T19:30:00Z')).toBe(true);
   });
 
+  it('shows group picks when tournament group phase is locked in DB', () => {
+    expect(canViewOthersPicks(groupMatch, '2026-06-01T00:00:00Z', true)).toBe(true);
+  });
+
   it('shows knockout committed picks for comparison before kickoff', () => {
     expect(canViewOthersPicks(koMatch, '2026-06-27T12:00:00Z')).toBe(true);
   });

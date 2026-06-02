@@ -80,6 +80,11 @@ export interface ComparisonEntryView {
 }
 
 export interface MatchComparisonView {
+  actualResult?: {
+    homeScore: number;
+    awayScore: number;
+    progressingTeamId?: string;
+  } | null;
   match: {
     id: string;
     stage: string;
