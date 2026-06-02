@@ -1,6 +1,6 @@
 # World Cup Boys — Agent TODO Tracker
 
-> Sync with [HANDOVER.md](./HANDOVER.md). **P0 and P1 complete** as of PR #2 (`cursor/world-cup-p0-complete-21eb`, 2026-06-02).  
+> Sync with [HANDOVER.md](./HANDOVER.md). **P0–P2 + compliance** complete ([COMPLIANCE.md](./COMPLIANCE.md), 2026-06-02).  
 > New agents: read [AGENT_PROMPT.md](./AGENT_PROMPT.md) and confirm next steps with the owner before coding.
 
 ## Status legend
