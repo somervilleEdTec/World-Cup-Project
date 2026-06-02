@@ -2,31 +2,36 @@ import fs from 'node:fs';
 import path from 'node:path';
 import type { DatabaseClient } from './types';
 
-const MIGRATION_VERSION = 1;
+const MIGRATION_FILES: Record<number, { sqlite: string; postgres: string }> = {
+  1: { sqlite: '001_initial.sqlite.sql', postgres: '001_initial.postgres.sql' },
+  2: { sqlite: '002_accepted_groups.sqlite.sql', postgres: '002_accepted_groups.postgres.sql' }
+};
 
-function migrationFile(dialect: 'sqlite' | 'postgres'): string {
-  const name = dialect === 'postgres' ? '001_initial.postgres.sql' : '001_initial.sqlite.sql';
-  return path.resolve(process.cwd(), 'migrations', name);
+const LATEST_VERSION = Math.max(...Object.keys(MIGRATION_FILES).map(Number));
+
+async function isVersionApplied(db: DatabaseClient, version: number): Promise<boolean> {
+  try {
+    const row = await db.get<{ version: number }>(
+      `SELECT version FROM schema_migrations WHERE version = ?`,
+      [version]
+    );
+    return Boolean(row);
+  } catch {
+    return false;
+  }
 }
 
 export async function runMigrations(db: DatabaseClient): Promise<void> {
-  try {
-    const hasMigrations = await db.get<{ version: number }>(
-      `SELECT version FROM schema_migrations WHERE version = ?`,
-      [MIGRATION_VERSION]
-    );
-    if (hasMigrations) return;
-  } catch {
-    // schema_migrations not created yet
-  }
+  for (let version = 1; version <= LATEST_VERSION; version += 1) {
+    if (await isVersionApplied(db, version)) continue;
 
-  const sql = fs.readFileSync(migrationFile(db.dialect), 'utf8');
-  await db.exec(sql);
-  const now = new Date().toISOString();
-  await db.run(`INSERT INTO schema_migrations (version, applied_at) VALUES (?, ?)`, [
-    MIGRATION_VERSION,
-    now
-  ]);
+    const files = MIGRATION_FILES[version];
+    const fileName = db.dialect === 'postgres' ? files.postgres : files.sqlite;
+    const sql = fs.readFileSync(path.resolve(process.cwd(), 'migrations', fileName), 'utf8');
+    await db.exec(sql);
+    const now = new Date().toISOString();
+    await db.run(`INSERT INTO schema_migrations (version, applied_at) VALUES (?, ?)`, [version, now]);
+  }
 }
 
 export async function resetDatabase(db: DatabaseClient): Promise<void> {

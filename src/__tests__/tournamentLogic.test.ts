@@ -60,6 +60,19 @@ describe('tournament logic', () => {
     expect(summary.exactScores).toBeGreaterThanOrEqual(5);
   });
 
+  it('does not award group-position points until all six group results exist', () => {
+    const picks = {
+      'g-a-1': { matchId: 'g-a-1', homeScore: 2, awayScore: 1 },
+      'g-a-2': { matchId: 'g-a-2', homeScore: 1, awayScore: 0 }
+    };
+    const partialActuals = {
+      'g-a-1': { matchId: 'g-a-1', homeScore: 2, awayScore: 1 },
+      'g-a-2': { matchId: 'g-a-2', homeScore: 1, awayScore: 0 }
+    };
+    const summary = computeScore(picks, partialActuals, undefined, undefined);
+    expect(summary.exactGroupPositions).toBe(0);
+  });
+
   it('scores exact group positions from official results', () => {
     const picks = {
       'g-a-1': { matchId: 'g-a-1', homeScore: 2, awayScore: 1 },

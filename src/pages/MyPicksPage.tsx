@@ -1,12 +1,20 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { groupMatches, teams } from '../data/tournament';
 import { TeamLabel } from '../components/TeamLabel';
-import { commitDraft, fetchPredictionState, markReviewed, saveBonusDraft, saveDraftPick } from '../services/apiClient';
+import {
+  commitDraft,
+  fetchPredictionState,
+  markReviewed,
+  saveBonusDraft,
+  saveDraftPick,
+  setGroupAccepted
+} from '../services/apiClient';
 import { getMatches } from '../lib/matchResolver';
+import { ALL_GROUP_IDS } from '../lib/pickLocks';
 import { computeGroupPositions, shouldLockGroup } from '../lib/tournamentLogic';
 import { Match, Pick, TournamentBonusPick } from '../types';
 
-const groupSequence = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L'];
+const groupSequence = ALL_GROUP_IDS;
 
 function formatCountdown(targetIso: string, nowIso: string): string {
   const diff = new Date(targetIso).getTime() - new Date(nowIso).getTime();
@@ -16,10 +24,21 @@ function formatCountdown(targetIso: string, nowIso: string): string {
   return `${hours}h ${minutes}m`;
 }
 
+function bonusValues(state: RemoteState): TournamentBonusPick {
+  const source = state.bonusDraft ?? state.bonusCommitted;
+  return {
+    winnerTeamId: source?.winnerTeamId ?? teams[0].id,
+    runnerUpTeamId: source?.runnerUpTeamId ?? teams[1].id,
+    thirdTeamId: source?.thirdTeamId ?? teams[2].id,
+    fourthTeamId: source?.fourthTeamId ?? teams[3].id
+  };
+}
+
 interface RemoteState {
   committedPicks: Record<string, Pick>;
   draftPicks: Record<string, Pick>;
   affectedMatches: string[];
+  acceptedGroups: string[];
   bonusDraft?: TournamentBonusPick;
   bonusCommitted?: TournamentBonusPick;
   commitState: { groupLocked: boolean };
@@ -29,6 +48,7 @@ const initialState: RemoteState = {
   committedPicks: {},
   draftPicks: {},
   affectedMatches: [],
+  acceptedGroups: [],
   commitState: { groupLocked: false }
 };
 
@@ -36,14 +56,17 @@ export function MyPicksPage() {
   const [groupIndex, setGroupIndex] = useState(0);
   const [message, setMessage] = useState<string>('');
   const [state, setState] = useState<RemoteState>(initialState);
-  const [acceptedGroups, setAcceptedGroups] = useState<Set<string>>(new Set());
 
   const nowIso = new Date().toISOString();
 
   const refresh = async () => {
     try {
       const response = (await fetchPredictionState()) as RemoteState;
-      setState(response);
+      setState({
+        ...initialState,
+        ...response,
+        acceptedGroups: response.acceptedGroups ?? []
+      });
     } catch (err) {
       setMessage(err instanceof Error ? err.message : 'Failed to load prediction state');
     }
@@ -59,11 +82,12 @@ export function MyPicksPage() {
 
   const mergedPicks = { ...state.committedPicks, ...state.draftPicks };
   const resolvedMatches = useMemo(() => getMatches(mergedPicks), [mergedPicks]);
-
   const groupPreview = useMemo(() => computeGroupPositions(activeGroup, mergedPicks), [activeGroup, mergedPicks]);
 
   const groupComplete = activeGroupMatches.every((match) => mergedPicks[match.id] !== undefined);
-  const groupAccepted = acceptedGroups.has(activeGroup);
+  const groupAccepted = state.acceptedGroups.includes(activeGroup);
+  const allGroupsAccepted = groupSequence.every((g) => state.acceptedGroups.includes(g));
+  const bonus = bonusValues(state);
 
   const saveMatch = async (event: FormEvent<HTMLFormElement>, match: Match) => {
     event.preventDefault();
@@ -113,6 +137,7 @@ export function MyPicksPage() {
             ? 'Group-stage picks are now locked. Only previously committed predictions were locked.'
             : 'Only committed group picks and bonus selections will lock at first kickoff.'}
         </p>
+        <p className="warning">Uncommitted edits will not count. Last committed picks will be locked.</p>
       </article>
 
       <article className="card">
@@ -130,7 +155,9 @@ export function MyPicksPage() {
                 <input name="homeScore" type="number" min="0" required defaultValue={pick?.homeScore ?? 0} />
                 <input name="awayScore" type="number" min="0" required defaultValue={pick?.awayScore ?? 0} />
               </div>
-              <button type="submit" disabled={groupLocked}>Save match</button>
+              <button type="submit" disabled={groupLocked}>
+                Save match
+              </button>
             </form>
           );
         })}
@@ -147,20 +174,28 @@ export function MyPicksPage() {
           <button
             type="button"
             disabled={!groupComplete || groupLocked}
-            onClick={() => setAcceptedGroups((prev) => new Set(prev).add(activeGroup))}
+            onClick={async () => {
+              try {
+                await setGroupAccepted(activeGroup, true);
+                await refresh();
+              } catch (err) {
+                setMessage(err instanceof Error ? err.message : 'Could not accept group');
+              }
+            }}
           >
             Accept group table
           </button>
           <button
             type="button"
             disabled={groupLocked}
-            onClick={() =>
-              setAcceptedGroups((prev) => {
-                const next = new Set(prev);
-                next.delete(activeGroup);
-                return next;
-              })
-            }
+            onClick={async () => {
+              try {
+                await setGroupAccepted(activeGroup, false);
+                await refresh();
+              } catch (err) {
+                setMessage(err instanceof Error ? err.message : 'Could not amend group');
+              }
+            }}
           >
             Amend
           </button>
@@ -185,10 +220,13 @@ export function MyPicksPage() {
       <article className="card">
         <h3>Tournament bonus picks</h3>
         <p>Select winner, runner-up, third, and fourth from all teams (repeats allowed).</p>
+        {!allGroupsAccepted && (
+          <p className="warning">Complete and accept all 12 groups before saving tournament bonus picks.</p>
+        )}
         <form onSubmit={submitBonus} className="form-grid">
           <label>
             Winner
-            <select name="winnerTeamId" defaultValue={state.bonusDraft?.winnerTeamId ?? teams[0].id}>
+            <select name="winnerTeamId" defaultValue={bonus.winnerTeamId}>
               {teams.map((team) => (
                 <option key={`winner-${team.id}`} value={team.id}>{`${team.flag} ${team.name}`}</option>
               ))}
@@ -196,7 +234,7 @@ export function MyPicksPage() {
           </label>
           <label>
             Runner-up
-            <select name="runnerUpTeamId" defaultValue={state.bonusDraft?.runnerUpTeamId ?? teams[1].id}>
+            <select name="runnerUpTeamId" defaultValue={bonus.runnerUpTeamId}>
               {teams.map((team) => (
                 <option key={`runner-${team.id}`} value={team.id}>{`${team.flag} ${team.name}`}</option>
               ))}
@@ -204,7 +242,7 @@ export function MyPicksPage() {
           </label>
           <label>
             Third
-            <select name="thirdTeamId" defaultValue={state.bonusDraft?.thirdTeamId ?? teams[2].id}>
+            <select name="thirdTeamId" defaultValue={bonus.thirdTeamId}>
               {teams.map((team) => (
                 <option key={`third-${team.id}`} value={team.id}>{`${team.flag} ${team.name}`}</option>
               ))}
@@ -212,13 +250,15 @@ export function MyPicksPage() {
           </label>
           <label>
             Fourth
-            <select name="fourthTeamId" defaultValue={state.bonusDraft?.fourthTeamId ?? teams[3].id}>
+            <select name="fourthTeamId" defaultValue={bonus.fourthTeamId}>
               {teams.map((team) => (
                 <option key={`fourth-${team.id}`} value={team.id}>{`${team.flag} ${team.name}`}</option>
               ))}
             </select>
           </label>
-          <button type="submit" disabled={groupLocked}>Save bonus picks</button>
+          <button type="submit" disabled={groupLocked || !allGroupsAccepted}>
+            Save bonus picks
+          </button>
         </form>
       </article>
 
@@ -241,12 +281,25 @@ export function MyPicksPage() {
                   {homeOk ? <TeamLabel team={homeTeam!} /> : <span>TBD</span>} <strong>vs</strong>{' '}
                   {awayOk ? <TeamLabel team={awayTeam!} /> : <span>TBD</span>}
                 </div>
-                <p>
-                  Locks in: {formatCountdown(match.kickoff, nowIso)} {locked ? '(Locked)' : '(Open)'}
-                </p>
+                <p>Locks in: {formatCountdown(match.kickoff, nowIso)}</p>
+                <p className="warning">This match locks at kickoff. Commit your changes before deadline.</p>
                 <div className="score-inputs">
-                  <input name="homeScore" type="number" min="0" required defaultValue={pick?.homeScore ?? 0} disabled={locked} />
-                  <input name="awayScore" type="number" min="0" required defaultValue={pick?.awayScore ?? 0} disabled={locked} />
+                  <input
+                    name="homeScore"
+                    type="number"
+                    min="0"
+                    required
+                    defaultValue={pick?.homeScore ?? 0}
+                    disabled={locked}
+                  />
+                  <input
+                    name="awayScore"
+                    type="number"
+                    min="0"
+                    required
+                    defaultValue={pick?.awayScore ?? 0}
+                    disabled={locked}
+                  />
                 </div>
                 {(pick?.homeScore ?? 0) === (pick?.awayScore ?? 0) && (
                   <label>
@@ -258,7 +311,9 @@ export function MyPicksPage() {
                     </select>
                   </label>
                 )}
-                <button type="submit" disabled={locked}>Save knockout pick</button>
+                <button type="submit" disabled={locked}>
+                  Save knockout pick
+                </button>
                 {state.affectedMatches.includes(match.id) && (
                   <button
                     type="button"

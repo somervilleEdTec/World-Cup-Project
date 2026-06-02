@@ -2,13 +2,12 @@ import { useEffect, useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { getToken } from '../services/apiClient';
 
-const links = [
+const baseLinks = [
   { to: '/', label: 'Welcome' },
   { to: '/my-picks', label: 'My Picks' },
   { to: '/league-table', label: 'League Table' },
   { to: '/comparison', label: 'Comparison' },
-  { to: '/rules', label: 'Rules' },
-  { to: '/admin', label: 'Admin' }
+  { to: '/rules', label: 'Rules' }
 ];
 
 export function AppLayout() {
@@ -20,9 +19,13 @@ export function AppLayout() {
     if (stored) setDisplayName(stored);
   }, []);
 
+  const isAdmin = localStorage.getItem('wcb_is_admin') === '1';
+  const links = isAdmin ? [...baseLinks, { to: '/admin', label: 'Admin' }] : baseLinks;
+
   const logout = () => {
     localStorage.removeItem('wcb_token');
     localStorage.removeItem('wcb_display_name');
+    localStorage.removeItem('wcb_is_admin');
     setDisplayName(null);
     navigate('/login');
   };

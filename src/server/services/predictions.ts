@@ -1,8 +1,19 @@
 import { getDb } from '../database';
+import { groupMatches } from '../../data/tournament';
 import { getMatches } from '../../lib/matchResolver';
-import { getResultsMap } from './leaderboard';
-import { affectedFutureMatches, shouldLockGroup, validatePick } from '../../lib/tournamentLogic';
+import { affectedFutureMatches, validatePick } from '../../lib/tournamentLogic';
+import {
+  allGroupsAccepted,
+  allGroupsComplete,
+  assertBonusEditable,
+  assertMatchEditable,
+  isMatchEditable,
+  shouldLockGroup
+} from '../../lib/pickLocks';
 import { Pick, TournamentBonusPick } from '../../types';
+import { getResultsMap } from './leaderboard';
+
+const VALID_GROUPS = new Set(['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L']);
 
 async function getMeta(userId: string) {
   const db = getDb();
@@ -13,10 +24,21 @@ async function getMeta(userId: string) {
     bonus_draft: string | null;
     bonus_committed: string | null;
     affected_matches: string;
+    accepted_groups: string;
   }>(
-    `SELECT commit_version, committed_at, group_locked, bonus_draft, bonus_committed, affected_matches FROM prediction_meta WHERE user_id = ?`,
+    `SELECT commit_version, committed_at, group_locked, bonus_draft, bonus_committed, affected_matches, accepted_groups
+     FROM prediction_meta WHERE user_id = ?`,
     [userId]
   );
+}
+
+function parseAcceptedGroups(raw: string | null | undefined): string[] {
+  if (!raw) return [];
+  try {
+    return JSON.parse(raw) as string[];
+  } catch {
+    return [];
+  }
 }
 
 export async function getUserPredictionState(userId: string) {
@@ -52,6 +74,7 @@ export async function getUserPredictionState(userId: string) {
     committedPicks,
     draftPicks,
     affectedMatches: meta ? (JSON.parse(meta.affected_matches) as string[]) : [],
+    acceptedGroups: parseAcceptedGroups(meta?.accepted_groups),
     commitState: {
       version: meta?.commit_version ?? 1,
       committedAt: meta?.committed_at ?? new Date().toISOString(),
@@ -64,17 +87,23 @@ export async function getUserPredictionState(userId: string) {
   };
 }
 
-export async function saveDraftPick(userId: string, pick: Pick) {
+export async function saveDraftPick(userId: string, pick: Pick, nowIso = new Date().toISOString()) {
   const db = getDb();
+  const meta = await getMeta(userId);
+  const groupLocked = (meta?.group_locked ?? 0) === 1;
+
   const state = await getUserPredictionState(userId);
   const results = await getResultsMap();
   const mergedPicks = { ...state.committedPicks, ...state.draftPicks, [pick.matchId]: pick };
   const match = getMatches(mergedPicks, results).find((m) => m.id === pick.matchId);
   if (!match) throw new Error('Match not found');
+
+  assertMatchEditable(match, groupLocked, nowIso);
+
   const errors = validatePick(match, pick);
   if (errors.length) throw new Error(errors[0]);
 
-  const now = new Date().toISOString();
+  const now = nowIso;
   await db.run(
     `INSERT INTO predictions (user_id, match_id, state, home_score, away_score, progressing_team_id, reviewed, updated_at)
      VALUES (?, ?, 'draft', ?, ?, ?, 1, ?)
@@ -99,9 +128,57 @@ export async function saveDraftPick(userId: string, pick: Pick) {
   ]);
 }
 
-export async function setBonusDraft(userId: string, bonus: TournamentBonusPick) {
+export async function setBonusDraft(userId: string, bonus: TournamentBonusPick, nowIso = new Date().toISOString()) {
   const db = getDb();
+  const meta = await getMeta(userId);
+  const groupLocked = (meta?.group_locked ?? 0) === 1;
+  assertBonusEditable(groupLocked, nowIso);
+
+  const state = await getUserPredictionState(userId);
+  const mergedPicks = { ...state.committedPicks, ...state.draftPicks };
+  if (!allGroupsComplete(mergedPicks)) {
+    throw new Error('Complete and accept all 12 groups before saving tournament bonus picks.');
+  }
+  if (!allGroupsAccepted(state.acceptedGroups)) {
+    throw new Error('Accept all 12 group tables before saving tournament bonus picks.');
+  }
+
   await db.run(`UPDATE prediction_meta SET bonus_draft = ? WHERE user_id = ?`, [JSON.stringify(bonus), userId]);
+}
+
+export async function setGroupAccepted(
+  userId: string,
+  groupId: string,
+  accepted: boolean,
+  nowIso = new Date().toISOString()
+) {
+  if (!VALID_GROUPS.has(groupId)) throw new Error('Invalid group');
+
+  const meta = await getMeta(userId);
+  const groupLocked = (meta?.group_locked ?? 0) === 1;
+  if (groupLocked || shouldLockGroup(nowIso)) {
+    throw new Error('Group-stage picks are locked.');
+  }
+
+  const state = await getUserPredictionState(userId);
+  const mergedPicks = { ...state.committedPicks, ...state.draftPicks };
+  const groupMatchIds = groupMatches.filter((m) => m.group === groupId);
+
+  if (accepted) {
+    const complete = groupMatchIds.every((m) => mergedPicks[m.id] !== undefined);
+    if (!complete) throw new Error(`Complete all matches in Group ${groupId} before accepting.`);
+  }
+
+  const current = parseAcceptedGroups(meta?.accepted_groups);
+  const next = accepted
+    ? [...new Set([...current, groupId])]
+    : current.filter((g) => g !== groupId);
+
+  const db = getDb();
+  await db.run(`UPDATE prediction_meta SET accepted_groups = ? WHERE user_id = ?`, [
+    JSON.stringify(next),
+    userId
+  ]);
 }
 
 export async function markReviewed(userId: string, matchId: string) {
@@ -121,21 +198,35 @@ export async function markReviewed(userId: string, matchId: string) {
 
 export async function commitDraft(userId: string, nowIso: string) {
   const db = getDb();
+  const meta = await getMeta(userId);
+  const groupLocked = (meta?.group_locked ?? 0) === 1;
   const state = await getUserPredictionState(userId);
-  const hasUnreviewed = state.affectedMatches.some((matchId) => !state.draftPicks[matchId]?.reviewed);
-  if (hasUnreviewed) throw new Error('Review affected fixtures and Commit changes.');
-
   const results = await getResultsMap();
   const merged = { ...state.committedPicks, ...state.draftPicks };
-  for (const pick of Object.values(state.draftPicks)) {
+
+  const promotableDrafts = Object.values(state.draftPicks).filter((pick) => {
+    const match = getMatches(merged, results).find((m) => m.id === pick.matchId);
+    return match && isMatchEditable(match, groupLocked, nowIso);
+  });
+
+  const hasUnreviewed = promotableDrafts.some(
+    (pick) => state.affectedMatches.includes(pick.matchId) && !pick.reviewed
+  );
+  if (hasUnreviewed) throw new Error('Review affected fixtures and Commit changes.');
+
+  for (const pick of promotableDrafts) {
     const match = getMatches(merged, results).find((m) => m.id === pick.matchId);
     if (!match) continue;
     const errors = validatePick(match, pick);
     if (errors.length) throw new Error(errors[0]);
   }
 
+  if (promotableDrafts.length === 0 && Object.keys(state.draftPicks).length > 0) {
+    throw new Error('No editable draft picks to commit (fixtures may be locked).');
+  }
+
   await db.transaction(async (tx) => {
-    for (const pick of Object.values(state.draftPicks)) {
+    for (const pick of promotableDrafts) {
       await tx.run(
         `INSERT INTO predictions (user_id, match_id, state, home_score, away_score, progressing_team_id, reviewed, updated_at)
          VALUES (?, ?, 'committed', ?, ?, ?, 1, ?)

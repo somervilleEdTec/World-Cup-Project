@@ -67,6 +67,27 @@ describe('API integration', () => {
     expect(res.status).toBe(401);
   });
 
+  it('rejects group draft saves after group lock time', async () => {
+    await request(app)
+      .post('/api/auth/register')
+      .send({ email: 'locked@example.com', password: 'password1', displayName: 'Locked' });
+
+    const login = await request(app)
+      .post('/api/auth/login')
+      .send({ email: 'locked@example.com', password: 'password1' });
+    const token = login.body.token as string;
+
+    const { runAutoLocks } = await import('../services/predictions');
+    await runAutoLocks('2026-06-12T00:00:00Z');
+
+    const draft = await request(app)
+      .post('/api/predictions/draft')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ matchId: 'g-a-1', homeScore: 1, awayScore: 0 });
+    expect(draft.status).toBe(400);
+    expect(String(draft.body.error)).toMatch(/locked/i);
+  });
+
   it('returns health check', async () => {
     const res = await request(app).get('/api/health');
     expect(res.status).toBe(200);

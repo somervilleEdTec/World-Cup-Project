@@ -61,8 +61,8 @@ export async function computeLeaderboard() {
         ])
       );
 
-      const meta = await db.get<{ bonus_committed: string | null }>(
-        `SELECT bonus_committed FROM prediction_meta WHERE user_id = ?`,
+      const meta = await db.get<{ bonus_committed: string | null; committed_at: string }>(
+        `SELECT bonus_committed, committed_at FROM prediction_meta WHERE user_id = ?`,
         [user.id]
       );
       const bonus = meta?.bonus_committed
@@ -73,6 +73,7 @@ export async function computeLeaderboard() {
       return {
         userId: user.id,
         name: user.display_name,
+        committedAt: meta?.committed_at ?? '',
         ...summary
       };
     })
@@ -84,6 +85,7 @@ export async function computeLeaderboard() {
       b.exactScores - a.exactScores ||
       b.correctResults - a.correctResults ||
       b.exactGroupPositions - a.exactGroupPositions ||
-      b.bonusHits - a.bonusHits
+      b.bonusHits - a.bonusHits ||
+      a.committedAt.localeCompare(b.committedAt)
   );
 }

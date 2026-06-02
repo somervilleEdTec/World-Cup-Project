@@ -22,6 +22,7 @@ export function LoginPage() {
       const response = await login(email, password);
       setToken(response.token);
       localStorage.setItem('wcb_display_name', response.user.displayName);
+      localStorage.setItem('wcb_is_admin', response.user.isAdmin ? '1' : '0');
       navigate('/');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Authentication failed');

@@ -100,7 +100,8 @@ If regulation is predicted as a draw in KO, user must pick **team to progress** 
 - [x] Group wizard with **Accept / Amend** before “Next Group”
 - [x] Comparison fixture dropdown + `?matchId=` + `GET /api/comparison/fixtures`
 - [x] Draft/commit flow, rolling KO locks, admin sync/override/recompute
-- [x] **11 unit tests** passing; `npm run build` passes
+- [x] **19 tests** passing (unit + API integration); `npm run build` passes
+- [x] **Plan compliance** — server-side locks, group accept persistence, scoring guards ([COMPLIANCE.md](./COMPLIANCE.md))
 
 ### Still manual / partial
 

@@ -1,20 +1,12 @@
-import { teams } from '../data/tournament';
-import { getFirstMatchKickoff } from './kickoffOverrides';
+import { groupMatches, teams } from '../data/tournament';
 import { getDownstreamKnockoutMatchIds } from './bracketEngine';
 import { computeGroupPositions } from './groupStandings';
 import { getMatches } from './matchResolver';
 import { picksFromActuals } from './pickUtils';
+import { isKnockout, kickoffReached } from './pickLocks';
 import { ActualResult, Match, Pick, TournamentBonusPick } from '../types';
 
-const KO_STAGES = new Set(['R32', 'R16', 'QF', 'SF', 'THIRD_PLACE', 'FINAL']);
-
-export function isGroupStage(match: Match): boolean {
-  return match.stage === 'GROUP';
-}
-
-export function isKnockout(match: Match): boolean {
-  return KO_STAGES.has(match.stage);
-}
+export { isGroupStage, isKnockout, kickoffReached, shouldLockGroup } from './pickLocks';
 
 export function requiresProgressionPick(match: Match, pick: Pick): boolean {
   return isKnockout(match) && pick.homeScore === pick.awayScore;
@@ -29,14 +21,6 @@ export function validatePick(match: Match, pick: Pick): string[] {
     errors.push('Draw selected — choose the team that progresses.');
   }
   return errors;
-}
-
-export function kickoffReached(isoKickoff: string, nowIso = new Date().toISOString()): boolean {
-  return new Date(nowIso).getTime() >= new Date(isoKickoff).getTime();
-}
-
-export function shouldLockGroup(nowIso = new Date().toISOString()): boolean {
-  return kickoffReached(getFirstMatchKickoff(), nowIso);
 }
 
 export function lockableKnockoutMatchIds(
@@ -89,6 +73,10 @@ export function computeScore(
   const groups = [...new Set(teams.map((team) => team.group))];
   const actualPicks = picksFromActuals(actuals);
   groups.forEach((groupId) => {
+    const groupMatchIds = groupMatches.filter((m) => m.group === groupId).map((m) => m.id);
+    const groupComplete = groupMatchIds.every((id) => actuals[id] !== undefined);
+    if (!groupComplete) return;
+
     const predictedPositions = computeGroupPositions(groupId, picks);
     const actualPositions = computeGroupPositions(groupId, actualPicks);
     predictedPositions.forEach((teamId, idx) => {

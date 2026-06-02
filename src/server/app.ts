@@ -8,7 +8,8 @@ import {
   markReviewed,
   runAutoLocks,
   saveDraftPick,
-  setBonusDraft
+  setBonusDraft,
+  setGroupAccepted
 } from './services/predictions';
 import { computeLeaderboard } from './services/leaderboard';
 import { getSyncStatus, syncFootballData } from './services/sync';
@@ -88,6 +89,18 @@ export function createApp(): Express {
       res.json({ ok: true });
     } catch (error) {
       res.status(400).json({ error: error instanceof Error ? error.message : 'Review failed' });
+    }
+  });
+
+  app.post('/api/predictions/groups/:groupId/accept', async (req: Request, res: Response) => {
+    try {
+      const user = await requireUser(authToken(req));
+      const schema = z.object({ accepted: z.boolean() });
+      const payload = schema.parse(req.body);
+      await setGroupAccepted(user.id, String(req.params.groupId).toUpperCase(), payload.accepted);
+      res.json({ ok: true });
+    } catch (error) {
+      res.status(400).json({ error: error instanceof Error ? error.message : 'Group accept failed' });
     }
   });
 
