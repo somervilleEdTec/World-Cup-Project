@@ -5,8 +5,13 @@ import { affectedFutureMatches, validatePick } from '../../lib/tournamentLogic';
 import {
   allGroupsAccepted,
   allGroupsComplete,
+  allGroupPicksCommitted,
+  assertAllGroupPicksCommitted,
   assertBonusEditable,
   assertMatchEditable,
+  countCommittedGroupPicks,
+  GROUP_MATCH_COUNT,
+  isKnockout,
   isMatchEditable,
   shouldLockGroup
 } from '../../lib/pickLocks';
@@ -70,11 +75,15 @@ export async function getUserPredictionState(userId: string) {
   });
 
   const meta = await getMeta(userId);
+  const groupPicksCommittedCount = countCommittedGroupPicks(committedPicks);
   return {
     committedPicks,
     draftPicks,
     affectedMatches: meta ? (JSON.parse(meta.affected_matches) as string[]) : [],
     acceptedGroups: parseAcceptedGroups(meta?.accepted_groups),
+    groupPicksCommittedCount,
+    groupPicksRequired: GROUP_MATCH_COUNT,
+    allGroupPicksCommitted: allGroupPicksCommitted(committedPicks),
     commitState: {
       version: meta?.commit_version ?? 1,
       committedAt: meta?.committed_at ?? new Date().toISOString(),
@@ -99,6 +108,10 @@ export async function saveDraftPick(userId: string, pick: Pick, nowIso = new Dat
   if (!match) throw new Error('Match not found');
 
   assertMatchEditable(match, groupLocked, nowIso);
+
+  if (isKnockout(match)) {
+    assertAllGroupPicksCommitted(state.committedPicks, groupLocked, nowIso);
+  }
 
   const errors = validatePick(match, pick);
   if (errors.length) throw new Error(errors[0]);
@@ -135,9 +148,11 @@ export async function setBonusDraft(userId: string, bonus: TournamentBonusPick, 
   assertBonusEditable(groupLocked, nowIso);
 
   const state = await getUserPredictionState(userId);
+  assertAllGroupPicksCommitted(state.committedPicks, groupLocked, nowIso);
+
   const mergedPicks = { ...state.committedPicks, ...state.draftPicks };
   if (!allGroupsComplete(mergedPicks)) {
-    throw new Error('Complete and accept all 12 groups before saving tournament bonus picks.');
+    throw new Error('Complete all group match scorelines before saving tournament bonus picks.');
   }
   if (!allGroupsAccepted(state.acceptedGroups)) {
     throw new Error('Accept all 12 group tables before saving tournament bonus picks.');

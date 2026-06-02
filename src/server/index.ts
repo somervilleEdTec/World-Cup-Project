@@ -5,12 +5,25 @@ import express from 'express';
 import { createApp } from './app';
 import { initDatabase, closeDatabase } from './database';
 import { seedGroupMatchMappings } from './services/matchMapping';
+import { syncKickoffsFromFootballData } from './services/sync';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 async function main() {
   await initDatabase();
   await seedGroupMatchMappings();
+
+  const footballToken = process.env.FOOTBALL_DATA_TOKEN;
+  if (footballToken) {
+    try {
+      const kickoffs = await syncKickoffsFromFootballData(footballToken);
+      // eslint-disable-next-line no-console
+      console.log(`Kickoffs loaded from football-data.org: ${kickoffs.mapped}/${kickoffs.total}`);
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.warn('Kickoff import skipped:', error instanceof Error ? error.message : error);
+    }
+  }
 
   const app = createApp();
 

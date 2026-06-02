@@ -1,9 +1,8 @@
 import 'dotenv/config';
 import { closeDatabase, initDatabase } from '../src/server/database/index.js';
-import { fetchCompetitionFixtures, PROVIDER } from '../src/services/footballDataService.js';
-import { resolveInternalMatchId } from '../src/server/services/matchMapping.js';
-import { upsertMatchKickoff } from '../src/server/kickoffs.js';
 import { seedGroupMatchMappings } from '../src/server/services/matchMapping.js';
+import { syncKickoffsFromFootballData } from '../src/server/services/fixtureSync.js';
+import { syncFootballData } from '../src/server/services/sync.js';
 
 async function main() {
   const token = process.env.FOOTBALL_DATA_TOKEN;
@@ -16,27 +15,13 @@ async function main() {
   await initDatabase();
   await seedGroupMatchMappings();
 
-  const fixtures = await fetchCompetitionFixtures(token);
-  let mapped = 0;
-  let skipped = 0;
-
-  for (const fixture of fixtures) {
-    const internalId = await resolveInternalMatchId(
-      PROVIDER,
-      fixture.providerId,
-      fixture.homeName,
-      fixture.awayName
-    );
-    if (!internalId) {
-      skipped += 1;
-      continue;
-    }
-    await upsertMatchKickoff(internalId, fixture.kickoff, 'football-data.org');
-    mapped += 1;
-  }
+  const kickoffs = await syncKickoffsFromFootballData(token);
+  const results = await syncFootballData(token);
 
   // eslint-disable-next-line no-console
-  console.log(`Seed complete: ${mapped} kickoffs updated, ${skipped} fixtures skipped (unmapped teams).`);
+  console.log(
+    `Seed complete: ${kickoffs.mapped} kickoffs (${kickoffs.skipped} skipped), ${results.updated} results synced.`
+  );
   await closeDatabase();
 }
 

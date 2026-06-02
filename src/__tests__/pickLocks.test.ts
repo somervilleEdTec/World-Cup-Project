@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { assertMatchEditable, isMatchEditable } from '../lib/pickLocks';
+import {
+  allGroupPicksCommitted,
+  assertAllGroupPicksCommitted,
+  assertMatchEditable,
+  countCommittedGroupPicks,
+  GROUP_MATCH_COUNT,
+  isMatchEditable
+} from '../lib/pickLocks';
+import { groupMatches } from '../data/tournament';
 import { Match } from '../types';
 
 const groupMatch: Match = {
@@ -28,5 +36,17 @@ describe('pick locks', () => {
   it('blocks knockout picks after fixture kickoff', () => {
     expect(() => assertMatchEditable(koMatch, false, '2026-06-28T20:00:00Z')).toThrow(/locked/i);
     expect(isMatchEditable(koMatch, false, '2026-06-28T18:00:00Z')).toBe(true);
+  });
+
+  it('requires all group picks committed before first kickoff', () => {
+    const partial: Record<string, { matchId: string; homeScore: number; awayScore: number }> = {};
+    groupMatches.slice(0, 10).forEach((m) => {
+      partial[m.id] = { matchId: m.id, homeScore: 1, awayScore: 0 };
+    });
+    expect(countCommittedGroupPicks(partial)).toBe(10);
+    expect(allGroupPicksCommitted(partial)).toBe(false);
+    expect(() => assertAllGroupPicksCommitted(partial, false, '2026-06-01T00:00:00Z')).toThrow(
+      String(GROUP_MATCH_COUNT)
+    );
   });
 });

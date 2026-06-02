@@ -8,9 +8,17 @@ This guide covers running the app in production with **PostgreSQL**, optional **
 - PostgreSQL 14+ (recommended for production)
 - football-data.org API token (optional; for live results and kickoff import)
 
+## Small pool (~10 friends)
+
+**SQLite is fine.** Use the default setup (`data.db`, no `DATABASE_URL`), run `npm run migrate`, and back up `data.db` occasionally. Postgres is optional until you need concurrent write scale or hosted HA.
+
+Set `FOOTBALL_DATA_TOKEN` in `.env` so the API and jobs processes import real kickoffs and poll live results automatically (see §3).
+
+---
+
 ## 1. Database (PostgreSQL)
 
-Create a database and user:
+For larger deployments, create a database and user:
 
 ```sql
 CREATE USER worldcup WITH PASSWORD 'your-secure-password';
@@ -49,15 +57,18 @@ FOOTBALL_DATA_TOKEN=your_token
 PORT=8787
 ```
 
-## 3. Import real 2026 kickoffs (recommended)
+## 3. Real kickoffs and live results (football-data.org)
 
-After migrations, seed kickoffs and provider match IDs from football-data.org:
+Set `FOOTBALL_DATA_TOKEN` in `.env`. Then:
 
-```bash
-npm run seed:fixtures
-```
+| When | What runs |
+|------|-----------|
+| **API startup** | Imports kickoffs once (`match_kickoffs` + provider IDs) |
+| **`npm run jobs`** | Initial full sync (kickoffs + results), then results every **2 min**, kickoffs every **6 h** |
+| **Admin → Run full sync** | Kickoffs + finished results on demand |
+| **CLI** | `npm run seed:fixtures` — same as full sync (kickoffs + results) |
 
-This updates the `match_kickoffs` and `match_external_ids` tables. Locks and comparison use DB kickoffs when present.
+Locks and comparison use DB kickoffs when present. Without a token, the app uses approximate static kickoffs from code.
 
 ## 4. Build and run
 

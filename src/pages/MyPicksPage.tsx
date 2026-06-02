@@ -10,7 +10,7 @@ import {
   setGroupAccepted
 } from '../services/apiClient';
 import { getMatches } from '../lib/matchResolver';
-import { ALL_GROUP_IDS } from '../lib/pickLocks';
+import { ALL_GROUP_IDS, GROUP_MATCH_COUNT } from '../lib/pickLocks';
 import { computeGroupPositions, shouldLockGroup } from '../lib/tournamentLogic';
 import { Match, Pick, TournamentBonusPick } from '../types';
 
@@ -39,6 +39,9 @@ interface RemoteState {
   draftPicks: Record<string, Pick>;
   affectedMatches: string[];
   acceptedGroups: string[];
+  groupPicksCommittedCount?: number;
+  groupPicksRequired?: number;
+  allGroupPicksCommitted?: boolean;
   bonusDraft?: TournamentBonusPick;
   bonusCommitted?: TournamentBonusPick;
   commitState: { groupLocked: boolean };
@@ -87,7 +90,12 @@ export function MyPicksPage() {
   const groupComplete = activeGroupMatches.every((match) => mergedPicks[match.id] !== undefined);
   const groupAccepted = state.acceptedGroups.includes(activeGroup);
   const allGroupsAccepted = groupSequence.every((g) => state.acceptedGroups.includes(g));
+  const groupPicksRequired = state.groupPicksRequired ?? GROUP_MATCH_COUNT;
+  const groupPicksCommittedCount = state.groupPicksCommittedCount ?? 0;
+  const allGroupPicksCommitted =
+    state.allGroupPicksCommitted ?? groupPicksCommittedCount >= groupPicksRequired;
   const bonus = bonusValues(state);
+  const koUnlocked = allGroupPicksCommitted || groupLocked;
 
   const saveMatch = async (event: FormEvent<HTMLFormElement>, match: Match) => {
     event.preventDefault();
@@ -138,6 +146,12 @@ export function MyPicksPage() {
             : 'Only committed group picks and bonus selections will lock at first kickoff.'}
         </p>
         <p className="warning">Uncommitted edits will not count. Last committed picks will be locked.</p>
+        <p className={allGroupPicksCommitted ? 'success' : 'warning'}>
+          Group picks committed: {groupPicksCommittedCount}/{groupPicksRequired}
+          {!allGroupPicksCommitted && !groupLocked
+            ? ' — commit all group-stage picks before first kickoff to unlock bonus and knockout picks.'
+            : ''}
+        </p>
       </article>
 
       <article className="card">
@@ -220,6 +234,9 @@ export function MyPicksPage() {
       <article className="card">
         <h3>Tournament bonus picks</h3>
         <p>Select winner, runner-up, third, and fourth from all teams (repeats allowed).</p>
+        {!allGroupPicksCommitted && !groupLocked && (
+          <p className="warning">Commit all {groupPicksRequired} group-stage picks before saving bonus picks.</p>
+        )}
         {!allGroupsAccepted && (
           <p className="warning">Complete and accept all 12 groups before saving tournament bonus picks.</p>
         )}
@@ -256,7 +273,7 @@ export function MyPicksPage() {
               ))}
             </select>
           </label>
-          <button type="submit" disabled={groupLocked || !allGroupsAccepted}>
+          <button type="submit" disabled={groupLocked || !allGroupsAccepted || !allGroupPicksCommitted}>
             Save bonus picks
           </button>
         </form>
@@ -264,6 +281,11 @@ export function MyPicksPage() {
 
       <article className="card">
         <h3>Knockout fixture picks</h3>
+        {!koUnlocked && (
+          <p className="warning">
+            Commit all {groupPicksRequired} group-stage picks before first kickoff to unlock knockout predictions.
+          </p>
+        )}
         {resolvedMatches
           .filter((match) => match.stage !== 'GROUP')
           .map((match) => {
@@ -311,7 +333,7 @@ export function MyPicksPage() {
                     </select>
                   </label>
                 )}
-                <button type="submit" disabled={locked}>
+                <button type="submit" disabled={locked || !koUnlocked}>
                   Save knockout pick
                 </button>
                 {state.affectedMatches.includes(match.id) && (

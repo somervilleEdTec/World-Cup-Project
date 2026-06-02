@@ -1,5 +1,5 @@
 import { FormEvent, useState } from 'react';
-import { fetchSyncStatus, manualOverride, recomputeLeaderboard, runSync } from '../services/apiClient';
+import { fetchSyncStatus, manualOverride, recomputeLeaderboard, runFixtureSync, runSync } from '../services/apiClient';
 
 export function AdminPage() {
   const [message, setMessage] = useState<string>('');
@@ -17,11 +17,25 @@ export function AdminPage() {
 
   const triggerSync = async () => {
     try {
-      const response = (await runSync()) as { updated: number; ok: boolean };
-      setMessage(`Sync completed: ${response.updated} results updated.`);
+      const response = (await runSync()) as {
+        kickoffs: { mapped: number; skipped: number };
+        results: { updated: number; ok: boolean };
+      };
+      setMessage(
+        `Full sync: ${response.kickoffs.mapped} kickoffs, ${response.results.updated} results updated.`
+      );
       await loadStatus();
     } catch (err) {
       setMessage(err instanceof Error ? err.message : 'Sync failed');
+    }
+  };
+
+  const triggerFixtureSync = async () => {
+    try {
+      const response = (await runFixtureSync()) as { mapped: number; skipped: number };
+      setMessage(`Kickoffs updated: ${response.mapped} fixtures (${response.skipped} skipped).`);
+    } catch (err) {
+      setMessage(err instanceof Error ? err.message : 'Kickoff sync failed');
     }
   };
 
@@ -58,7 +72,8 @@ export function AdminPage() {
         <p>Sync monitoring, manual result override, and leaderboard recompute.</p>
         <div className="button-row">
           <button type="button" onClick={loadStatus}>Load Sync Status</button>
-          <button type="button" onClick={triggerSync}>Run football-data sync</button>
+          <button type="button" onClick={triggerSync}>Run full football-data sync</button>
+          <button type="button" onClick={triggerFixtureSync}>Import kickoffs only</button>
           <button type="button" onClick={recompute}>Recompute leaderboard</button>
         </div>
         {status && (

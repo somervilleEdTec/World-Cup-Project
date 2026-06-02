@@ -67,6 +67,24 @@ describe('API integration', () => {
     expect(res.status).toBe(401);
   });
 
+  it('rejects knockout draft until all group picks are committed', async () => {
+    await request(app)
+      .post('/api/auth/register')
+      .send({ email: 'ko-gate@example.com', password: 'password1', displayName: 'KO Gate' });
+
+    const login = await request(app)
+      .post('/api/auth/login')
+      .send({ email: 'ko-gate@example.com', password: 'password1' });
+    const token = login.body.token as string;
+
+    const koDraft = await request(app)
+      .post('/api/predictions/draft')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ matchId: 'r32-1', homeScore: 2, awayScore: 1 });
+    expect(koDraft.status).toBe(400);
+    expect(String(koDraft.body.error)).toMatch(/72/);
+  });
+
   it('rejects group draft saves after group lock time', async () => {
     await request(app)
       .post('/api/auth/register')

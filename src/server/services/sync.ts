@@ -2,6 +2,7 @@ import { fetchLatestResults, PROVIDER } from '../../services/footballDataService
 import { getMatches } from '../../lib/matchResolver';
 import { getDb } from '../database';
 import { resolveInternalMatchId, teamIdFromProviderName } from './matchMapping';
+import { syncKickoffsFromFootballData } from './fixtureSync';
 
 function progressingTeamId(
   homeTeamId: string,
@@ -89,6 +90,14 @@ export async function syncFootballData(apiToken: string) {
     return { ok: false, updated: 0, skipped: 0, error: message };
   }
 }
+
+export async function runFullFootballDataSync(apiToken: string) {
+  const kickoffs = await syncKickoffsFromFootballData(apiToken);
+  const results = await syncFootballData(apiToken);
+  return { kickoffs, results };
+}
+
+export { syncKickoffsFromFootballData } from './fixtureSync';
 
 export async function getSyncStatus() {
   const db = getDb();

@@ -75,6 +75,10 @@ export async function runSync() {
   return request('/api/admin/sync/run', { method: 'POST' });
 }
 
+export async function runFixtureSync() {
+  return request('/api/admin/fixtures/sync', { method: 'POST' });
+}
+
 export async function fetchSyncStatus() {
   return request('/api/admin/sync-status');
 }

@@ -1,6 +1,8 @@
 import { groupMatches } from '../data/tournament';
 import { getFirstMatchKickoff } from './kickoffOverrides';
-import { Match } from '../types';
+import { Match, Pick } from '../types';
+
+export const GROUP_MATCH_COUNT = groupMatches.length;
 
 export const ALL_GROUP_IDS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L'];
 
@@ -63,4 +65,28 @@ export function allGroupsComplete(picks: Record<string, { matchId: string }>): b
 
 export function allGroupsAccepted(acceptedGroups: string[]): boolean {
   return ALL_GROUP_IDS.every((groupId) => acceptedGroups.includes(groupId));
+}
+
+export function countCommittedGroupPicks(committedPicks: Record<string, Pick>): number {
+  return groupMatches.filter((m) => committedPicks[m.id] !== undefined).length;
+}
+
+export function allGroupPicksCommitted(committedPicks: Record<string, Pick>): boolean {
+  return countCommittedGroupPicks(committedPicks) === GROUP_MATCH_COUNT;
+}
+
+/** Enforce FINAL_PLAN: all 72 group picks committed before first kickoff. */
+export function assertAllGroupPicksCommitted(
+  committedPicks: Record<string, Pick>,
+  metaGroupLocked: boolean,
+  nowIso = new Date().toISOString()
+): void {
+  if (isGroupLocked(metaGroupLocked, nowIso)) return;
+
+  const count = countCommittedGroupPicks(committedPicks);
+  if (!allGroupPicksCommitted(committedPicks)) {
+    throw new Error(
+      `All ${GROUP_MATCH_COUNT} group-stage picks must be committed before first kickoff (currently ${count}/${GROUP_MATCH_COUNT}).`
+    );
+  }
 }
