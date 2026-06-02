@@ -1,39 +1,38 @@
 # World Cup Boys
 
-Welcome to the Shiva Bowl.
+**Welcome to the Shiva Bowl.**
 
-## Local setup
+Friends-and-family prediction app for FIFA World Cup 2026.
+
+## New agent?
+
+Start here: **[docs/HANDOVER.md](docs/HANDOVER.md)**
+
+- Product rules: [docs/FINAL_PLAN.md](docs/FINAL_PLAN.md)
+- Task tracker: [docs/TODO.md](docs/TODO.md)
+- Original exploration: [docs/PROJECT_PLAN.md](docs/PROJECT_PLAN.md)
+
+## Quick start
 
 ```bash
 npm install
+npm run server    # API on :8787
+npm run jobs      # locks + football-data sync (optional token)
+npm run dev       # frontend
 ```
-
-### Run frontend
-
-```bash
-npm run dev
-```
-
-### Run API backend
-
-```bash
-npm run server
-```
-
-### Run schedulers (auto-lock + football-data sync)
-
-```bash
-npm run jobs
-```
-
-## Environment
-
-- `FOOTBALL_DATA_TOKEN` (required for automatic score sync)
-- `VITE_API_BASE_URL` (optional, defaults to `http://localhost:8787`)
-
-## Quality checks
 
 ```bash
 npm test
 npm run build
 ```
+
+## Environment
+
+| Variable | Purpose |
+|----------|---------|
+| `FOOTBALL_DATA_TOKEN` | football-data.org API token |
+| `VITE_API_BASE_URL` | Frontend API base (default `http://localhost:8787`) |
+
+## Branch / PR
+
+Active development: `cursor/world-cup-app-planning-4552` → PR #1 on `main`.
