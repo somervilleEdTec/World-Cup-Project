@@ -1,4 +1,4 @@
-# Prompt for the next agent
+# Prompt for the next agent — stress testing & debugging
 
 Copy everything below the line into a new Cursor agent session.
 
@@ -6,81 +6,75 @@ Copy everything below the line into a new Cursor agent session.
 
 ## Your role
 
-You are taking over **World Cup Boys** (“Welcome to the Shiva Bowl”) — a FIFA World Cup 2026 prediction app for friends/family.
+You are taking over **World Cup Boys** (“Welcome to the Shiva Bowl”) — FIFA World Cup 2026 prediction app for friends/family.
 
 **Repository:** https://github.com/somervilleEdTec/World-Cup-Project  
-**Branch:** `main` (all P0–P2 work merged; latest tag `v1.1.0`)  
-**Primary task:** **UI debugging and polish** — the product owner has found UI issues while testing locally.
+**Branch:** `main`  
+**Primary task:** **Stress testing, regression testing, and bug fixes** before go-live with ~10 friends.
 
-## Mandatory first step — do not skip
+The product owner completed a **UI/UX polish pass** (PRs #7–#11). Your job is to **break it, fix it, and harden it** — not to rebuild features.
 
-Read these files in order:
+## Mandatory first step — read in order
 
-1. [docs/UI_HANDOVER.md](./UI_HANDOVER.md) — **start here** for UI work
-2. [docs/HANDOVER.md](./HANDOVER.md) — architecture, API, features
-3. [docs/FINAL_PLAN.md](./FINAL_PLAN.md) — competition rules (do not change without owner)
-4. [docs/TODO.md](./TODO.md) — backlog
+1. [docs/STRESS_TEST_HANDOVER.md](./STRESS_TEST_HANDOVER.md) — **start here** (playbook + current behaviour)
+2. [docs/HANDOVER.md](./HANDOVER.md) — architecture, API, environment
+3. [docs/FINAL_PLAN.md](./FINAL_PLAN.md) — competition rules (**do not change** without owner)
+4. [docs/UI_HANDOVER.md](./UI_HANDOVER.md) — completed owner UI work + stress-test log table
 
-Then **message the product owner**:
+Then run locally, execute the stress-test checklist, log issues in UI_HANDOVER §6, fix with PRs to `main`.
 
-> I’ve read the handover on `main`. I understand the next focus is **UI fixes** you found while testing.
->
-> Please send your list of UI issues (page, what’s wrong, what you want instead). Screenshots are helpful.
->
-> I won’t change the UI until you confirm the list (unless you say “start with mobile layout” etc.).
-
-Wait for their reply. Then branch, fix, test, commit, push, open PR to `main`.
-
-## Local setup (owner uses Windows)
-
-**PowerShell** (repo root):
+## Local setup (Windows — owner)
 
 ```powershell
 git pull origin main
-.\scripts\Test-LocalSite.ps1
+npm install
+npm run db:purge              # optional fresh start
 .\scripts\Test-LocalSite.ps1 -Mode Serve
 ```
 
 Browser: **http://localhost:8787/login**
 
+Register: **Name** + password (≤6 chars) + sign-up password **`MadSlags1`**
+
+Admin:
+
+```powershell
+sqlite3 data.db "UPDATE users SET is_admin = 1 WHERE display_name = 'YourName';"
+```
+
 **macOS/Linux:**
 
 ```bash
 npm install && npm run migrate && npm test && npm run build
-npm run server    # :8787 — serves API + built SPA
-npm run dev       # :5173 — optional hot reload (needs API on :8787)
+npm run server    # :8787
+npm run jobs      # optional — locks + sync
 ```
 
-Admin: register in UI, then  
-`sqlite3 data.db "UPDATE users SET is_admin = 1 WHERE email = 'you@example.com';"`
+## Current UX summary (do not “fix” back without owner)
 
-Optional: `FOOTBALL_DATA_TOKEN` in `.env` for sync/seed.
+- **Tournament Results** tab — standalone; flag dropdowns; save → locked at first kickoff
+- **Group Stage** — auto-save scores; **Lock group** (one-way); league-style projected table
+- **Knockout** — auto-save; only confirmed fixtures; needs 72 group picks server-side
+- **Missing picks** list on all My Picks tabs
+- **Welcome** page has rules; **no** Rules nav tab
+- **No** email auth; **no** commit / Accept / Amend UI
 
-## What is already done (do not redo)
+## Quality gates before every PR
 
-- P0/P1/P2: bracket engine, scoring, auth, Postgres/SQLite, migrations, deploy docs, integration tests, football-data sync/mapping
-- **72 committed group picks** gate; server-side locks ([COMPLIANCE.md](./COMPLIANCE.md))
-- **Group / Knockout tabs**; knockout only when official fixture confirmed
-- **SVG flags** (`CountryFlag`, `public/flags/4x3/`)
-- **Windows test script** `scripts/Test-LocalSite.ps1`
-- **30 tests** passing
+```bash
+npm test        # 36 tests
+npm run build
+```
+
+Manual: 2 users, all three My Picks tabs, lock a group, leaderboard, comparison, mobile width ~375px.
 
 ## Conventions
 
 - Do not edit [docs/FINAL_PLAN.md](./FINAL_PLAN.md) without owner approval
-- Cloud agent branches: `cursor/<descriptive-name>-21eb` (or owner preference)
+- Cloud agent branches: `cursor/<descriptive-name>-efbb`
 - PR base: **`main`**
-- Update [docs/UI_HANDOVER.md](./UI_HANDOVER.md) §5 when issues are fixed
+- Update [docs/UI_HANDOVER.md](./UI_HANDOVER.md) §6 with bugs found/fixed
 - Do not edit Cursor artifact plans under `/opt/cursor/artifacts/plans/`
-
-## Quality gates before PR
-
-```bash
-npm test
-npm run build
-```
-
-Manual: two users, My Picks group flow, commit, Comparison, League Table.
 
 ---
 

@@ -1,6 +1,6 @@
 # World Cup 2026 Prediction App — Project Plan
 
-> **Status (2026-06-02):** This document is the original exploration brief. **Competition rules** are superseded by [FINAL_PLAN.md](./FINAL_PLAN.md). **Implementation status** is in [HANDOVER.md](./HANDOVER.md). P0/P1 from the handover backlog are complete on branch `cursor/world-cup-p0-complete-21eb` (PR #2). New agents: start with [AGENT_PROMPT.md](./AGENT_PROMPT.md).
+> **Status (2026-06-02):** Original exploration brief. **Rules:** [FINAL_PLAN.md](./FINAL_PLAN.md). **Implementation:** [HANDOVER.md](./HANDOVER.md). **Next agent:** [STRESS_TEST_HANDOVER.md](./STRESS_TEST_HANDOVER.md).
 
 ## 1. Vision
 

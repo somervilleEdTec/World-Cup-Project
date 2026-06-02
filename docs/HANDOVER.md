@@ -2,37 +2,34 @@
 
 **Last updated:** 2026-06-02  
 **Repository:** https://github.com/somervilleEdTec/World-Cup-Project  
-**Active branch:** `main` — all P0–P2 + recent UX merges  
-**Release:** `v1.1.0` (functional + knockout gating + flags + Windows test script)  
-**Deploy guide:** [docs/DEPLOY.md](./DEPLOY.md) · **Go-live:** [docs/GO_LIVE.md](./GO_LIVE.md)  
-**UI work:** [docs/UI_HANDOVER.md](./UI_HANDOVER.md) — **next agent starts here** for owner-reported UI fixes
+**Active branch:** `main`  
+**Phase:** Stress testing & debugging (UI polish complete, PRs #7–#11)  
+**Deploy:** [docs/DEPLOY.md](./DEPLOY.md) · **Go-live:** [docs/GO_LIVE.md](./GO_LIVE.md)
+
+**Next agent starts here:** [docs/STRESS_TEST_HANDOVER.md](./STRESS_TEST_HANDOVER.md) · Prompt: [docs/AGENT_PROMPT.md](./AGENT_PROMPT.md)
 
 ---
 
-## 1. Purpose of this document
+## 1. Purpose
 
-This handover gives a **new agent** everything needed to resume work without re-reading prior conversations:
+This handover lets a new agent work without prior chat context:
 
-- What the product is and the **final locked rules**
-- What has been **built** vs what is **still missing**
-- How to **run and test** locally
-- **Architecture** and file map
-- **Progression timeline** (git + features)
-- A prioritized **TODO backlog** ([docs/TODO.md](./TODO.md))
+- Product and **scoring rules** (see [FINAL_PLAN.md](./FINAL_PLAN.md) for authoritative rules)
+- **Current UX** after June 2026 polish
+- **Architecture**, API, and file map
+- How to **run and test** (Windows + Unix)
 
-**Start here for takeover:** [docs/AGENT_PROMPT.md](./AGENT_PROMPT.md) — includes instructions to **ask the product owner for next steps before coding**.
-
-**Do not edit** Cursor plan artifacts in `/opt/cursor/artifacts/plans/`. Treat **`docs/FINAL_PLAN.md`** as the in-repo product spec.
+**Do not edit** `/opt/cursor/artifacts/plans/`. Do not change [FINAL_PLAN.md](./FINAL_PLAN.md) without owner approval.
 
 ---
 
 ## 2. Product summary
 
-**World Cup Boys** — tagline: **"Welcome to the Shiva Bowl"**
+**World Cup Boys** — **"Welcome to the Shiva Bowl"**
 
-A friends-and-family prediction app for **FIFA World Cup 2026** (48 teams, 12 groups, 104 matches). Single global pool, email/password auth, mobile-first UI, live leaderboard driven by real results (football-data.org + manual admin override).
+Friends-and-family prediction app for **FIFA World Cup 2026** (48 teams, 12 groups, 104 matches). Name/password auth, mobile-first UI, leaderboard from real results (football-data.org + admin override).
 
-### Final scoring (`src/lib/tournamentLogic.ts`)
+### Scoring (`src/lib/tournamentLogic.ts`)
 
 | Rule | Points |
 |------|--------|
@@ -44,167 +41,135 @@ A friends-and-family prediction app for **FIFA World Cup 2026** (48 teams, 12 gr
 | Preselected third place | +6 |
 | Preselected fourth place | +4 |
 
-### Locking rules (implemented)
+### Locking (implemented)
 
-| Phase | Lock trigger |
-|-------|----------------|
-| Group stage + bonus picks | First tournament kickoff (`FIRST_MATCH_KICKOFF` in `src/data/tournament.ts`) |
-| Each knockout fixture | That fixture’s kickoff (rolling lock) |
-| Commits | Only **committed** picks count; drafts ignored at lock |
+| What | When |
+|------|------|
+| Tournament result picks | First match kickoff |
+| Group-stage picks (global) | First match kickoff |
+| Per-group **Lock group** (user) | One-way; blocks edits until global lock |
+| Each knockout fixture | That fixture’s kickoff |
 
-### Knockout draws
+### Picks storage (June 2026 UX)
 
-If regulation is predicted as a draw in KO, user must pick **team to progress** (no ET/pen scoreline).
+- **Match picks:** saved as `committed` via `POST /api/predictions/draft` (auto-save in UI).
+- **Tournament picks:** `bonus_committed` via `POST /api/predictions/bonus`.
+- **Locked groups:** `prediction_meta.accepted_groups` (JSON array of group letters).
+- **Leaderboard / comparison:** use **committed** picks only.
 
 ---
 
-## 3. Plan documents in this repo
+## 3. Documentation index
 
 | File | Role |
 |------|------|
-| [docs/FINAL_PLAN.md](./FINAL_PLAN.md) | **Authoritative** final product rules |
-| [docs/PROJECT_PLAN.md](./PROJECT_PLAN.md) | Original exploratory plan — **superseded** by FINAL_PLAN for rules |
-| [docs/HANDOVER.md](./HANDOVER.md) | This file — implementation status |
-| [docs/TODO.md](./TODO.md) | Task tracker (P0/P1 marked complete as of PR #2) |
-| [docs/AGENT_PROMPT.md](./AGENT_PROMPT.md) | Copy-paste prompt for the next agent session |
-| [docs/UI_HANDOVER.md](./UI_HANDOVER.md) | UI/UX debug handover (current priority) |
+| [STRESS_TEST_HANDOVER.md](./STRESS_TEST_HANDOVER.md) | **Next agent — stress test playbook** |
+| [AGENT_PROMPT.md](./AGENT_PROMPT.md) | Copy-paste session prompt |
+| [UI_HANDOVER.md](./UI_HANDOVER.md) | UI history + bug log table |
+| [HANDOVER.md](./HANDOVER.md) | This file |
+| [FINAL_PLAN.md](./FINAL_PLAN.md) | Locked competition rules |
+| [TODO.md](./TODO.md) | Backlog |
+| [DEPLOY.md](./DEPLOY.md) | Production |
+| [GO_LIVE.md](./GO_LIVE.md) | Pre-launch checklist |
+| [COMPLIANCE.md](./COMPLIANCE.md) | Plan compliance (partially lags UX) |
 
 ---
 
-## 4. Progression timeline (git)
+## 4. Recent milestones (git)
 
-| Commit / milestone | Summary |
-|--------------------|---------|
-| `fc52239` | Initial empty repo |
-| `3f488a1` | `docs/PROJECT_PLAN.md` |
-| `e606be4`–`7607243` | React/Vite scaffold, API, comparison (PR #1 branch) |
-| `7c43f6c` | **P0 + P1 complete:** bracket engine, 495 third-place mappings, sync ID mapping, scoring fixes, auth, rules page, comparison picker |
+| PR / area | Summary |
+|-----------|---------|
+| #7 | Name auth, join password, `db:purge`, My Picks tabs, auto-save, projected table |
+| #8 | Bonus save fix, table zeros, score clamp |
+| #9 | Tournament standalone, TeamSelect flags, no commit panel |
+| #10 | Rules on Welcome, mobile nav, remove Rules route |
+| #11 | Lock group, missing picks list, debounced auto-save |
 
-**Current stack:** React 19 + Vite 8 + TypeScript + Express 5 + better-sqlite3. Zustand in `src/lib/store.ts` is legacy; production path uses API.
+**Stack:** React 19, Vite 8, TypeScript, Express 5, better-sqlite3 / Postgres. Legacy Zustand: `src/lib/store.ts` (unused in production path).
 
 ---
 
-## 5. What is implemented
+## 5. Implemented features
 
-### Core (tournament-ready logic)
+### Core
 
-- [x] **Bracket engine** — `src/lib/bracketEngine.ts`: FIFA R32→Final tree, third-place resolution via **495** Annex C mappings (`src/data/thirdPlaceMappings.ts`, regenerate with `node scripts/generate-third-place-map.mjs`)
-- [x] **Dynamic knockout fixtures** — `src/lib/matchResolver.ts` → `getMatches(picks, results)` resolves team IDs from group picks and/or `results` table
-- [x] **Group standings** — `src/lib/groupStandings.ts` (shared by scoring and bracket)
-- [x] **Scoring** — Group-position bonus uses `picksFromActuals()`; tournament bonuses via `deriveFinalPlacings()` in leaderboard
-- [x] **football-data.org mapping** — `match_external_ids` table + `src/server/services/matchMapping.ts`; sync resolves provider IDs to internal `g-*` / `r32-*` IDs
+- [x] Bracket engine + **495** third-place mappings (`src/lib/bracketEngine.ts`, `scripts/generate-third-place-map.mjs`)
+- [x] Dynamic KO fixtures (`src/lib/matchResolver.ts`)
+- [x] Group standings + scoring (`src/lib/groupStandings.ts`, `src/lib/tournamentLogic.ts`)
+- [x] football-data mapping (`src/server/services/matchMapping.ts`, `sync.ts`)
+- [x] Official KO gating (`src/lib/knockoutFixtureAvailability.ts`)
 
-### App shell & UX
+### App & UX (current)
 
-- [x] Pages: Login, Welcome, My Picks, League Table, Comparison, **Rules**, Admin
-- [x] **Protected routes** + logout + display name (`ProtectedRoute`, `wcb_display_name` in localStorage)
-- [x] Group wizard with **Accept / Amend** before “Next Group”
-- [x] **My Picks:** Group stage / Knockout stage **tabs**; KO list only for **officially confirmed** fixtures
-- [x] **Team flags:** SVG via `CountryFlag` + `public/flags/4x3/` (not emoji)
-- [x] Comparison fixture dropdown + `?matchId=` + `GET /api/comparison/fixtures`
-- [x] Draft/commit flow, rolling KO locks, admin sync/override/recompute
-- [x] **30 tests** passing (unit + API integration); `npm run build` passes
-- [x] **Plan compliance** — server-side locks, group accept persistence, scoring guards ([COMPLIANCE.md](./COMPLIANCE.md))
-- [x] **Windows local test:** `scripts/Test-LocalSite.ps1` (verified on owner PC)
+- [x] Pages: Login, Welcome (with rules), My Picks, League Table, Comparison, Admin
+- [x] Auth: **display name** + password; join password; sessions
+- [x] My Picks: **Tournament Results · Group Stage · Knockout Stage**
+- [x] Auto-save match scores; **Lock group**; missing picks summary (`src/lib/missingPicks.ts`)
+- [x] `TeamSelect` — flags + alphabetical teams
+- [x] SVG flags (`CountryFlag`, `public/flags/4x3/`)
+- [x] **36 tests**; `npm run build`; Windows `scripts/Test-LocalSite.ps1`
 
-### Still manual / partial
+### Ops / partial
 
-- [ ] **Admin role** — set `users.is_admin = 1` in SQLite after register
-- [ ] **UI polish** — owner testing surfaced layout/UX issues; see [UI_HANDOVER.md](./UI_HANDOVER.md)
-- [ ] **football-data live sync** — needs valid `FOOTBALL_DATA_TOKEN` and matching team names in API responses
-- [ ] **Zustand store** — legacy client-only path; prefer API
-- [ ] **Production** — use Postgres + [DEPLOY.md](./DEPLOY.md); SQLite remains default for local dev
+- [ ] Admin role — manual SQL after register (`display_name`, not email)
+- [ ] Live football-data — needs `FOOTBALL_DATA_TOKEN`
+- [ ] Production — Postgres + [DEPLOY.md](./DEPLOY.md)
+- [ ] E2E browser tests — none
 
-### P2 complete (2026-06-02)
+### P3 not started
 
-- [x] Postgres + migrations (`DATABASE_URL`, `npm run migrate`)
-- [x] Production deployment documentation ([DEPLOY.md](./DEPLOY.md))
-- [x] API integration tests (Supertest, 4 tests)
-- [x] Seed kickoffs from football-data (`npm run seed:fixtures`, `match_kickoffs` table)
-
-### Not started (P3)
-
-- [ ] OAuth, PWA, PDF export
+OAuth, PWA, PDF export
 
 ---
 
 ## 6. Architecture
 
 ```text
-┌─────────────────────────────────────────────────────────┐
-│  Browser (Vite React SPA)                               │
-│  src/pages/*  src/components/*  src/services/apiClient  │
-└──────────────────────────┬──────────────────────────────┘
-                           │ HTTP :8787 (VITE_API_BASE_URL)
-┌──────────────────────────▼──────────────────────────────┐
-│  Express API — src/server/index.ts                      │
-│  auth | predictions | leaderboard | comparison | admin  │
-└──────────────────────────┬──────────────────────────────┘
-                           │
-┌──────────────────────────▼──────────────────────────────┐
-│  SQLite (dev) or PostgreSQL (prod) — see DATABASE_URL     │
-│  tables: users, sessions, predictions, results,         │
-│          match_external_ids, match_kickoffs, sync_status  │
-└─────────────────────────────────────────────────────────┘
+Browser (Vite React SPA) — src/pages/*, src/components/*, apiClient
+        │ HTTP :8787
+Express — src/server/index.ts (auth, predictions, leaderboard, comparison, admin)
+        │
+SQLite (dev) / PostgreSQL (prod)
+        predictions, prediction_meta, users, sessions, results, match_external_ids, …
 
-Scheduler: src/server/jobs.ts (locks + sync poll)
-
-Domain:
-  src/lib/groupStandings.ts   — group tables
-  src/lib/bracketEngine.ts    — KO bracket + final placings
-  src/lib/matchResolver.ts    — getMatches(picks, results)
-  src/lib/tournamentLogic.ts  — scoring, locks, validation
-  src/lib/comparisonVisibility.ts
-
-Data:
-  src/data/tournament.ts           — teams + 72 group matches
-  src/data/thirdPlaceMappings.ts   — 495 FIFA third-place scenarios (generated)
+Jobs: src/server/jobs.ts (locks, sync poll)
 ```
 
 ### Key files
 
 | Path | Purpose |
 |------|---------|
-| `src/lib/bracketEngine.ts` | R32–Final derivation, `deriveFinalPlacings` |
-| `src/lib/matchResolver.ts` | `getMatches()` — group + resolved KO |
-| `src/lib/groupStandings.ts` | Points/GD/GF standings per group |
-| `src/server/services/matchMapping.ts` | Provider ID ↔ internal match ID |
-| `src/server/services/sync.ts` | football-data ingest |
-| `src/server/services/leaderboard.ts` | Points aggregation |
-| `src/server/services/predictions.ts` | Draft/commit/locks |
-| `src/server/services/comparison.ts` | Multi-user comparison |
-| `src/pages/MyPicksPage.tsx` | Group / KO tabs, wizard, bonus, commit |
-| `src/lib/knockoutFixtureAvailability.ts` | Official KO fixture gating |
-| `src/components/CountryFlag.tsx` | SVG flag images |
-| `src/pages/RulesPage.tsx` | Scoring / lock rules (UI) |
-| `scripts/generate-third-place-map.mjs` | Regenerate Annex C mappings from Wikipedia |
+| `src/pages/MyPicksPage.tsx` | Tabs, auto-save, lock, missing picks |
+| `src/lib/missingPicks.ts` | Missing picks list for header |
+| `src/components/TeamSelect.tsx` | Flag + name picker |
+| `src/server/services/predictions.ts` | Saves, locks, bonus |
+| `src/server/services/auth.ts` | Register / login |
+| `src/lib/pickLocks.ts` | Lock rules, 72-group gate |
+| `src/lib/knockoutFixtureAvailability.ts` | Confirmed KO fixtures |
+| `scripts/purge-database.ts` | `npm run db:purge` |
+
+**Removed:** `src/pages/RulesPage.tsx` (rules on Welcome).
 
 ---
 
-## 7. API reference (quick)
+## 7. API reference
 
-Base URL: `http://localhost:8787` (override with `VITE_API_BASE_URL`)
+Base: `http://localhost:8787` · Auth: `Authorization: Bearer <token>`
 
-| Method | Path | Auth | Notes |
-|--------|------|------|-------|
-| POST | `/api/auth/register` | No | `{ email, password, displayName }` |
-| POST | `/api/auth/login` | No | Returns `{ token, user }` |
-| GET | `/api/predictions/state` | Bearer | Full draft/committed state |
-| POST | `/api/predictions/draft` | Bearer | Save match pick draft |
-| POST | `/api/predictions/review/:matchId` | Bearer | Mark fixture reviewed |
-| POST | `/api/predictions/bonus` | Bearer | Bonus four-tuple |
-| POST | `/api/predictions/commit` | Bearer | Promote drafts → committed |
-| GET | `/api/leaderboard` | No | All users ranked |
-| GET | `/api/comparison/fixtures` | Bearer | Upcoming fixtures list |
-| GET | `/api/comparison/next` | Bearer | Next fixture + all picks |
-| GET | `/api/comparison/:matchId` | Bearer | Specific fixture |
-| POST | `/api/system/locks/run` | No | Manual lock pass |
-| GET | `/api/admin/sync-status` | Admin | |
-| POST | `/api/admin/sync/run` | Admin | Needs `FOOTBALL_DATA_TOKEN` |
-| POST | `/api/admin/results/override` | Admin | Manual FT result |
-| POST | `/api/admin/leaderboard/recompute` | Admin | |
-
-**Auth header:** `Authorization: Bearer <token>`
+| Method | Path | Notes |
+|--------|------|--------|
+| POST | `/api/auth/register` | `{ displayName, password, joinPassword }` |
+| POST | `/api/auth/login` | `{ displayName, password }` |
+| GET | `/api/predictions/state` | Bearer |
+| POST | `/api/predictions/draft` | Saves **committed** match pick |
+| POST | `/api/predictions/bonus` | Saves **bonus_committed** |
+| POST | `/api/predictions/groups/:groupId/lock` | One-way group lock |
+| POST | `/api/predictions/groups/:groupId/accept` | Legacy alias → lock |
+| POST | `/api/predictions/commit` | Legacy; UI unused |
+| GET | `/api/leaderboard` | Public |
+| GET | `/api/comparison/*` | Bearer |
+| POST | `/api/admin/*` | Admin |
+| POST | `/api/system/locks/run` | Manual lock pass |
 
 ---
 
@@ -213,116 +178,78 @@ Base URL: `http://localhost:8787` (override with `VITE_API_BASE_URL`)
 ### Windows (owner-tested)
 
 ```powershell
-cd C:\Users\tomso\World-Cup-Project   # or your clone path
+cd C:\Users\tomso\World-Cup-Project
 git pull origin main
-.\scripts\Test-LocalSite.ps1                    # install, migrate, test, build, smoke API
-.\scripts\Test-LocalSite.ps1 -Mode Serve        # http://localhost:8787/login
+.\scripts\Test-LocalSite.ps1
+.\scripts\Test-LocalSite.ps1 -Mode Serve
 ```
 
-First-time: `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`
+Fresh database: `npm run db:purge`
 
 ### macOS / Linux
 
 ```bash
-npm install
-npm run migrate
-
-# Terminal 1 — API (+ built SPA when dist/ exists)
-npm run server
-
-# Terminal 2 — schedulers (locks + sync)
-export FOOTBALL_DATA_TOKEN=your_token_here   # optional
-npm run jobs
-
-# Terminal 3 — frontend dev (optional)
-npm run dev
+npm install && npm run migrate
+npm run server    # :8787
+npm run jobs      # optional
+npm run dev       # :5173 optional
 ```
 
-Open http://localhost:5173 (dev) or http://localhost:8787 (server with `dist/`) — unauthenticated users redirect to `/login`.
-
-**Create admin user:** register via UI, then:
+### Admin
 
 ```bash
-sqlite3 data.db "UPDATE users SET is_admin = 1 WHERE email = 'you@example.com';"
+sqlite3 data.db "UPDATE users SET is_admin = 1 WHERE display_name = 'YourName';"
 ```
 
-**Quality gates:**
+### Quality gates
 
 ```bash
-npm test              # 30 tests (unit + API integration)
-npm run test:unit
-npm run test:integration
+npm test              # 36 tests
 npm run build
-npm run migrate       # apply schema (SQLite or Postgres)
+npm run db:purge      # reset local SQLite data
 ```
 
 ---
 
 ## 9. Environment variables
 
-| Variable | Required | Purpose |
-|----------|----------|---------|
-| `DATABASE_URL` | Production | PostgreSQL connection string |
-| `SQLITE_PATH` | No | SQLite file when `DATABASE_URL` unset (default `data.db`) |
-| `FOOTBALL_DATA_TOKEN` | For live sync / seed | football-data.org `X-Auth-Token` |
-| `VITE_API_BASE_URL` | No | Frontend → API (default `http://localhost:8787`) |
-| `PORT` | No | API port (default `8787`) |
+| Variable | Purpose |
+|----------|---------|
+| `DATABASE_URL` | PostgreSQL (production) |
+| `SQLITE_PATH` | SQLite file (default `data.db`) |
+| `JOIN_PASSWORD` | Sign-up gate (default `MadSlags1`) |
+| `FOOTBALL_DATA_TOKEN` | football-data.org |
+| `VITE_API_BASE_URL` | API base (default `http://localhost:8787`) |
+| `PORT` | API port (default `8787`) |
 
 ---
 
-## 10. Prioritized TODO for next agent
+## 10. Next agent priorities
 
-**P0–P2 are complete** on `main`. See [docs/TODO.md](./TODO.md).
-
-### Current priority — UI / UX
-
-The product owner is smoke-testing on **Windows** and has **UI issues** to fix. Start with [docs/UI_HANDOVER.md](./UI_HANDOVER.md) and [docs/AGENT_PROMPT.md](./AGENT_PROMPT.md). Get a numbered issue list before coding.
-
-### P3 — Later
-
-OAuth, PWA manifest, notifications, PDF export (see [docs/PROJECT_PLAN.md](./PROJECT_PLAN.md)).
+1. Execute [STRESS_TEST_HANDOVER.md](./STRESS_TEST_HANDOVER.md) checklist.
+2. Fix bugs; log in [UI_HANDOVER.md](./UI_HANDOVER.md) §6.
+3. Align [GO_LIVE.md](./GO_LIVE.md) and [COMPLIANCE.md](./COMPLIANCE.md) with verified behaviour.
+4. Owner go-live sign-off.
 
 ---
 
-## 11. Plan todo checklist (final plan)
+## 11. Known risks
 
-| Plan todo ID | Status |
-|--------------|--------|
-| `competition-rule-refactor` | [x] |
-| `group-position-bonus` | [x] |
-| `bonus-picks-page` | [x] |
-| `ko-rolling-locks` | [x] |
-| `draft-commit-safety` | [x] |
-| `football-data-sync` | [x] (mapping + name resolution; live API depends on token) |
-
----
-
-## 12. Known risks / bugs to watch
-
-1. **Third-place mappings** — sourced from Wikipedia Annex C table; regenerate if FIFA publishes errata (`node scripts/generate-third-place-map.mjs`).
-2. **KO kickoff times** — approximate in code; leaderboard locks use these ISO strings.
-3. **football-data team names** — aliases in `matchMapping.ts`; add names if sync skips fixtures.
-4. **No HTTPS / CORS** — configure for production.
-5. **`data.db` local only** — not in git; each environment starts empty unless seeded.
-6. **Partial group results** — group-position scoring only counts groups where all 6 results exist in `results` table.
+1. Third-place mappings from Wikipedia Annex C — regenerate if FIFA errata.
+2. KO kickoff times approximate in static data.
+3. football-data team name aliases may miss fixtures.
+4. **72 KO gate** vs friendly UX — saves blocked until 72 group picks committed.
+5. Auto-save debounce — last edit may be lost on fast navigation.
+6. No HTTPS/CORS in dev — configure for production.
+7. `COMPLIANCE.md` may describe old draft/commit UI — trust code + STRESS_TEST_HANDOVER.
 
 ---
 
-## 13. Suggested first session for a new agent
+## 12. Conventions
 
-1. Read [docs/UI_HANDOVER.md](./UI_HANDOVER.md) and [docs/AGENT_PROMPT.md](./AGENT_PROMPT.md).
-2. **Ask the owner** for their UI issue list (do not assume).
-3. `git pull origin main` → `npm install` → `npm test` → `npm run build`.
-4. Reproduce on `-Mode Serve` or `-Mode Dev` (Windows: `.\scripts\Test-LocalSite.ps1`).
-5. Fix UI in focused PRs; re-run `npm test` and owner sign-off.
-
----
-
-## 14. Conventions
-
-- Branch naming (cloud agent): `cursor/<descriptive-name>-21eb`
+- Branch: `cursor/<descriptive-name>-efbb`
 - PR base: `main`
-- Update `docs/FINAL_PLAN.md` only if product rules change (with owner approval).
+- Update stress-test log when fixing UI bugs
 
 ---
 
