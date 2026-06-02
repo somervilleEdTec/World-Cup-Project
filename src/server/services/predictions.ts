@@ -9,6 +9,7 @@ import {
   assertMatchEditable,
   countCommittedGroupPicks,
   GROUP_MATCH_COUNT,
+  isGroupStage,
   isKnockout,
   isMatchEditable,
   shouldLockGroup
@@ -111,6 +112,13 @@ export async function saveDraftPick(userId: string, pick: Pick, nowIso = new Dat
 
   assertMatchEditable(match, groupLocked, nowIso);
 
+  if (isGroupStage(match) && match.group) {
+    const lockedGroups = parseAcceptedGroups(meta?.accepted_groups);
+    if (lockedGroups.includes(match.group)) {
+      throw new Error(`Group ${match.group} is locked.`);
+    }
+  }
+
   if (isKnockout(match)) {
     assertAllGroupPicksCommitted(state.committedPicks, groupLocked, nowIso);
     assertKnockoutFixtureConfirmed(pick.matchId, results);
@@ -151,6 +159,7 @@ export async function setGroupAccepted(
   nowIso = new Date().toISOString()
 ) {
   if (!VALID_GROUPS.has(groupId)) throw new Error('Invalid group');
+  if (!accepted) throw new Error('Groups cannot be unlocked once locked.');
 
   const meta = await getMeta(userId);
   const groupLocked = (meta?.group_locked ?? 0) === 1;
@@ -158,57 +167,49 @@ export async function setGroupAccepted(
     throw new Error('Group-stage picks are locked.');
   }
 
+  const lockedGroups = parseAcceptedGroups(meta?.accepted_groups);
+  if (lockedGroups.includes(groupId)) {
+    throw new Error(`Group ${groupId} is already locked.`);
+  }
+
   const state = await getUserPredictionState(userId);
   const mergedPicks = { ...state.committedPicks, ...state.draftPicks };
   const groupMatchIds = groupMatches.filter((m) => m.group === groupId);
 
-  if (accepted) {
-    const complete = groupMatchIds.every((m) => mergedPicks[m.id] !== undefined);
-    if (!complete) throw new Error(`Complete all matches in Group ${groupId} before accepting.`);
+  const complete = groupMatchIds.every((m) => mergedPicks[m.id] !== undefined);
+  if (!complete) throw new Error(`Complete all matches in Group ${groupId} before locking.`);
 
-    const results = await getResultsMap();
-    const db = getDb();
-
-    await db.transaction(async (tx) => {
-      for (const match of groupMatchIds) {
-        const pick = mergedPicks[match.id];
-        if (!pick) continue;
-
-        const matchObj = getMatches(mergedPicks, results).find((m) => m.id === match.id);
-        if (!matchObj) continue;
-        const errors = validatePick(matchObj, pick);
-        if (errors.length) throw new Error(errors[0]);
-
-        await tx.run(
-          `INSERT INTO predictions (user_id, match_id, state, home_score, away_score, progressing_team_id, reviewed, updated_at)
-           VALUES (?, ?, 'committed', ?, ?, ?, 1, ?)
-           ON CONFLICT(user_id, match_id, state) DO UPDATE SET home_score=excluded.home_score, away_score=excluded.away_score, progressing_team_id=excluded.progressing_team_id, reviewed=1, updated_at=excluded.updated_at`,
-          [userId, pick.matchId, pick.homeScore, pick.awayScore, pick.progressingTeamId ?? null, nowIso]
-        );
-        await tx.run(
-          `DELETE FROM predictions WHERE user_id = ? AND match_id = ? AND state = 'draft'`,
-          [userId, pick.matchId]
-        );
-      }
-
-      const current = parseAcceptedGroups(meta?.accepted_groups);
-      const next = [...new Set([...current, groupId])];
-      await tx.run(`UPDATE prediction_meta SET accepted_groups = ?, affected_matches = '[]' WHERE user_id = ?`, [
-        JSON.stringify(next),
-        userId
-      ]);
-    });
-    return;
-  }
-
-  const current = parseAcceptedGroups(meta?.accepted_groups);
-  const next = current.filter((g) => g !== groupId);
-
+  const results = await getResultsMap();
   const db = getDb();
-  await db.run(`UPDATE prediction_meta SET accepted_groups = ? WHERE user_id = ?`, [
-    JSON.stringify(next),
-    userId
-  ]);
+
+  await db.transaction(async (tx) => {
+    for (const match of groupMatchIds) {
+      const pick = mergedPicks[match.id];
+      if (!pick) continue;
+
+      const matchObj = getMatches(mergedPicks, results).find((m) => m.id === match.id);
+      if (!matchObj) continue;
+      const errors = validatePick(matchObj, pick);
+      if (errors.length) throw new Error(errors[0]);
+
+      await tx.run(
+        `INSERT INTO predictions (user_id, match_id, state, home_score, away_score, progressing_team_id, reviewed, updated_at)
+         VALUES (?, ?, 'committed', ?, ?, ?, 1, ?)
+         ON CONFLICT(user_id, match_id, state) DO UPDATE SET home_score=excluded.home_score, away_score=excluded.away_score, progressing_team_id=excluded.progressing_team_id, reviewed=1, updated_at=excluded.updated_at`,
+        [userId, pick.matchId, pick.homeScore, pick.awayScore, pick.progressingTeamId ?? null, nowIso]
+      );
+      await tx.run(`DELETE FROM predictions WHERE user_id = ? AND match_id = ? AND state = 'draft'`, [
+        userId,
+        pick.matchId
+      ]);
+    }
+
+    const next = [...new Set([...lockedGroups, groupId])];
+    await tx.run(`UPDATE prediction_meta SET accepted_groups = ?, affected_matches = '[]' WHERE user_id = ?`, [
+      JSON.stringify(next),
+      userId
+    ]);
+  });
 }
 
 export async function markReviewed(userId: string, matchId: string) {
