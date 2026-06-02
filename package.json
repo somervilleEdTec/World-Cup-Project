@@ -18,6 +18,7 @@
     "jobs": "tsx src/server/jobs.ts",
     "migrate": "tsx scripts/migrate.ts",
     "db:purge": "tsx scripts/purge-database.ts",
+    "seed:ko-environment": "tsx scripts/seed-ko-environment.ts",
     "copy:flags": "node scripts/copy-flag-assets.mjs",
     "postinstall": "node scripts/copy-flag-assets.mjs",
     "seed:fixtures": "tsx scripts/seed-from-football-data.ts",
