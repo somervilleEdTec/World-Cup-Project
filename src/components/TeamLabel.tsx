@@ -1,4 +1,5 @@
 import { Team } from '../types';
+import { CountryFlag } from './CountryFlag';
 
 interface TeamLabelProps {
   team: Team;
@@ -6,8 +7,8 @@ interface TeamLabelProps {
 
 export function TeamLabel({ team }: TeamLabelProps) {
   return (
-    <span className="team-label" aria-label={`${team.name} ${team.flag}`}>
-      <span className="team-flag">{team.flag}</span>
+    <span className="team-label" aria-label={team.name}>
+      <CountryFlag countryCode={team.countryCode} title={team.name} />
       <span>{team.name}</span>
     </span>
   );

@@ -3,7 +3,8 @@ export type Stage = 'GROUP' | 'R32' | 'R16' | 'QF' | 'SF' | 'THIRD_PLACE' | 'FIN
 export interface Team {
   id: string;
   name: string;
-  flag: string;
+  /** flag-icons country code (e.g. mx, gb-eng). */
+  countryCode: string;
   group: string;
 }
 

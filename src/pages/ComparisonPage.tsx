@@ -15,7 +15,7 @@ function formatPick(entry: MatchComparisonView['entries'][number]): string {
   const { homeScore, awayScore, progressingTeamId } = entry.pick;
   if (homeScore === awayScore && progressingTeamId) {
     const team = teams.find((t) => t.id === progressingTeamId);
-    const name = team ? `${team.flag} ${team.name}` : progressingTeamId;
+    const name = team ? team.name : progressingTeamId;
     return `${homeScore}-${awayScore} (adv: ${name})`;
   }
   return `${homeScore}-${awayScore}`;

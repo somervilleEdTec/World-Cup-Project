@@ -1,4 +1,5 @@
 import { Match, Team } from '../types';
+import { TEAM_COUNTRY_CODES } from './teamCountryCodes';
 
 export const FIRST_MATCH_KICKOFF = '2026-06-11T19:00:00Z';
 
@@ -17,27 +18,17 @@ const groupTeamNames: Record<string, [string, string, string, string]> = {
   L: ['England', 'Croatia', 'Ghana', 'Panama']
 };
 
-const flags: Record<string, string> = {
-  Mexico: '🇲🇽', 'South Africa': '🇿🇦', 'South Korea': '🇰🇷', Czechia: '🇨🇿',
-  Canada: '🇨🇦', 'Bosnia and Herzegovina': '🇧🇦', Qatar: '🇶🇦', Switzerland: '🇨🇭',
-  Brazil: '🇧🇷', Morocco: '🇲🇦', Haiti: '🇭🇹', Scotland: '🏴',
-  'United States': '🇺🇸', Paraguay: '🇵🇾', Australia: '🇦🇺', Turkiye: '🇹🇷',
-  Germany: '🇩🇪', Curacao: '🇨🇼', 'Ivory Coast': '🇨🇮', Ecuador: '🇪🇨',
-  Netherlands: '🇳🇱', Japan: '🇯🇵', Sweden: '🇸🇪', Tunisia: '🇹🇳',
-  Belgium: '🇧🇪', Egypt: '🇪🇬', Iran: '🇮🇷', 'New Zealand': '🇳🇿',
-  Spain: '🇪🇸', 'Cape Verde': '🇨🇻', 'Saudi Arabia': '🇸🇦', Uruguay: '🇺🇾',
-  France: '🇫🇷', Senegal: '🇸🇳', Iraq: '🇮🇶', Norway: '🇳🇴',
-  Argentina: '🇦🇷', Algeria: '🇩🇿', Austria: '🇦🇹', Jordan: '🇯🇴',
-  Portugal: '🇵🇹', 'DR Congo': '🇨🇩', Uzbekistan: '🇺🇿', Colombia: '🇨🇴',
-  England: '🏴', Croatia: '🇭🇷', Ghana: '🇬🇭', Panama: '🇵🇦'
-};
-
 function idFrom(name: string): string {
   return name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
 }
 
 export const teams: Team[] = Object.entries(groupTeamNames).flatMap(([group, names]) =>
-  names.map((name) => ({ id: idFrom(name), name, group, flag: flags[name] ?? '🏳️' }))
+  names.map((name) => ({
+    id: idFrom(name),
+    name,
+    group,
+    countryCode: TEAM_COUNTRY_CODES[name] ?? 'un'
+  }))
 );
 
 function groupMatchesForGroup(group: string, teamIds: string[], offsetDays: number): Match[] {

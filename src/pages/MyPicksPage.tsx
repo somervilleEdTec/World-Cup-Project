@@ -203,7 +203,9 @@ export function MyPicksPage() {
         <ol>
           {groupPreview.map((teamId) => {
             const team = teams.find((entry) => entry.id === teamId);
-            return <li key={teamId}>{team ? `${team.flag} ${team.name}` : teamId}</li>;
+            return (
+              <li key={teamId}>{team ? <TeamLabel team={team} /> : teamId}</li>
+            );
           })}
         </ol>
 
@@ -270,7 +272,7 @@ export function MyPicksPage() {
             Winner
             <select name="winnerTeamId" defaultValue={bonus.winnerTeamId}>
               {teams.map((team) => (
-                <option key={`winner-${team.id}`} value={team.id}>{`${team.flag} ${team.name}`}</option>
+                <option key={`winner-${team.id}`} value={team.id}>{team.name}</option>
               ))}
             </select>
           </label>
@@ -278,7 +280,7 @@ export function MyPicksPage() {
             Runner-up
             <select name="runnerUpTeamId" defaultValue={bonus.runnerUpTeamId}>
               {teams.map((team) => (
-                <option key={`runner-${team.id}`} value={team.id}>{`${team.flag} ${team.name}`}</option>
+                <option key={`runner-${team.id}`} value={team.id}>{team.name}</option>
               ))}
             </select>
           </label>
@@ -286,7 +288,7 @@ export function MyPicksPage() {
             Third
             <select name="thirdTeamId" defaultValue={bonus.thirdTeamId}>
               {teams.map((team) => (
-                <option key={`third-${team.id}`} value={team.id}>{`${team.flag} ${team.name}`}</option>
+                <option key={`third-${team.id}`} value={team.id}>{team.name}</option>
               ))}
             </select>
           </label>
@@ -294,7 +296,7 @@ export function MyPicksPage() {
             Fourth
             <select name="fourthTeamId" defaultValue={bonus.fourthTeamId}>
               {teams.map((team) => (
-                <option key={`fourth-${team.id}`} value={team.id}>{`${team.flag} ${team.name}`}</option>
+                <option key={`fourth-${team.id}`} value={team.id}>{team.name}</option>
               ))}
             </select>
           </label>
@@ -362,8 +364,8 @@ export function MyPicksPage() {
                     Draw selected — choose the team that progresses.
                     <select name="progressingTeamId" defaultValue={pick?.progressingTeamId} disabled={locked} required>
                       <option value="">Select progressing team</option>
-                      {homeTeam && <option value={homeTeam.id}>{`${homeTeam.flag} ${homeTeam.name}`}</option>}
-                      {awayTeam && <option value={awayTeam.id}>{`${awayTeam.flag} ${awayTeam.name}`}</option>}
+                      {homeTeam && <option value={homeTeam.id}>{homeTeam.name}</option>}
+                      {awayTeam && <option value={awayTeam.id}>{awayTeam.name}</option>}
                     </select>
                   </label>
                 )}
