@@ -1,11 +1,11 @@
-import { FormEvent, useMemo, useState } from 'react';
+import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { matches, teams } from '../data/tournament';
 import { TeamLabel } from '../components/TeamLabel';
-import { useAppStore } from '../lib/store';
+import { commitDraft, fetchPredictionState, markReviewed, saveBonusDraft, saveDraftPick } from '../services/apiClient';
 import { computeGroupPositions, shouldLockGroup } from '../lib/tournamentLogic';
-import { Match, TournamentBonusPick } from '../types';
+import { Match, Pick, TournamentBonusPick } from '../types';
 
-const groupSequence = ['A', 'B'];
+const groupSequence = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L'];
 
 function formatCountdown(targetIso: string, nowIso: string): string {
   const diff = new Date(targetIso).getTime() - new Date(nowIso).getTime();
@@ -15,52 +15,67 @@ function formatCountdown(targetIso: string, nowIso: string): string {
   return `${hours}h ${minutes}m`;
 }
 
+interface RemoteState {
+  committedPicks: Record<string, Pick>;
+  draftPicks: Record<string, Pick>;
+  affectedMatches: string[];
+  bonusDraft?: TournamentBonusPick;
+  bonusCommitted?: TournamentBonusPick;
+  commitState: { groupLocked: boolean };
+}
+
+const initialState: RemoteState = {
+  committedPicks: {},
+  draftPicks: {},
+  affectedMatches: [],
+  commitState: { groupLocked: false }
+};
+
 export function MyPicksPage() {
   const [groupIndex, setGroupIndex] = useState(0);
   const [message, setMessage] = useState<string>('');
+  const [state, setState] = useState<RemoteState>(initialState);
 
-  const nowIso = useAppStore((state) => state.nowIso);
-  const draftPicks = useAppStore((state) => state.draftPicks);
-  const committedPicks = useAppStore((state) => state.committedPicks);
-  const affectedMatches = useAppStore((state) => state.affectedMatches);
-  const bonusDraft = useAppStore((state) => state.bonusDraft);
-  const updateDraftPick = useAppStore((state) => state.updateDraftPick);
-  const reviewAffectedMatch = useAppStore((state) => state.reviewAffectedMatch);
-  const setBonusDraft = useAppStore((state) => state.setBonusDraft);
-  const commitDraft = useAppStore((state) => state.commitDraft);
-  const runAutoLocks = useAppStore((state) => state.runAutoLocks);
+  const nowIso = new Date().toISOString();
+
+  const refresh = async () => {
+    try {
+      const response = (await fetchPredictionState()) as RemoteState;
+      setState(response);
+    } catch (err) {
+      setMessage(err instanceof Error ? err.message : 'Failed to load prediction state');
+    }
+  };
+
+  useEffect(() => {
+    void refresh();
+  }, []);
 
   const activeGroup = groupSequence[groupIndex];
   const groupMatches = matches.filter((match) => match.stage === 'GROUP' && match.group === activeGroup);
-  const groupLocked = shouldLockGroup(nowIso);
+  const groupLocked = state.commitState.groupLocked || shouldLockGroup(nowIso);
 
-  const mergedPicks = { ...committedPicks, ...draftPicks };
+  const mergedPicks = { ...state.committedPicks, ...state.draftPicks };
 
   const groupPreview = useMemo(() => computeGroupPositions(activeGroup, mergedPicks), [activeGroup, mergedPicks]);
 
-  const saveMatch = (event: FormEvent<HTMLFormElement>, match: Match) => {
+  const saveMatch = async (event: FormEvent<HTMLFormElement>, match: Match) => {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
     const homeScore = Number(form.get('homeScore'));
     const awayScore = Number(form.get('awayScore'));
     const progressingTeamId = (form.get('progressingTeamId') as string) || undefined;
 
-    const errors = updateDraftPick(match.id, {
-      matchId: match.id,
-      homeScore,
-      awayScore,
-      progressingTeamId,
-      reviewed: true
-    });
-
-    if (errors.length > 0) {
-      setMessage(errors[0]);
-      return;
+    try {
+      await saveDraftPick({ matchId: match.id, homeScore, awayScore, progressingTeamId });
+      setMessage('Draft saved. Remember to commit changes.');
+      await refresh();
+    } catch (err) {
+      setMessage(err instanceof Error ? err.message : 'Could not save draft');
     }
-    setMessage('Draft saved. Remember to commit changes.');
   };
 
-  const submitBonus = (event: FormEvent<HTMLFormElement>) => {
+  const submitBonus = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
 
@@ -71,30 +86,31 @@ export function MyPicksPage() {
       fourthTeamId: String(form.get('fourthTeamId'))
     };
 
-    setBonusDraft(payload);
-    setMessage('Bonus picks saved to draft. Commit to lock them.');
+    try {
+      await saveBonusDraft(payload);
+      setMessage('Bonus picks saved to draft. Commit to lock them.');
+      await refresh();
+    } catch (err) {
+      setMessage(err instanceof Error ? err.message : 'Could not save bonus picks');
+    }
   };
 
   return (
     <section className="stack">
       <article className="card">
         <h2>My Picks</h2>
-        <p className={affectedMatches.length > 0 ? 'warning' : 'success'}>
-          {affectedMatches.length > 0 ? 'Uncommitted changes pending' : 'All changes committed'}
+        <p className={state.affectedMatches.length > 0 ? 'warning' : 'success'}>
+          {state.affectedMatches.length > 0 ? 'Uncommitted changes pending' : 'All changes committed'}
         </p>
         <p>
           {groupLocked
             ? 'Group-stage picks are now locked. Only previously committed predictions were locked.'
             : 'Only committed group picks and bonus selections will lock at first kickoff.'}
         </p>
-        <button type="button" onClick={runAutoLocks}>
-          Refresh lock status
-        </button>
       </article>
 
       <article className="card">
         <h3>Group {activeGroup} predictions</h3>
-        <p>Complete this group, preview standings, then move next.</p>
         {groupMatches.map((match) => {
           const homeTeam = teams.find((team) => team.id === match.homeTeamId);
           const awayTeam = teams.find((team) => team.id === match.awayTeamId);
@@ -141,7 +157,7 @@ export function MyPicksPage() {
         <form onSubmit={submitBonus} className="form-grid">
           <label>
             Winner
-            <select name="winnerTeamId" defaultValue={bonusDraft?.winnerTeamId ?? teams[0].id}>
+            <select name="winnerTeamId" defaultValue={state.bonusDraft?.winnerTeamId ?? teams[0].id}>
               {teams.map((team) => (
                 <option key={`winner-${team.id}`} value={team.id}>{`${team.flag} ${team.name}`}</option>
               ))}
@@ -149,7 +165,7 @@ export function MyPicksPage() {
           </label>
           <label>
             Runner-up
-            <select name="runnerUpTeamId" defaultValue={bonusDraft?.runnerUpTeamId ?? teams[1].id}>
+            <select name="runnerUpTeamId" defaultValue={state.bonusDraft?.runnerUpTeamId ?? teams[1].id}>
               {teams.map((team) => (
                 <option key={`runner-${team.id}`} value={team.id}>{`${team.flag} ${team.name}`}</option>
               ))}
@@ -157,7 +173,7 @@ export function MyPicksPage() {
           </label>
           <label>
             Third
-            <select name="thirdTeamId" defaultValue={bonusDraft?.thirdTeamId ?? teams[2].id}>
+            <select name="thirdTeamId" defaultValue={state.bonusDraft?.thirdTeamId ?? teams[2].id}>
               {teams.map((team) => (
                 <option key={`third-${team.id}`} value={team.id}>{`${team.flag} ${team.name}`}</option>
               ))}
@@ -165,7 +181,7 @@ export function MyPicksPage() {
           </label>
           <label>
             Fourth
-            <select name="fourthTeamId" defaultValue={bonusDraft?.fourthTeamId ?? teams[3].id}>
+            <select name="fourthTeamId" defaultValue={state.bonusDraft?.fourthTeamId ?? teams[3].id}>
               {teams.map((team) => (
                 <option key={`fourth-${team.id}`} value={team.id}>{`${team.flag} ${team.name}`}</option>
               ))}
@@ -192,8 +208,7 @@ export function MyPicksPage() {
                   {homeTeam && <TeamLabel team={homeTeam} />} <strong>vs</strong> {awayTeam && <TeamLabel team={awayTeam} />}
                 </div>
                 <p>
-                  Locks in: {formatCountdown(match.kickoff, nowIso)}{' '}
-                  {locked ? '(Locked)' : '(Open)'}
+                  Locks in: {formatCountdown(match.kickoff, nowIso)} {locked ? '(Locked)' : '(Open)'}
                 </p>
                 <div className="score-inputs">
                   <input name="homeScore" type="number" min="0" required defaultValue={pick?.homeScore ?? 0} disabled={locked} />
@@ -210,8 +225,14 @@ export function MyPicksPage() {
                   </label>
                 )}
                 <button type="submit" disabled={locked}>Save knockout pick</button>
-                {affectedMatches.includes(match.id) && (
-                  <button type="button" onClick={() => reviewAffectedMatch(match.id)}>
+                {state.affectedMatches.includes(match.id) && (
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      await markReviewed(match.id);
+                      await refresh();
+                    }}
+                  >
                     Mark reviewed
                   </button>
                 )}
@@ -221,7 +242,18 @@ export function MyPicksPage() {
       </article>
 
       <article className="card">
-        <button type="button" onClick={() => setMessage(commitDraft().message)}>
+        <button
+          type="button"
+          onClick={async () => {
+            try {
+              await commitDraft();
+              setMessage('Changes committed successfully.');
+              await refresh();
+            } catch (err) {
+              setMessage(err instanceof Error ? err.message : 'Commit failed');
+            }
+          }}
+        >
           Review affected fixtures and Commit changes
         </button>
         <p>{message}</p>

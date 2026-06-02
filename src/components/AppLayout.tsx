@@ -4,7 +4,8 @@ const links = [
   { to: '/', label: 'Welcome' },
   { to: '/my-picks', label: 'My Picks' },
   { to: '/league-table', label: 'League Table' },
-  { to: '/comparison', label: 'Comparison' }
+  { to: '/comparison', label: 'Comparison' },
+  { to: '/admin', label: 'Admin' }
 ];
 
 export function AppLayout() {

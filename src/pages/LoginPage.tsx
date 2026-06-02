@@ -1,12 +1,30 @@
-import { FormEvent } from 'react';
+import { FormEvent, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { login, register, setToken } from '../services/apiClient';
 
 export function LoginPage() {
   const navigate = useNavigate();
+  const [mode, setMode] = useState<'login' | 'register'>('login');
+  const [error, setError] = useState<string | null>(null);
 
-  const onSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    navigate('/');
+    const form = new FormData(event.currentTarget);
+    const email = String(form.get('email'));
+    const password = String(form.get('password'));
+    const displayName = String(form.get('displayName') ?? 'Player');
+
+    try {
+      setError(null);
+      if (mode === 'register') {
+        await register(email, password, displayName);
+      }
+      const response = await login(email, password);
+      setToken(response.token);
+      navigate('/');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Authentication failed');
+    }
   };
 
   return (
@@ -14,16 +32,26 @@ export function LoginPage() {
       <h2>Log In</h2>
       <p>Sign in to manage your World Cup Boys picks.</p>
       <form onSubmit={onSubmit} className="form-grid">
+        {mode === 'register' && (
+          <label>
+            Display name
+            <input required name="displayName" type="text" placeholder="Shiva XI" />
+          </label>
+        )}
         <label>
           Email
-          <input required type="email" placeholder="you@example.com" />
+          <input required name="email" type="email" placeholder="you@example.com" />
         </label>
         <label>
           Password
-          <input required type="password" placeholder="••••••••" />
+          <input required name="password" minLength={8} type="password" placeholder="••••••••" />
         </label>
-        <button type="submit">Log In</button>
+        {error && <p className="warning">{error}</p>}
+        <button type="submit">{mode === 'login' ? 'Log In' : 'Register & Log In'}</button>
       </form>
+      <button type="button" onClick={() => setMode(mode === 'login' ? 'register' : 'login')}>
+        {mode === 'login' ? 'Need an account? Register' : 'Already registered? Log in'}
+      </button>
     </section>
   );
 }

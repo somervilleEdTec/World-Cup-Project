@@ -1,28 +1,21 @@
-import { useMemo } from 'react';
-import { useAppStore } from '../lib/store';
-import { computeScore } from '../lib/tournamentLogic';
-import { ActualResult, TournamentBonusPick } from '../types';
-
-const mockResults: Record<string, ActualResult> = {};
-const finalPlacings: TournamentBonusPick = {
-  winnerTeamId: 'mex',
-  runnerUpTeamId: 'can',
-  thirdTeamId: 'sui',
-  fourthTeamId: 'kor'
-};
+import { useEffect, useState } from 'react';
+import { fetchLeaderboard } from '../services/apiClient';
+import { LeaderboardEntry } from '../types';
 
 export function LeagueTablePage() {
-  const committedPicks = useAppStore((state) => state.committedPicks);
-  const bonusCommitted = useAppStore((state) => state.bonusCommitted);
+  const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
-  const summary = useMemo(
-    () => computeScore(committedPicks, mockResults, bonusCommitted, finalPlacings),
-    [committedPicks, bonusCommitted]
-  );
+  useEffect(() => {
+    fetchLeaderboard()
+      .then((response) => setEntries(response as LeaderboardEntry[]))
+      .catch((err) => setError(err instanceof Error ? err.message : 'Unable to load leaderboard'));
+  }, []);
 
   return (
     <section className="card">
       <h2>League Table</h2>
+      {error && <p className="warning">{error}</p>}
       <table>
         <thead>
           <tr>
@@ -36,15 +29,17 @@ export function LeagueTablePage() {
           </tr>
         </thead>
         <tbody>
-          <tr>
-            <td>1</td>
-            <td>You</td>
-            <td>{summary.points}</td>
-            <td>{summary.exactScores}</td>
-            <td>{summary.correctResults}</td>
-            <td>{summary.exactGroupPositions}</td>
-            <td>{summary.bonusHits}</td>
-          </tr>
+          {entries.map((entry, index) => (
+            <tr key={entry.userId}>
+              <td>{index + 1}</td>
+              <td>{entry.name}</td>
+              <td>{entry.points}</td>
+              <td>{entry.exactScores}</td>
+              <td>{entry.correctResults}</td>
+              <td>{entry.exactGroupPositions}</td>
+              <td>{entry.bonusHits}</td>
+            </tr>
+          ))}
         </tbody>
       </table>
     </section>

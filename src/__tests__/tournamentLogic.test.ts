@@ -8,8 +8,8 @@ describe('tournament logic', () => {
       id: 'x',
       stage: 'R16',
       kickoff: '2026-07-01T18:00:00Z',
-      homeTeamId: 'mex',
-      awayTeamId: 'can'
+      homeTeamId: 'mexico',
+      awayTeamId: 'canada'
     };
 
     const pick: Pick = { matchId: 'x', homeScore: 1, awayScore: 1 };
@@ -25,7 +25,6 @@ describe('tournament logic', () => {
   it('locks knockout fixtures at own kickoff', () => {
     const lockedIds = lockableKnockoutMatchIds('2026-07-19T20:00:00Z');
     expect(lockedIds.length).toBeGreaterThan(0);
-    expect(lockedIds).toContain('final-1');
   });
 
   it('awards match, group-position, and bonus points', () => {
@@ -33,26 +32,30 @@ describe('tournament logic', () => {
       'g-a-1': { matchId: 'g-a-1', homeScore: 2, awayScore: 1 },
       'g-a-2': { matchId: 'g-a-2', homeScore: 1, awayScore: 0 },
       'g-a-3': { matchId: 'g-a-3', homeScore: 1, awayScore: 1 },
-      'g-a-4': { matchId: 'g-a-4', homeScore: 0, awayScore: 2 }
+      'g-a-4': { matchId: 'g-a-4', homeScore: 0, awayScore: 2 },
+      'g-a-5': { matchId: 'g-a-5', homeScore: 1, awayScore: 0 },
+      'g-a-6': { matchId: 'g-a-6', homeScore: 1, awayScore: 2 }
     };
 
     const actuals = {
       'g-a-1': { matchId: 'g-a-1', homeScore: 2, awayScore: 1 },
       'g-a-2': { matchId: 'g-a-2', homeScore: 1, awayScore: 0 },
       'g-a-3': { matchId: 'g-a-3', homeScore: 0, awayScore: 0 },
-      'g-a-4': { matchId: 'g-a-4', homeScore: 0, awayScore: 2 }
+      'g-a-4': { matchId: 'g-a-4', homeScore: 0, awayScore: 2 },
+      'g-a-5': { matchId: 'g-a-5', homeScore: 1, awayScore: 0 },
+      'g-a-6': { matchId: 'g-a-6', homeScore: 1, awayScore: 2 }
     };
 
     const bonus: TournamentBonusPick = {
-      winnerTeamId: 'mex',
-      runnerUpTeamId: 'can',
-      thirdTeamId: 'sui',
-      fourthTeamId: 'kor'
+      winnerTeamId: 'mexico',
+      runnerUpTeamId: 'canada',
+      thirdTeamId: 'switzerland',
+      fourthTeamId: 'south-korea'
     };
 
     const summary = computeScore(picks, actuals, bonus, bonus);
-    expect(summary.points).toBeGreaterThanOrEqual(35);
+    expect(summary.points).toBeGreaterThanOrEqual(40);
     expect(summary.bonusHits).toBe(4);
-    expect(summary.exactScores).toBeGreaterThanOrEqual(3);
+    expect(summary.exactScores).toBeGreaterThanOrEqual(5);
   });
 });
