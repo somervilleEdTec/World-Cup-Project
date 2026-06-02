@@ -29,8 +29,9 @@ describe('comparison visibility', () => {
     expect(canViewOthersPicks(groupMatch, '2026-06-01T00:00:00Z', true)).toBe(true);
   });
 
-  it('shows knockout committed picks for comparison before kickoff', () => {
-    expect(canViewOthersPicks(koMatch, '2026-06-27T12:00:00Z')).toBe(true);
+  it('hides knockout predictions from others until fixture kickoff', () => {
+    expect(canViewOthersPicks(koMatch, '2026-06-27T12:00:00Z')).toBe(false);
+    expect(canViewOthersPicks(koMatch, '2026-06-28T17:00:00Z')).toBe(true);
   });
 
   it('selects earliest upcoming match', () => {

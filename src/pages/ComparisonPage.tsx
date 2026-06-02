@@ -12,8 +12,10 @@ import { formatKickoffBst } from '../lib/formatDateTime';
 import { classifyPickAccuracy } from '../lib/matchScoring';
 import { MatchComparisonView } from '../types';
 
-function formatPick(entry: MatchComparisonView['entries'][number]): string {
-  if (entry.hidden) return 'Hidden until lock';
+function formatPick(entry: MatchComparisonView['entries'][number], stage: string): string {
+  if (entry.hidden) {
+    return stage === 'GROUP' ? 'Hidden until lock' : 'Hidden until kickoff';
+  }
   if (!entry.pick) return 'No prediction';
   const { homeScore, awayScore, progressingTeamId } = entry.pick;
   if (homeScore === awayScore && progressingTeamId) {
@@ -161,7 +163,9 @@ export function ComparisonPage() {
             {data.entries.map((entry) => (
               <tr key={entry.userId} className={entry.isCurrentUser ? 'comparison-row-you' : undefined}>
                 <td>{entry.displayName}{entry.isCurrentUser ? ' (you)' : ''}</td>
-                <td className={pickCellClass(entry, data.actualResult)}>{formatPick(entry)}</td>
+                <td className={pickCellClass(entry, data.actualResult)}>
+                  {formatPick(entry, data.match.stage)}
+                </td>
               </tr>
             ))}
           </tbody>

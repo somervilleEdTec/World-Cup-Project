@@ -130,7 +130,7 @@ export async function getMatchComparison(
     ? 'Showing predictions for this fixture.'
     : isGroupStage(match)
       ? 'Other players’ predictions appear after the first tournament kickoff (group lock).'
-      : 'Other players’ knockout predictions are shown once saved.';
+      : 'Other players’ knockout predictions appear after this fixture’s kickoff.';
 
   return {
     actualResult: actual
