@@ -2,8 +2,8 @@
 
 **Last updated:** 2026-06-02  
 **Repository:** https://github.com/somervilleEdTec/World-Cup-Project  
-**Active branch:** `main`  
-**Phase:** Go-live ready (UI polish + KO-environment hardening merged)  
+**Branches:** `main` (production) · `Debug` (development) — see [BRANCHING.md](./BRANCHING.md)  
+**Phase:** Go-live ready (UI polish + KO-environment + before-final seed)  
 **Deploy:** [docs/DEPLOY.md](./DEPLOY.md) · **Go-live:** [docs/GO_LIVE.md](./GO_LIVE.md) · **KO test seed:** [docs/KO_ENVIRONMENT.md](./KO_ENVIRONMENT.md) · **Final-prediction scenario:** [docs/FINAL_PREDICTION_HANDOVER.md](./FINAL_PREDICTION_HANDOVER.md)
 
 **Next agent starts here:** [docs/FINAL_PREDICTION_HANDOVER.md](./FINAL_PREDICTION_HANDOVER.md) (simulated end-of-tournament debug) · [docs/STRESS_TEST_HANDOVER.md](./STRESS_TEST_HANDOVER.md) · Prompt: [docs/AGENT_PROMPT.md](./AGENT_PROMPT.md)
@@ -68,6 +68,7 @@ Friends-and-family prediction app for **FIFA World Cup 2026** (48 teams, 12 grou
 | [AGENT_PROMPT.md](./AGENT_PROMPT.md) | Copy-paste session prompt |
 | [UI_HANDOVER.md](./UI_HANDOVER.md) | UI history + bug log table |
 | [HANDOVER.md](./HANDOVER.md) | This file |
+| [BRANCHING.md](./BRANCHING.md) | Two-branch workflow (`main` + `Debug`) |
 | [FINAL_PLAN.md](./FINAL_PLAN.md) | Locked competition rules |
 | [TODO.md](./TODO.md) | Backlog |
 | [DEPLOY.md](./DEPLOY.md) | Production |
@@ -259,9 +260,9 @@ npm run db:purge      # reset local SQLite data
 
 ## 12. Conventions
 
-- Branch: `cursor/<descriptive-name>-efbb`
-- PR base: `main`
-- Update stress-test log when fixing UI bugs
+- **Branches:** `Debug` for work; merge to `main` when stable ([BRANCHING.md](./BRANCHING.md))
+- PRs (if used): base `main`, head `Debug`
+- Update [UI_HANDOVER.md](./UI_HANDOVER.md) §6 when fixing UI bugs
 
 ---
 

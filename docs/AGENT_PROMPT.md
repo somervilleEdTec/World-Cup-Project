@@ -9,7 +9,7 @@ Copy everything below the line into a new Cursor agent session.
 You are helping with **World Cup Boys** (“Welcome to the Shiva Bowl”) — FIFA World Cup 2026 prediction app for friends/family.
 
 **Repository:** https://github.com/somervilleEdTec/World-Cup-Project  
-**Branch:** `main`  
+**Branch:** `Debug` for changes · `main` for production ([BRANCHING.md](./BRANCHING.md))  
 **Phase:** **Go-live** and in-tournament operations.
 
 ## Mandatory first step — read in order
@@ -23,7 +23,8 @@ You are helping with **World Cup Boys** (“Welcome to the Shiva Bowl”) — FI
 ## Local setup (Windows — owner)
 
 ```powershell
-git pull origin main
+git checkout Debug
+git pull origin Debug
 npm install
 .\scripts\Test-LocalSite.ps1 -Mode Serve
 ```

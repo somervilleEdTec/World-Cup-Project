@@ -4,13 +4,23 @@
 
 Friends-and-family prediction app for FIFA World Cup 2026 (48 teams, 12 groups, knockout bracket through the final).
 
+## Branches
+
+| Branch | Purpose |
+|--------|---------|
+| **`main`** | Production-ready release |
+| **`Debug`** | Active development (merge to `main` when stable) |
+
+See **[docs/BRANCHING.md](docs/BRANCHING.md)**.
+
 ## New agent? (stress test & debug)
 
-1. **[docs/STRESS_TEST_HANDOVER.md](docs/STRESS_TEST_HANDOVER.md)** — **start here** (playbook, current UX, checklist)  
-2. **[docs/AGENT_PROMPT.md](docs/AGENT_PROMPT.md)** — copy-paste prompt for a new session  
-3. **[docs/HANDOVER.md](docs/HANDOVER.md)** — architecture and API  
-4. **[docs/UI_HANDOVER.md](docs/UI_HANDOVER.md)** — completed UI work + bug log  
-5. **[docs/TODO.md](docs/TODO.md)** — task tracker  
+1. **[docs/FINAL_PREDICTION_HANDOVER.md](docs/FINAL_PREDICTION_HANDOVER.md)** — **start here** for end-of-tournament local debug  
+2. **[docs/HANDOVER.md](docs/HANDOVER.md)** — architecture and API  
+3. **[docs/AGENT_PROMPT.md](docs/AGENT_PROMPT.md)** — copy-paste prompt for a new session  
+4. **[docs/KO_ENVIRONMENT.md](docs/KO_ENVIRONMENT.md)** · **[docs/STRESS_TEST_HANDOVER.md](docs/STRESS_TEST_HANDOVER.md)** — test seeds and playbook  
+5. **[docs/UI_HANDOVER.md](docs/UI_HANDOVER.md)** — completed UI work + bug log  
+6. **[docs/TODO.md](docs/TODO.md)** — task tracker  
 
 Product rules: **[docs/FINAL_PLAN.md](docs/FINAL_PLAN.md)**
 
@@ -43,7 +53,7 @@ npm run dev       # frontend dev on :5173 (optional)
 ```
 
 ```bash
-npm test          # 36 tests
+npm test          # unit + integration tests
 npm run build
 ```
 

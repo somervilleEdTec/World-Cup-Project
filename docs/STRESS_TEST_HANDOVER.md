@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-06-02  
 **Repository:** https://github.com/somervilleEdTec/World-Cup-Project  
-**Branch:** `main`  
+**Branches:** `main` (production) · `Debug` (development) — [BRANCHING.md](./BRANCHING.md)  
 **Phase:** Owner UI polish **complete** (PRs #7–#11). Your job is **stress testing, regression hunting, and bug fixes** — not greenfield features.
 
 **Start here:** [AGENT_PROMPT.md](./AGENT_PROMPT.md) (copy-paste for a new Cursor session)
@@ -250,7 +250,7 @@ Use **2+ browser profiles** or incognito + normal (different users).
 
 ## 8. Reporting & PR conventions
 
-- Branch: `cursor/<topic>-efbb` (or owner preference)
+- Branch: `Debug` for work; merge to `main` when stable ([BRANCHING.md](./BRANCHING.md))
 - PR base: **`main`**
 - Record bugs in [UI_HANDOVER.md](./UI_HANDOVER.md) §6 before/while fixing
 - Tag owner on blocking rule questions; do not edit `FINAL_PLAN.md` alone

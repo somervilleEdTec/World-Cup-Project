@@ -1,7 +1,7 @@
 # UI / UX handover
 
 **Last updated:** 2026-06-02  
-**Branch:** `main`  
+**Branches:** `main` (production) · `Debug` (development) — [BRANCHING.md](./BRANCHING.md)  
 **Status:** Owner polish + KO-environment UX **merged to `main`** (2026-06-02). See [HANDOVER.md](./HANDOVER.md) for current behaviour.
 
 ---
