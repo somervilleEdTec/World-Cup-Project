@@ -75,7 +75,14 @@ http://localhost:8787/login
 
 | # | Page / flow | Steps | Expected | Actual | Status |
 |---|-------------|-------|----------|--------|--------|
-| | | | | | |
+| 1 | My Picks — Group Stage | Enter scores, click **Next Group** within 450 ms debounce | Scores saved | Pending edits could be lost (debounce cancelled on unmount; no flush on navigation) | **Fixed** — flush on group/tab change + save on score input unmount |
+| 2 | My Picks — Knockout | Open KO tab with confirmed fixtures but fewer than 72 group picks | Clear why inputs disabled | Inputs disabled with no explanation | **Fixed** — warning shows saved count (e.g. 12/72) |
+| 3 | Auth (API) | Register duplicate name, wrong join/login password | 400 / 401 with message | Matches spec | Verified |
+| 4 | Tournament Results (API) | Save bonus before any group picks | Persists | Works | Verified |
+| 5 | Group lock (API) | Lock group A with 1/6 matches | Error | “Complete all matches in Group A before locking.” | Verified |
+| 6 | KO gate (API) | Save KO pick with 0 group picks | Blocked with 72 message | Works | Verified |
+| 7 | Locks (API) | `POST /api/system/locks/run` after kickoff | Global lock | `{"ok":true}` | Verified |
+| 8 | Leaderboard | Two users registered | Both listed | 2 users on `/api/leaderboard` | Verified |
 
 ---
 

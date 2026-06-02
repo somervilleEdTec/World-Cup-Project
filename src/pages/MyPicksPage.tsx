@@ -82,6 +82,10 @@ function MatchScoreInputs({
   const [progressingTeamId, setProgressingTeamId] = useState(pick?.progressingTeamId ?? '');
   const [edited, setEdited] = useState(false);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const editedRef = useRef(edited);
+  const disabledRef = useRef(disabled);
+  editedRef.current = edited;
+  disabledRef.current = disabled;
 
   useEffect(() => {
     setHomeScore(pick?.homeScore ?? 0);
@@ -100,6 +104,11 @@ function MatchScoreInputs({
       progressingTeamId: home === away ? progressingTeamId || undefined : undefined
     };
   }, [awayScore, homeScore, match.id, progressingTeamId]);
+
+  const buildPickRef = useRef(buildPick);
+  const onSaveRef = useRef(onSave);
+  buildPickRef.current = buildPick;
+  onSaveRef.current = onSave;
 
   const notifyChange = useCallback(
     (nextHome: number, nextAway: number, nextProgressing = progressingTeamId) => {
@@ -130,6 +139,18 @@ function MatchScoreInputs({
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     };
   }, [homeScore, awayScore, progressingTeamId, scheduleSave]);
+
+  useEffect(() => {
+    return () => {
+      if (saveTimerRef.current) {
+        clearTimeout(saveTimerRef.current);
+        saveTimerRef.current = null;
+      }
+      if (editedRef.current && !disabledRef.current) {
+        void onSaveRef.current(buildPickRef.current());
+      }
+    };
+  }, [match.id]);
 
   const homeTeam = teams.find((team) => team.id === match.homeTeamId);
   const awayTeam = teams.find((team) => team.id === match.awayTeamId);
@@ -265,14 +286,32 @@ export function MyPicksPage() {
   };
 
   const flushPendingForGroup = async () => {
-    for (const match of activeGroupMatches) {
+    const matches = groupMatches.filter((match) => match.group === activeGroup);
+    for (const match of matches) {
       const pick = pendingGroupPicks[match.id];
       if (pick) {
         await saveDraftPick(pick);
       }
     }
-    setPendingGroupPicks({});
+    setPendingGroupPicks((current) => {
+      const next = { ...current };
+      for (const match of matches) {
+        delete next[match.id];
+      }
+      return next;
+    });
     await refresh();
+  };
+
+  const changeGroupIndex = (nextIndex: number) => {
+    void flushPendingForGroup().finally(() => setGroupIndex(nextIndex));
+  };
+
+  const changePhase = (nextPhase: PicksPhase) => {
+    if (phase === 'group' && nextPhase !== 'group') {
+      void flushPendingForGroup();
+    }
+    setPhase(nextPhase);
   };
 
   const submitBonus = async (event: FormEvent<HTMLFormElement>) => {
@@ -317,16 +356,16 @@ export function MyPicksPage() {
           )}
         </div>
         <div className="button-row">
-          <button type="button" className={phase === 'bonus' ? 'active-tab' : ''} onClick={() => setPhase('bonus')}>
+          <button type="button" className={phase === 'bonus' ? 'active-tab' : ''} onClick={() => changePhase('bonus')}>
             Tournament Results
           </button>
-          <button type="button" className={phase === 'group' ? 'active-tab' : ''} onClick={() => setPhase('group')}>
+          <button type="button" className={phase === 'group' ? 'active-tab' : ''} onClick={() => changePhase('group')}>
             Group Stage
           </button>
           <button
             type="button"
             className={phase === 'knockout' ? 'active-tab' : ''}
-            onClick={() => setPhase('knockout')}
+            onClick={() => changePhase('knockout')}
           >
             Knockout Stage
             {hasConfirmedKnockout ? ` (${confirmedKnockoutFixtures.length})` : ''}
@@ -422,13 +461,13 @@ export function MyPicksPage() {
             >
               Lock group
             </button>
-            <button type="button" disabled={groupIndex === 0} onClick={() => setGroupIndex((value) => value - 1)}>
+            <button type="button" disabled={groupIndex === 0} onClick={() => changeGroupIndex(groupIndex - 1)}>
               Previous Group
             </button>
             <button
               type="button"
               disabled={groupIndex === groupSequence.length - 1}
-              onClick={() => setGroupIndex((value) => value + 1)}
+              onClick={() => changeGroupIndex(groupIndex + 1)}
             >
               Next Group
             </button>
@@ -474,6 +513,12 @@ export function MyPicksPage() {
         <article className="card">
           <h3>Knockout fixture picks</h3>
           <p>Only officially confirmed fixtures are listed — not projected from your group picks.</p>
+          {hasConfirmedKnockout && !koPicksAllowed && (
+            <p className="warning">
+              Complete and save all 72 group-stage match scores before knockout picks can be saved (
+              {state.groupPicksCommittedCount ?? 0}/{state.groupPicksRequired ?? 72} saved).
+            </p>
+          )}
           {!hasConfirmedKnockout && (
             <p className="warning">
               No knockout fixtures are confirmed yet. They unlock as group games finish and FIFA assigns teams.
