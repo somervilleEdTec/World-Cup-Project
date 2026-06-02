@@ -6,7 +6,6 @@ import { ComparisonPage } from './pages/ComparisonPage';
 import { LeagueTablePage } from './pages/LeagueTablePage';
 import { LoginPage } from './pages/LoginPage';
 import { MyPicksPage } from './pages/MyPicksPage';
-import { RulesPage } from './pages/RulesPage';
 import { WelcomePage } from './pages/WelcomePage';
 
 export function App() {
@@ -25,7 +24,6 @@ export function App() {
         <Route path="my-picks" element={<MyPicksPage />} />
         <Route path="league-table" element={<LeagueTablePage />} />
         <Route path="comparison" element={<ComparisonPage />} />
-        <Route path="rules" element={<RulesPage />} />
         <Route path="admin" element={<AdminPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />

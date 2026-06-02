@@ -3,11 +3,10 @@ import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { getToken } from '../services/apiClient';
 
 const baseLinks = [
-  { to: '/', label: 'Welcome' },
-  { to: '/my-picks', label: 'My Picks' },
-  { to: '/league-table', label: 'League Table' },
-  { to: '/comparison', label: 'Comparison' },
-  { to: '/rules', label: 'Rules' }
+  { to: '/', label: 'Welcome', mobileLabel: 'Home' },
+  { to: '/my-picks', label: 'My Picks', mobileLabel: 'Picks' },
+  { to: '/league-table', label: 'League Table', mobileLabel: 'Table' },
+  { to: '/comparison', label: 'Comparison', mobileLabel: 'Compare' }
 ];
 
 export function AppLayout() {
@@ -20,7 +19,9 @@ export function AppLayout() {
   }, []);
 
   const isAdmin = localStorage.getItem('wcb_is_admin') === '1';
-  const links = isAdmin ? [...baseLinks, { to: '/admin', label: 'Admin' }] : baseLinks;
+  const links = isAdmin
+    ? [...baseLinks, { to: '/admin', label: 'Admin', mobileLabel: 'Admin' }]
+    : baseLinks;
 
   const logout = () => {
     localStorage.removeItem('wcb_token');
@@ -54,8 +55,12 @@ export function AppLayout() {
       </main>
       <nav className="mobile-nav" aria-label="Mobile navigation">
         {links.map((link) => (
-          <NavLink key={link.to} to={link.to} className="mobile-nav-btn">
-            {link.label}
+          <NavLink
+            key={link.to}
+            to={link.to}
+            className={({ isActive }) => (isActive ? 'mobile-nav-btn active' : 'mobile-nav-btn')}
+          >
+            <span className="mobile-nav-label">{link.mobileLabel}</span>
           </NavLink>
         ))}
       </nav>
