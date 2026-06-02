@@ -1,7 +1,7 @@
 # World Cup Boys — Final Plan (Restructured Competition Rules)
 
 > **Source of truth for product rules.** This file is a repo copy of the agreed final plan.  
-> For implementation status and next steps, see [HANDOVER.md](./HANDOVER.md).
+> For implementation status, see [HANDOVER.md](./HANDOVER.md). For the next agent session, see [AGENT_PROMPT.md](./AGENT_PROMPT.md).
 
 ## Final Locked Rules
 

@@ -2,23 +2,26 @@
 
 **Last updated:** 2026-06-02  
 **Repository:** https://github.com/somervilleEdTec/World-Cup-Project  
-**Active branch:** `cursor/world-cup-app-planning-4552`  
-**Pull request:** https://github.com/somervilleEdTec/World-Cup-Project/pull/1  
+**Active branch:** `cursor/world-cup-p0-complete-21eb`  
+**Pull request:** https://github.com/somervilleEdTec/World-Cup-Project/pull/2 (draft)  
+**Prior PR:** https://github.com/somervilleEdTec/World-Cup-Project/pull/1 (planning scaffold, superseded for implementation)
 
 ---
 
 ## 1. Purpose of this document
 
-This handover gives a **new agent** everything needed to resume work without re-reading the full conversation:
+This handover gives a **new agent** everything needed to resume work without re-reading prior conversations:
 
 - What the product is and the **final locked rules**
 - What has been **built** vs what is **still missing**
 - How to **run and test** locally
 - **Architecture** and file map
 - **Progression timeline** (git + features)
-- A prioritized **TODO backlog** with honest status
+- A prioritized **TODO backlog** ([docs/TODO.md](./TODO.md))
 
-**Do not edit** Cursor plan artifacts in `/opt/cursor/artifacts/plans/` — treat **`docs/FINAL_PLAN.md`** as the in-repo product spec.
+**Start here for takeover:** [docs/AGENT_PROMPT.md](./AGENT_PROMPT.md) — includes instructions to **ask the product owner for next steps before coding**.
+
+**Do not edit** Cursor plan artifacts in `/opt/cursor/artifacts/plans/`. Treat **`docs/FINAL_PLAN.md`** as the in-repo product spec.
 
 ---
 
@@ -28,7 +31,7 @@ This handover gives a **new agent** everything needed to resume work without re-
 
 A friends-and-family prediction app for **FIFA World Cup 2026** (48 teams, 12 groups, 104 matches). Single global pool, email/password auth, mobile-first UI, live leaderboard driven by real results (football-data.org + manual admin override).
 
-### Final scoring (implemented in `src/lib/tournamentLogic.ts`)
+### Final scoring (`src/lib/tournamentLogic.ts`)
 
 | Rule | Points |
 |------|--------|
@@ -40,7 +43,7 @@ A friends-and-family prediction app for **FIFA World Cup 2026** (48 teams, 12 gr
 | Preselected third place | +6 |
 | Preselected fourth place | +4 |
 
-### Locking rules (partially enforced)
+### Locking rules (implemented)
 
 | Phase | Lock trigger |
 |-------|----------------|
@@ -58,70 +61,60 @@ If regulation is predicted as a draw in KO, user must pick **team to progress** 
 
 | File | Role |
 |------|------|
-| [docs/FINAL_PLAN.md](./FINAL_PLAN.md) | **Authoritative** final product rules (restructured competition) |
-| [docs/PROJECT_PLAN.md](./PROJECT_PLAN.md) | Original exploratory plan (architecture ideas, earlier scoring proposals — **superseded** by FINAL_PLAN for rules) |
-| [docs/HANDOVER.md](./HANDOVER.md) | This file — implementation status + agent TODOs |
+| [docs/FINAL_PLAN.md](./FINAL_PLAN.md) | **Authoritative** final product rules |
+| [docs/PROJECT_PLAN.md](./PROJECT_PLAN.md) | Original exploratory plan — **superseded** by FINAL_PLAN for rules |
+| [docs/HANDOVER.md](./HANDOVER.md) | This file — implementation status |
+| [docs/TODO.md](./TODO.md) | Task tracker (P0/P1 marked complete as of PR #2) |
+| [docs/AGENT_PROMPT.md](./AGENT_PROMPT.md) | Copy-paste prompt for the next agent session |
 
 ---
 
 ## 4. Progression timeline (git)
 
-| Commit | Summary |
-|--------|---------|
+| Commit / milestone | Summary |
+|--------------------|---------|
 | `fc52239` | Initial empty repo |
-| `3f488a1` | Original `docs/PROJECT_PLAN.md` |
-| `e606be4` | React/Vite scaffold, core pages, Zustand, scoring engine, tests |
-| `b0c7339` | Typing/build fixes |
-| `efc6e7d` | SQLite backend, Express API, schedulers, admin page, 48-team/104-match seed skeleton |
-| `f71ed16` | Frontend wired to API; README |
-| `7607243` | Multi-user Comparison API + Comparison page table |
+| `3f488a1` | `docs/PROJECT_PLAN.md` |
+| `e606be4`–`7607243` | React/Vite scaffold, API, comparison (PR #1 branch) |
+| `7c43f6c` | **P0 + P1 complete:** bracket engine, 495 third-place mappings, sync ID mapping, scoring fixes, auth, rules page, comparison picker |
 
-**Current stack:** React 19 + Vite 8 + TypeScript + Express 5 + better-sqlite3 + Zustand (legacy, mostly superseded by API for picks).
+**Current stack:** React 19 + Vite 8 + TypeScript + Express 5 + better-sqlite3. Zustand in `src/lib/store.ts` is legacy; production path uses API.
 
 ---
 
-## 5. What is implemented (honest assessment)
+## 5. What is implemented
 
-### Done or working at scaffold level
+### Core (tournament-ready logic)
 
-- [x] Branding: title **World Cup Boys**, tagline on header/login context
-- [x] Flag + team name component (`TeamLabel`)
-- [x] Mobile layout: desktop top nav + mobile bottom tabs
-- [x] Pages: Login, Welcome, My Picks, League Table, Comparison, Admin
-- [x] Auth: register/login, bearer token in `localStorage` (`wcb_token`)
-- [x] SQLite schema: users, sessions, predictions (draft/committed), prediction_meta, results, sync_status
-- [x] Prediction APIs: draft save, review, bonus draft, commit, state fetch
-- [x] Lock scheduler job (`npm run jobs`) — group lock + KO kickoff checks every 30s
-- [x] football-data.org fetch service + sync persistence + admin trigger
-- [x] Admin: sync status, manual result override, recompute leaderboard
-- [x] Leaderboard API from committed picks + results table
-- [x] Comparison API: `GET /api/comparison/next`, `GET /api/comparison/:matchId`
-- [x] Group wizard UI (A–L navigation), bonus dropdowns (all teams, repeats allowed)
-- [x] Unit tests: `tournamentLogic.test.ts`, `comparisonVisibility.test.ts` (7 tests, passing)
-- [x] `npm test` and `npm run build` pass
+- [x] **Bracket engine** — `src/lib/bracketEngine.ts`: FIFA R32→Final tree, third-place resolution via **495** Annex C mappings (`src/data/thirdPlaceMappings.ts`, regenerate with `node scripts/generate-third-place-map.mjs`)
+- [x] **Dynamic knockout fixtures** — `src/lib/matchResolver.ts` → `getMatches(picks, results)` resolves team IDs from group picks and/or `results` table
+- [x] **Group standings** — `src/lib/groupStandings.ts` (shared by scoring and bracket)
+- [x] **Scoring** — Group-position bonus uses `picksFromActuals()`; tournament bonuses via `deriveFinalPlacings()` in leaderboard
+- [x] **football-data.org mapping** — `match_external_ids` table + `src/server/services/matchMapping.ts`; sync resolves provider IDs to internal `g-*` / `r32-*` IDs
 
-### Partially implemented / needs hardening
+### App shell & UX
 
-- [ ] **FIFA 2026 bracket engine** — knockout fixtures are **placeholders**, not derived from group results or official R32 mapping
-- [ ] **Group wizard accept/amend** — preview table exists; explicit per-group “Accept / Amend” step not fully isolated
-- [ ] **Dynamic KO population** — KO teams/fixtures do not update from real results/qualifiers
-- [ ] **football-data.org ID mapping** — sync stores provider match IDs; internal IDs are `g-a-1`, `r32-1`, etc. — **not mapped**
-- [ ] **Tournament bonus scoring** — `computeScore` needs real `finalPlacings` from tournament end; leaderboard currently passes `undefined` for final placings
-- [ ] **Group position bonus** — logic exists but `actualPositions` derivation in `computeScore` is fragile (see code comment in handover risks)
-- [ ] **Auth guards** — no protected routes; API returns 401 but UI does not redirect
-- [ ] **Admin role** — `users.is_admin` must be set manually in DB
-- [ ] **Multi-user Comparison** — KO visibility shows committed picks before kickoff by design; confirm with product owner if KO should hide until lock
-- [ ] **Zustand store** (`src/lib/store.ts`) — legacy client-only path; prefer API
+- [x] Pages: Login, Welcome, My Picks, League Table, Comparison, **Rules**, Admin
+- [x] **Protected routes** + logout + display name (`ProtectedRoute`, `wcb_display_name` in localStorage)
+- [x] Group wizard with **Accept / Amend** before “Next Group”
+- [x] Comparison fixture dropdown + `?matchId=` + `GET /api/comparison/fixtures`
+- [x] Draft/commit flow, rolling KO locks, admin sync/override/recompute
+- [x] **11 unit tests** passing; `npm run build` passes
 
-### Not started
+### Still manual / partial
 
-- [ ] Production deployment (Vercel + hosted DB or single VPS)
-- [ ] Postgres migration (SQLite is dev-friendly only)
-- [ ] OAuth (Google/Apple)
-- [ ] E2E / integration tests for API
-- [ ] Official 2026 fixture import from football-data (all kickoffs/venues)
-- [ ] Route to select Comparison match (`matchId` query) in UI
-- [ ] Seed script / migration runner on server start
+- [ ] **Admin role** — set `users.is_admin = 1` in SQLite after register
+- [ ] **Real fixture kickoffs** — group KO kickoffs are approximate ISO dates; import from football-data still P2
+- [ ] **football-data live sync** — needs valid `FOOTBALL_DATA_TOKEN` and matching team names in API responses
+- [ ] **Zustand store** — legacy client-only path; prefer API
+- [ ] **Production** — SQLite only; no deploy docs yet (P2)
+
+### Not started (see TODO P2–P3)
+
+- [ ] Postgres + migrations
+- [ ] Production deployment documentation
+- [ ] API integration tests (Supertest)
+- [ ] OAuth, PWA, PDF export
 
 ---
 
@@ -139,29 +132,40 @@ If regulation is predicted as a draw in KO, user must pick **team to progress** 
 └──────────────────────────┬──────────────────────────────┘
                            │
 ┌──────────────────────────▼──────────────────────────────┐
-│  SQLite — data.db (created at runtime, gitignored)      │
+│  SQLite — data.db (runtime, gitignored)                   │
+│  tables: users, sessions, predictions, results,         │
+│          match_external_ids, sync_status                  │
 └─────────────────────────────────────────────────────────┘
 
 Scheduler: src/server/jobs.ts (locks + sync poll)
-Domain logic: src/lib/tournamentLogic.ts, comparisonVisibility.ts
-Seed data: src/data/tournament.ts (48 teams, 104 matches)
+
+Domain:
+  src/lib/groupStandings.ts   — group tables
+  src/lib/bracketEngine.ts    — KO bracket + final placings
+  src/lib/matchResolver.ts    — getMatches(picks, results)
+  src/lib/tournamentLogic.ts  — scoring, locks, validation
+  src/lib/comparisonVisibility.ts
+
+Data:
+  src/data/tournament.ts           — teams + 72 group matches
+  src/data/thirdPlaceMappings.ts   — 495 FIFA third-place scenarios (generated)
 ```
 
 ### Key files
 
 | Path | Purpose |
 |------|---------|
-| `src/server/index.ts` | All HTTP routes |
-| `src/server/db.ts` | Schema bootstrap |
-| `src/server/services/predictions.ts` | Draft/commit/locks persistence |
-| `src/server/services/comparison.ts` | Multi-user comparison |
-| `src/server/services/leaderboard.ts` | Points aggregation |
+| `src/lib/bracketEngine.ts` | R32–Final derivation, `deriveFinalPlacings` |
+| `src/lib/matchResolver.ts` | `getMatches()` — group + resolved KO |
+| `src/lib/groupStandings.ts` | Points/GD/GF standings per group |
+| `src/server/services/matchMapping.ts` | Provider ID ↔ internal match ID |
 | `src/server/services/sync.ts` | football-data ingest |
-| `src/server/services/auth.ts` | Register/login/sessions |
-| `src/lib/tournamentLogic.ts` | Scoring, standings, validation |
-| `src/data/tournament.ts` | Teams + matches seed |
-| `src/pages/MyPicksPage.tsx` | Main prediction UX |
-| `src/pages/ComparisonPage.tsx` | Next-match comparison table |
+| `src/server/services/leaderboard.ts` | Points aggregation |
+| `src/server/services/predictions.ts` | Draft/commit/locks |
+| `src/server/services/comparison.ts` | Multi-user comparison |
+| `src/pages/MyPicksPage.tsx` | Group wizard + KO picks |
+| `src/pages/RulesPage.tsx` | Scoring / lock rules (UI) |
+| `scripts/generate-third-place-map.mjs` | Regenerate Annex C mappings from Wikipedia |
 
 ---
 
@@ -179,6 +183,7 @@ Base URL: `http://localhost:8787` (override with `VITE_API_BASE_URL`)
 | POST | `/api/predictions/bonus` | Bearer | Bonus four-tuple |
 | POST | `/api/predictions/commit` | Bearer | Promote drafts → committed |
 | GET | `/api/leaderboard` | No | All users ranked |
+| GET | `/api/comparison/fixtures` | Bearer | Upcoming fixtures list |
 | GET | `/api/comparison/next` | Bearer | Next fixture + all picks |
 | GET | `/api/comparison/:matchId` | Bearer | Specific fixture |
 | POST | `/api/system/locks/run` | No | Manual lock pass |
@@ -200,14 +205,14 @@ npm install
 npm run server
 
 # Terminal 2 — schedulers (locks + sync)
-export FOOTBALL_DATA_TOKEN=your_token_here   # optional for sync
+export FOOTBALL_DATA_TOKEN=your_token_here   # optional
 npm run jobs
 
 # Terminal 3 — frontend
 npm run dev
 ```
 
-Open app (Vite default): http://localhost:5173
+Open http://localhost:5173 — unauthenticated users redirect to `/login`.
 
 **Create admin user:** register via UI, then:
 
@@ -218,7 +223,7 @@ sqlite3 data.db "UPDATE users SET is_admin = 1 WHERE email = 'you@example.com';"
 **Quality gates:**
 
 ```bash
-npm test
+npm test    # 11 tests
 npm run build
 ```
 
@@ -236,75 +241,62 @@ npm run build
 
 ## 10. Prioritized TODO for next agent
 
-Use this order. Mark items in [docs/TODO.md](./TODO.md) as you go.
+**P0 and P1 are complete** as of PR #2. See [docs/TODO.md](./TODO.md).
 
-### P0 — Correctness (blocks real tournament use)
+### P2 — Operations (recommended next)
 
-1. **Bracket engine** — Implement FIFA 2026 group → R32 mapping (8 third-place slots). Replace `placeholderKo()` in `tournament.ts`. File: new `src/lib/bracketEngine.ts` + tests.
-2. **Fixture ID mapping** — Table `match_external_ids (internal_id, provider, provider_id)`; map football-data responses to internal `match_id` before writing `results`.
-3. **Scoring fixes** — Pass real `finalPlacings` into leaderboard; fix group-position scoring to compare predicted standings vs **official results** standings (not the buggy actuals→picks conversion in `computeScore`).
-4. **Dynamic knockout fixtures** — When real results update group standings, regenerate available KO matches and team slots.
+1. **Postgres + migrations** — replace SQLite for production
+2. **Deploy docs** — single host (API serves `dist/`) or split Vercel + DB
+3. **Integration tests** — Supertest with temp DB
+4. **Import script** — `scripts/seed-from-football-data.ts` for real kickoffs and provider IDs
 
-### P1 — Product completeness
+### P3 — Later
 
-5. **Group accept/amend flow** — After each group entry, force preview + explicit Accept before advancing; block “Next Group” until accepted.
-6. **Auth UX** — Protected routes; redirect to `/login`; show logged-in user; logout.
-7. **Comparison match picker** — Dropdown of upcoming fixtures calling `/api/comparison/:matchId`.
-8. **Rules page** — Static page explaining scoring + lock rules (from FINAL_PLAN).
+OAuth, PWA manifest, notifications, PDF export (see [docs/PROJECT_PLAN.md](./PROJECT_PLAN.md)).
 
-### P2 — Operations
-
-9. **Postgres + migrations** — Prisma or drizzle; don’t rely on SQLite in production.
-10. **Deploy** — Document single-host (API serves `dist/`) or split deploy.
-11. **Integration tests** — Supertest against API with temp DB.
-12. **Import script** — `scripts/seed-from-football-data.ts` for real kickoffs.
-
-### P3 — Nice to have
-
-13. OAuth, PWA manifest, push notifications, PDF export (from original PROJECT_PLAN).
+**Before starting:** read [docs/AGENT_PROMPT.md](./AGENT_PROMPT.md) and confirm priorities with the product owner.
 
 ---
 
-## 11. Plan todo checklist (from final plan artifact)
+## 11. Plan todo checklist (final plan)
 
-These were the plan tool todos; **implementation status** as of handover:
-
-| Plan todo ID | Plan intent | Status |
-|--------------|-------------|--------|
-| `competition-rule-refactor` | Group hard-lock + rolling KO locks | **Scaffold done** — needs real bracket |
-| `group-position-bonus` | +2 per exact group position | **Code done** — verify vs real results |
-| `bonus-picks-page` | Winner/runner-up/3rd/4th dropdowns | **Done** in My Picks |
-| `ko-rolling-locks` | Per-fixture lock + countdown UI | **Scaffold done** |
-| `draft-commit-safety` | Draft vs commit + review enforcement | **Done** in API |
-| `football-data-sync` | Live results drive leaderboard | **Scaffold done** — ID mapping missing |
+| Plan todo ID | Status |
+|--------------|--------|
+| `competition-rule-refactor` | [x] |
+| `group-position-bonus` | [x] |
+| `bonus-picks-page` | [x] |
+| `ko-rolling-locks` | [x] |
+| `draft-commit-safety` | [x] |
+| `football-data-sync` | [x] (mapping + name resolution; live API depends on token) |
 
 ---
 
 ## 12. Known risks / bugs to watch
 
-1. **`computeScore` group positions** — `actualPositions` built from `actuals` via incorrect cast; likely wrong when results partial. Rewrite using `computeGroupPositions(groupId, picksFromResults)`.
-2. **Knockout placeholder teams** — R32 matches use arbitrary team IDs; comparisons and picks may not reflect user’s group predictions.
-3. **No HTTPS / CORS** — fine for local dev; configure for production.
-4. **Password hashing** — pbkdf2 in `auth.ts` is OK for friends app; consider bcrypt for production.
+1. **Third-place mappings** — sourced from Wikipedia Annex C table; regenerate if FIFA publishes errata (`node scripts/generate-third-place-map.mjs`).
+2. **KO kickoff times** — approximate in code; leaderboard locks use these ISO strings.
+3. **football-data team names** — aliases in `matchMapping.ts`; add names if sync skips fixtures.
+4. **No HTTPS / CORS** — configure for production.
 5. **`data.db` local only** — not in git; each environment starts empty unless seeded.
+6. **Partial group results** — group-position scoring only counts groups where all 6 results exist in `results` table.
 
 ---
 
 ## 13. Suggested first session for a new agent
 
-1. Read [docs/FINAL_PLAN.md](./FINAL_PLAN.md) (10 min).
-2. `npm install && npm test && npm run build`.
-3. Run server + dev; register two users; commit picks; open Comparison and League Table.
-4. Pick **one P0 item** (recommend: fixture ID mapping OR bracket engine).
-5. Add tests first, then implement; commit on `cursor/world-cup-app-planning-4552` or new `cursor/<task>-4552` branch per cloud agent rules.
+1. Read [docs/AGENT_PROMPT.md](./AGENT_PROMPT.md) and **ask the owner what to do next** (do not assume).
+2. Read [docs/FINAL_PLAN.md](./FINAL_PLAN.md).
+3. `git checkout cursor/world-cup-p0-complete-21eb` (or `main` after merge).
+4. `npm install && npm test && npm run build`.
+5. Smoke-test: two users, group picks, accept groups, commit, check KO teams and Comparison.
 
 ---
 
-## 14. Contacts / conventions
+## 14. Conventions
 
-- Branch naming (cloud agent): `cursor/<descriptive-name>-4552`
+- Branch naming (cloud agent): `cursor/<descriptive-name>-21eb`
 - PR base: `main`
-- Do **not** modify Cursor plan files in artifacts; update `docs/FINAL_PLAN.md` only if product rules change (with owner approval).
+- Update `docs/FINAL_PLAN.md` only if product rules change (with owner approval).
 
 ---
 

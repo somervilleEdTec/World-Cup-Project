@@ -1,5 +1,7 @@
 # World Cup 2026 Prediction App — Project Plan
 
+> **Status (2026-06-02):** This document is the original exploration brief. **Competition rules** are superseded by [FINAL_PLAN.md](./FINAL_PLAN.md). **Implementation status** is in [HANDOVER.md](./HANDOVER.md). P0/P1 from the handover backlog are complete on branch `cursor/world-cup-p0-complete-21eb` (PR #2). New agents: start with [AGENT_PROMPT.md](./AGENT_PROMPT.md).
+
 ## 1. Vision
 
 A private (friends-and-family) web app where authenticated users submit **one locked bracket** before the tournament: group-stage results drive knockout matchups automatically, real results are entered as the Cup progresses, and a **live leaderboard** ranks everyone by prediction accuracy using a transparent, fair scoring model.
@@ -321,4 +323,4 @@ sequenceDiagram
 
 ## 12. Next Step
 
-Once open decisions in §10 are answered, Phase 0 + Phase 1 (schema seed + bracket engine tests) should be the first code merged. Everything else depends on that engine being correct.
+**Completed (see HANDOVER):** Bracket engine, schema seed, scoring, and core app shell are implemented. Remaining work is primarily P2 operations (Postgres, deploy, integration tests, real fixture import) — confirm priorities via [AGENT_PROMPT.md](./AGENT_PROMPT.md).
