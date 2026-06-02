@@ -1,4 +1,8 @@
-import { FIRST_MATCH_KICKOFF, matches, teams } from '../data/tournament';
+import { FIRST_MATCH_KICKOFF, teams } from '../data/tournament';
+import { getDownstreamKnockoutMatchIds } from './bracketEngine';
+import { computeGroupPositions } from './groupStandings';
+import { getMatches } from './matchResolver';
+import { picksFromActuals } from './pickUtils';
 import { ActualResult, Match, Pick, TournamentBonusPick } from '../types';
 
 const KO_STAGES = new Set(['R32', 'R16', 'QF', 'SF', 'THIRD_PLACE', 'FINAL']);
@@ -34,69 +38,23 @@ export function shouldLockGroup(nowIso = new Date().toISOString()): boolean {
   return kickoffReached(FIRST_MATCH_KICKOFF, nowIso);
 }
 
-export function lockableKnockoutMatchIds(nowIso = new Date().toISOString()): string[] {
+export function lockableKnockoutMatchIds(
+  nowIso = new Date().toISOString(),
+  picks: Record<string, Pick> = {},
+  actuals: Record<string, ActualResult> = {}
+): string[] {
+  const matches = getMatches(picks, actuals);
   return matches.filter((m) => isKnockout(m) && kickoffReached(m.kickoff, nowIso)).map((m) => m.id);
 }
 
 export function affectedFutureMatches(changedMatchId: string): string[] {
-  const changed = matches.find((m) => m.id === changedMatchId);
-  if (!changed) return [];
-
-  if (changed.stage === 'GROUP') {
-    return matches.filter((m) => isKnockout(m)).map((m) => m.id);
+  if (changedMatchId.startsWith('g-')) {
+    return getMatches().filter((m) => isKnockout(m)).map((m) => m.id);
   }
-  const stageOrder: Match['stage'][] = ['R32', 'R16', 'QF', 'SF', 'THIRD_PLACE', 'FINAL'];
-  const idx = stageOrder.indexOf(changed.stage);
-  return matches
-    .filter((m) => stageOrder.indexOf(m.stage) > idx)
-    .map((m) => m.id);
+  return getDownstreamKnockoutMatchIds(changedMatchId);
 }
 
-interface GroupRow {
-  teamId: string;
-  pts: number;
-  gd: number;
-  gf: number;
-}
-
-function compareRows(a: GroupRow, b: GroupRow): number {
-  if (b.pts !== a.pts) return b.pts - a.pts;
-  if (b.gd !== a.gd) return b.gd - a.gd;
-  return b.gf - a.gf;
-}
-
-export function computeGroupPositions(groupId: string, picks: Record<string, Pick>): string[] {
-  const groupMatches = matches.filter((m) => m.stage === 'GROUP' && m.group === groupId);
-  const rows = new Map<string, GroupRow>();
-
-  teams
-    .filter((team) => team.group === groupId)
-    .forEach((team) => rows.set(team.id, { teamId: team.id, pts: 0, gd: 0, gf: 0 }));
-
-  groupMatches.forEach((match) => {
-    const pick = picks[match.id];
-    if (!pick) return;
-    const home = rows.get(match.homeTeamId);
-    const away = rows.get(match.awayTeamId);
-    if (!home || !away) return;
-
-    home.gf += pick.homeScore;
-    away.gf += pick.awayScore;
-    home.gd += pick.homeScore - pick.awayScore;
-    away.gd += pick.awayScore - pick.homeScore;
-
-    if (pick.homeScore > pick.awayScore) {
-      home.pts += 3;
-    } else if (pick.homeScore < pick.awayScore) {
-      away.pts += 3;
-    } else {
-      home.pts += 1;
-      away.pts += 1;
-    }
-  });
-
-  return [...rows.values()].sort(compareRows).map((row) => row.teamId);
-}
+export { computeGroupPositions, computeGroupStandings, type GroupRow } from './groupStandings';
 
 export function computeScore(
   picks: Record<string, Pick>,
@@ -128,12 +86,10 @@ export function computeScore(
 
   let exactGroupPositions = 0;
   const groups = [...new Set(teams.map((team) => team.group))];
+  const actualPicks = picksFromActuals(actuals);
   groups.forEach((groupId) => {
     const predictedPositions = computeGroupPositions(groupId, picks);
-    const actualPositions = computeGroupPositions(
-      groupId,
-      Object.fromEntries(Object.values(actuals).map((result) => [result.matchId, result])) as unknown as Record<string, Pick>
-    );
+    const actualPositions = computeGroupPositions(groupId, actualPicks);
     predictedPositions.forEach((teamId, idx) => {
       if (actualPositions[idx] === teamId) {
         exactGroupPositions += 1;

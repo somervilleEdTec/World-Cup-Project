@@ -1,7 +1,8 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react';
-import { matches, teams } from '../data/tournament';
+import { groupMatches, teams } from '../data/tournament';
 import { TeamLabel } from '../components/TeamLabel';
 import { commitDraft, fetchPredictionState, markReviewed, saveBonusDraft, saveDraftPick } from '../services/apiClient';
+import { getMatches } from '../lib/matchResolver';
 import { computeGroupPositions, shouldLockGroup } from '../lib/tournamentLogic';
 import { Match, Pick, TournamentBonusPick } from '../types';
 
@@ -35,6 +36,7 @@ export function MyPicksPage() {
   const [groupIndex, setGroupIndex] = useState(0);
   const [message, setMessage] = useState<string>('');
   const [state, setState] = useState<RemoteState>(initialState);
+  const [acceptedGroups, setAcceptedGroups] = useState<Set<string>>(new Set());
 
   const nowIso = new Date().toISOString();
 
@@ -52,12 +54,16 @@ export function MyPicksPage() {
   }, []);
 
   const activeGroup = groupSequence[groupIndex];
-  const groupMatches = matches.filter((match) => match.stage === 'GROUP' && match.group === activeGroup);
+  const activeGroupMatches = groupMatches.filter((match) => match.group === activeGroup);
   const groupLocked = state.commitState.groupLocked || shouldLockGroup(nowIso);
 
   const mergedPicks = { ...state.committedPicks, ...state.draftPicks };
+  const resolvedMatches = useMemo(() => getMatches(mergedPicks), [mergedPicks]);
 
   const groupPreview = useMemo(() => computeGroupPositions(activeGroup, mergedPicks), [activeGroup, mergedPicks]);
+
+  const groupComplete = activeGroupMatches.every((match) => mergedPicks[match.id] !== undefined);
+  const groupAccepted = acceptedGroups.has(activeGroup);
 
   const saveMatch = async (event: FormEvent<HTMLFormElement>, match: Match) => {
     event.preventDefault();
@@ -111,7 +117,7 @@ export function MyPicksPage() {
 
       <article className="card">
         <h3>Group {activeGroup} predictions</h3>
-        {groupMatches.map((match) => {
+        {activeGroupMatches.map((match) => {
           const homeTeam = teams.find((team) => team.id === match.homeTeamId);
           const awayTeam = teams.find((team) => team.id === match.awayTeamId);
           const pick = mergedPicks[match.id];
@@ -138,12 +144,37 @@ export function MyPicksPage() {
         </ol>
 
         <div className="button-row">
+          <button
+            type="button"
+            disabled={!groupComplete || groupLocked}
+            onClick={() => setAcceptedGroups((prev) => new Set(prev).add(activeGroup))}
+          >
+            Accept group table
+          </button>
+          <button
+            type="button"
+            disabled={groupLocked}
+            onClick={() =>
+              setAcceptedGroups((prev) => {
+                const next = new Set(prev);
+                next.delete(activeGroup);
+                return next;
+              })
+            }
+          >
+            Amend
+          </button>
+        </div>
+        {!groupAccepted && groupComplete && <p className="warning">Accept this group before moving on.</p>}
+        {groupAccepted && <p className="success">Group {activeGroup} accepted.</p>}
+
+        <div className="button-row">
           <button type="button" disabled={groupIndex === 0} onClick={() => setGroupIndex((value) => value - 1)}>
             Previous Group
           </button>
           <button
             type="button"
-            disabled={groupIndex === groupSequence.length - 1}
+            disabled={groupIndex === groupSequence.length - 1 || !groupAccepted}
             onClick={() => setGroupIndex((value) => value + 1)}
           >
             Next Group
@@ -193,11 +224,13 @@ export function MyPicksPage() {
 
       <article className="card">
         <h3>Knockout fixture picks</h3>
-        {matches
+        {resolvedMatches
           .filter((match) => match.stage !== 'GROUP')
           .map((match) => {
             const homeTeam = teams.find((team) => team.id === match.homeTeamId);
             const awayTeam = teams.find((team) => team.id === match.awayTeamId);
+            const homeOk = homeTeam && homeTeam.id !== 'tbd';
+            const awayOk = awayTeam && awayTeam.id !== 'tbd';
             const pick = mergedPicks[match.id];
             const locked = new Date(nowIso).getTime() >= new Date(match.kickoff).getTime();
 
@@ -205,7 +238,8 @@ export function MyPicksPage() {
               <form key={match.id} onSubmit={(event) => saveMatch(event, match)} className="fixture-card">
                 <p className="kicker">{match.stage}</p>
                 <div className="fixture-row">
-                  {homeTeam && <TeamLabel team={homeTeam} />} <strong>vs</strong> {awayTeam && <TeamLabel team={awayTeam} />}
+                  {homeOk ? <TeamLabel team={homeTeam!} /> : <span>TBD</span>} <strong>vs</strong>{' '}
+                  {awayOk ? <TeamLabel team={awayTeam!} /> : <span>TBD</span>}
                 </div>
                 <p>
                   Locks in: {formatCountdown(match.kickoff, nowIso)} {locked ? '(Locked)' : '(Open)'}

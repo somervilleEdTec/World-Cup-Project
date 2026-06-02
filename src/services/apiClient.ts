@@ -93,3 +93,16 @@ export async function fetchNextMatchComparison() {
 export async function fetchMatchComparison(matchId: string) {
   return request(`/api/comparison/${matchId}`);
 }
+
+export async function fetchComparisonFixtures() {
+  return request<
+    Array<{
+      id: string;
+      stage: string;
+      group?: string;
+      kickoff: string;
+      homeTeamId: string;
+      awayTeamId: string;
+    }>
+  >('/api/comparison/fixtures');
+}

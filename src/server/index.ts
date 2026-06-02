@@ -12,8 +12,12 @@ import {
 } from './services/predictions';
 import { computeLeaderboard } from './services/leaderboard';
 import { getSyncStatus, syncFootballData } from './services/sync';
-import { getMatchComparison, getNextMatchComparison } from './services/comparison';
+import { getMatchComparison, getNextMatchComparison, listUpcomingMatches } from './services/comparison';
 import { db } from './db';
+import { ensureMatchMappingSchema, seedGroupMatchMappings } from './services/matchMapping';
+
+ensureMatchMappingSchema();
+seedGroupMatchMappings();
 
 const app = express();
 app.use(cors());
@@ -113,6 +117,15 @@ app.post('/api/system/locks/run', (_req: Request, res: Response) => {
   res.json({ ok: true });
 });
 
+
+app.get('/api/comparison/fixtures', (req: Request, res: Response) => {
+  try {
+    requireUser(authToken(req));
+    return res.json(listUpcomingMatches(new Date().toISOString()));
+  } catch (error) {
+    return res.status(401).json({ error: error instanceof Error ? error.message : 'Unauthorized' });
+  }
+});
 
 app.get('/api/comparison/next', (req: Request, res: Response) => {
   try {

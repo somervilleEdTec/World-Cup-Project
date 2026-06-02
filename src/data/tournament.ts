@@ -40,7 +40,7 @@ export const teams: Team[] = Object.entries(groupTeamNames).flatMap(([group, nam
   names.map((name) => ({ id: idFrom(name), name, group, flag: flags[name] ?? '🏳️' }))
 );
 
-function groupMatches(group: string, teamIds: string[], offsetDays: number): Match[] {
+function groupMatchesForGroup(group: string, teamIds: string[], offsetDays: number): Match[] {
   const [a, b, c, d] = teamIds;
   const pairs: Array<[string, string]> = [
     [a, b], [c, d], [a, c], [b, d], [a, d], [b, c]
@@ -56,27 +56,9 @@ function groupMatches(group: string, teamIds: string[], offsetDays: number): Mat
 }
 
 const groups = Object.keys(groupTeamNames);
-const allGroupMatches = groups.flatMap((group, index) => {
+export const groupMatches: Match[] = groups.flatMap((group, index) => {
   const ids = teams.filter((t) => t.group === group).map((t) => t.id);
-  return groupMatches(group, ids, index);
+  return groupMatchesForGroup(group, ids, index);
 });
 
-function placeholderKo(stage: Match['stage'], count: number, startDay: number): Match[] {
-  return Array.from({ length: count }).map((_, idx) => ({
-    id: `${stage.toLowerCase()}-${idx + 1}`,
-    stage,
-    kickoff: new Date(Date.UTC(2026, 5, startDay + idx, 18, 0, 0)).toISOString(),
-    homeTeamId: teams[idx % teams.length].id,
-    awayTeamId: teams[(idx + 1) % teams.length].id
-  }));
-}
-
-export const matches: Match[] = [
-  ...allGroupMatches,
-  ...placeholderKo('R32', 16, 28),
-  ...placeholderKo('R16', 8, 36),
-  ...placeholderKo('QF', 4, 42),
-  ...placeholderKo('SF', 2, 46),
-  ...placeholderKo('THIRD_PLACE', 1, 48),
-  ...placeholderKo('FINAL', 1, 49)
-];
+export { getMatches } from '../lib/matchResolver';

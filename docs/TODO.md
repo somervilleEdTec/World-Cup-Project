@@ -12,18 +12,18 @@
 
 ## P0 — Correctness
 
-- [ ] **Bracket engine** — FIFA 2026 group → R32 (+ 8 third-place slots); replace knockout placeholders
-- [ ] **football-data match ID mapping** — internal `match_id` ↔ provider ID before writing results
-- [ ] **Scoring: group position bonus** — compare predicted vs official standings from results
-- [ ] **Scoring: tournament bonus** — supply real champion/runner-up/3rd/4th from final results
-- [ ] **Dynamic KO fixtures** — populate KO matches from real qualifiers
+- [x] **Bracket engine** — FIFA 2026 group → R32 (+ 8 third-place slots); replace knockout placeholders
+- [x] **football-data match ID mapping** — internal `match_id` ↔ provider ID before writing results
+- [x] **Scoring: group position bonus** — compare predicted vs official standings from results
+- [x] **Scoring: tournament bonus** — supply real champion/runner-up/3rd/4th from final results
+- [x] **Dynamic KO fixtures** — populate KO matches from real qualifiers
 
 ## P1 — Product
 
-- [~] Group wizard **accept/amend** per group (preview exists; gate not strict)
-- [ ] Auth-protected routes + logout
-- [ ] Comparison: pick any upcoming fixture in UI
-- [ ] Public “How scoring works” page
+- [x] Group wizard **accept/amend** per group (preview exists; gate not strict)
+- [x] Auth-protected routes + logout
+- [x] Comparison: pick any upcoming fixture in UI
+- [x] Public “How scoring works” page
 
 ## P2 — Ops
 
@@ -44,12 +44,12 @@
 
 | ID | Status |
 |----|--------|
-| competition-rule-refactor | [~] |
-| group-position-bonus | [~] |
+| competition-rule-refactor | [x] |
+| group-position-bonus | [x] |
 | bonus-picks-page | [x] |
-| ko-rolling-locks | [~] |
+| ko-rolling-locks | [x] |
 | draft-commit-safety | [x] |
-| football-data-sync | [~] |
+| football-data-sync | [x] |
 
 ---
 

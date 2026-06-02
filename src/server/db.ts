@@ -64,4 +64,12 @@ CREATE TABLE IF NOT EXISTS sync_status (
 );
 
 INSERT OR IGNORE INTO sync_status (id) VALUES (1);
+
+CREATE TABLE IF NOT EXISTS match_external_ids (
+  internal_id TEXT NOT NULL,
+  provider TEXT NOT NULL,
+  provider_id TEXT NOT NULL,
+  PRIMARY KEY (provider, provider_id)
+);
+CREATE INDEX IF NOT EXISTS idx_match_external_internal ON match_external_ids(internal_id);
 `);

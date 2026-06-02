@@ -1,6 +1,8 @@
 import { db } from '../db';
 import { TournamentBonusPick, ActualResult } from '../../types';
 import { computeScore } from '../../lib/tournamentLogic';
+import { deriveFinalPlacings } from '../../lib/bracketEngine';
+import { picksFromActuals } from '../../lib/pickUtils';
 
 export function getResultsMap(): Record<string, ActualResult> {
   const rows = db
@@ -23,6 +25,7 @@ export function getResultsMap(): Record<string, ActualResult> {
 export function computeLeaderboard() {
   const users = db.prepare(`SELECT id, display_name FROM users`).all() as Array<{ id: string; display_name: string }>;
   const results = getResultsMap();
+  const finalPlacings = deriveFinalPlacings(picksFromActuals(results), results);
 
   return users
     .map((user) => {
@@ -57,7 +60,7 @@ export function computeLeaderboard() {
         .get(user.id) as { bonus_committed: string | null };
       const bonus = meta?.bonus_committed ? (JSON.parse(meta.bonus_committed) as TournamentBonusPick) : undefined;
 
-      const summary = computeScore(picks, results, bonus, undefined);
+      const summary = computeScore(picks, results, bonus, finalPlacings);
       return {
         userId: user.id,
         name: user.display_name,

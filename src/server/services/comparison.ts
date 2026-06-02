@@ -1,8 +1,8 @@
-import { matches } from '../../data/tournament';
+import { getMatches } from '../../lib/matchResolver';
 import { canViewOthersPicks, getNextUpcomingMatchId } from '../../lib/comparisonVisibility';
 import { isGroupStage, kickoffReached, shouldLockGroup } from '../../lib/tournamentLogic';
-import { Pick } from '../../types';
 import { db } from '../db';
+import { getResultsMap } from './leaderboard';
 
 export interface ComparisonPick {
   homeScore: number;
@@ -49,12 +49,27 @@ function rowToPick(row: {
   };
 }
 
+export function listUpcomingMatches(nowIso = new Date().toISOString()) {
+  const results = getResultsMap();
+  return getMatches({}, results)
+    .filter((m) => new Date(m.kickoff).getTime() > new Date(nowIso).getTime())
+    .map((m) => ({
+      id: m.id,
+      stage: m.stage,
+      group: m.group,
+      kickoff: m.kickoff,
+      homeTeamId: m.homeTeamId,
+      awayTeamId: m.awayTeamId
+    }));
+}
+
 export function getMatchComparison(
   matchId: string,
   currentUserId: string,
   nowIso = new Date().toISOString()
 ): MatchComparisonResponse | null {
-  const match = matches.find((m) => m.id === matchId);
+  const results = getResultsMap();
+  const match = getMatches({}, results).find((m) => m.id === matchId);
   if (!match) return null;
 
   const canViewOthers = canViewOthersPicks(match, nowIso);
@@ -122,9 +137,11 @@ export function getMatchComparison(
 }
 
 export function getNextMatchComparison(currentUserId: string, nowIso = new Date().toISOString()) {
+  const results = getResultsMap();
+  const allMatches = getMatches({}, results);
   const nextId = getNextUpcomingMatchId(
     nowIso,
-    matches.map((m) => ({ id: m.id, kickoff: m.kickoff }))
+    allMatches.map((m) => ({ id: m.id, kickoff: m.kickoff }))
   );
   if (!nextId) return null;
   return getMatchComparison(nextId, currentUserId, nowIso);

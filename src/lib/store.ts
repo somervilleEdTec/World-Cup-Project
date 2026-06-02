@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { matches } from '../data/tournament';
+import { getMatches } from '../lib/matchResolver';
 import { Pick, PlayerPredictionState, TournamentBonusPick } from '../types';
 import { affectedFutureMatches, lockableKnockoutMatchIds, shouldLockGroup, validatePick } from './tournamentLogic';
 
@@ -29,7 +29,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   nowIso: new Date().toISOString(),
   setNow: (iso) => set({ nowIso: iso }),
   updateDraftPick: (matchId, pick) => {
-    const match = matches.find((item) => item.id === matchId);
+    const match = getMatches().find((item) => item.id === matchId);
     if (!match) return ['Match not found'];
 
     const errors = validatePick(match, pick);
@@ -80,7 +80,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     }
 
     for (const [matchId, pick] of Object.entries(state.draftPicks)) {
-      const match = matches.find((item) => item.id === matchId);
+      const match = getMatches().find((item) => item.id === matchId);
       if (!match) continue;
       const errors = validatePick(match, pick);
       if (errors.length > 0) {
@@ -115,7 +115,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       },
       committedPicks: Object.fromEntries(
         Object.entries(committedPicks).map(([matchId, pick]) => {
-          const match = matches.find((item) => item.id === matchId);
+          const match = getMatches().find((item) => item.id === matchId);
           if (!match) return [matchId, pick];
           const locked = match.stage === 'GROUP' ? groupLocked : koLockedIds.has(matchId);
           return [matchId, { ...pick, reviewed: true, locked }];

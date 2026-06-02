@@ -1,5 +1,6 @@
-import { matches } from '../../data/tournament';
 import { db } from '../db';
+import { getMatches } from '../../lib/matchResolver';
+import { getResultsMap } from './leaderboard';
 import { affectedFutureMatches, shouldLockGroup, validatePick } from '../../lib/tournamentLogic';
 import { Pick, TournamentBonusPick } from '../../types';
 
@@ -61,7 +62,10 @@ export function getUserPredictionState(userId: string) {
 }
 
 export function saveDraftPick(userId: string, pick: Pick) {
-  const match = matches.find((m) => m.id === pick.matchId);
+  const state = getUserPredictionState(userId);
+  const results = getResultsMap();
+  const mergedPicks = { ...state.committedPicks, ...state.draftPicks, [pick.matchId]: pick };
+  const match = getMatches(mergedPicks, results).find((m) => m.id === pick.matchId);
   if (!match) throw new Error('Match not found');
   const errors = validatePick(match, pick);
   if (errors.length) throw new Error(errors[0]);
@@ -103,8 +107,10 @@ export function commitDraft(userId: string, nowIso: string) {
   const hasUnreviewed = state.affectedMatches.some((matchId) => !state.draftPicks[matchId]?.reviewed);
   if (hasUnreviewed) throw new Error('Review affected fixtures and Commit changes.');
 
+  const results = getResultsMap();
+  const merged = { ...state.committedPicks, ...state.draftPicks };
   Object.values(state.draftPicks).forEach((pick) => {
-    const match = matches.find((m) => m.id === pick.matchId);
+    const match = getMatches(merged, results).find((m) => m.id === pick.matchId);
     if (!match) return;
     const errors = validatePick(match, pick);
     if (errors.length) throw new Error(errors[0]);
@@ -144,7 +150,8 @@ export function runAutoLocks(nowIso: string) {
     });
   }
 
-  const lockable = matches
+  const results = getResultsMap();
+  const lockable = getMatches({}, results)
     .filter((m) => m.stage !== 'GROUP' && new Date(nowIso).getTime() >= new Date(m.kickoff).getTime())
     .map((m) => m.id);
 

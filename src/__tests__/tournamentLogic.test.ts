@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { computeScore, lockableKnockoutMatchIds, shouldLockGroup, validatePick } from '../lib/tournamentLogic';
+import { picksFromActuals } from '../lib/pickUtils';
 import { Match, Pick, TournamentBonusPick } from '../types';
 
 describe('tournament logic', () => {
@@ -57,5 +58,27 @@ describe('tournament logic', () => {
     expect(summary.points).toBeGreaterThanOrEqual(40);
     expect(summary.bonusHits).toBe(4);
     expect(summary.exactScores).toBeGreaterThanOrEqual(5);
+  });
+
+  it('scores exact group positions from official results', () => {
+    const picks = {
+      'g-a-1': { matchId: 'g-a-1', homeScore: 2, awayScore: 1 },
+      'g-a-2': { matchId: 'g-a-2', homeScore: 1, awayScore: 0 },
+      'g-a-3': { matchId: 'g-a-3', homeScore: 1, awayScore: 1 },
+      'g-a-4': { matchId: 'g-a-4', homeScore: 0, awayScore: 2 },
+      'g-a-5': { matchId: 'g-a-5', homeScore: 1, awayScore: 0 },
+      'g-a-6': { matchId: 'g-a-6', homeScore: 1, awayScore: 2 }
+    };
+    const actuals = {
+      'g-a-1': { matchId: 'g-a-1', homeScore: 2, awayScore: 1 },
+      'g-a-2': { matchId: 'g-a-2', homeScore: 1, awayScore: 0 },
+      'g-a-3': { matchId: 'g-a-3', homeScore: 1, awayScore: 1 },
+      'g-a-4': { matchId: 'g-a-4', homeScore: 0, awayScore: 2 },
+      'g-a-5': { matchId: 'g-a-5', homeScore: 1, awayScore: 0 },
+      'g-a-6': { matchId: 'g-a-6', homeScore: 0, awayScore: 1 }
+    };
+    const summary = computeScore(picks, actuals, undefined, undefined);
+    expect(summary.exactGroupPositions).toBeGreaterThan(0);
+    expect(picksFromActuals(actuals)['g-a-1']?.homeScore).toBe(2);
   });
 });
