@@ -16,16 +16,16 @@ export function LeagueTablePage() {
     <section className="card">
       <h2>League Table</h2>
       {error && <p className="warning">{error}</p>}
-      <table>
+      <table className="league-table-page">
         <thead>
           <tr>
             <th>Rank</th>
             <th>Player</th>
-            <th>Points</th>
             <th>Exact Scores</th>
             <th>Correct Results</th>
             <th>Exact Group Positions</th>
-            <th>Bonus Hits</th>
+            <th>Bonus Points</th>
+            <th>Points</th>
           </tr>
         </thead>
         <tbody>
@@ -33,11 +33,11 @@ export function LeagueTablePage() {
             <tr key={entry.userId}>
               <td>{index + 1}</td>
               <td>{entry.name}</td>
-              <td>{entry.points}</td>
-              <td>{entry.exactScores}</td>
-              <td>{entry.correctResults}</td>
-              <td>{entry.exactGroupPositions}</td>
-              <td>{entry.bonusHits}</td>
+              <td className="league-stat">{entry.exactScores}</td>
+              <td className="league-stat">{entry.correctResults}</td>
+              <td className="league-stat">{entry.exactGroupPositions}</td>
+              <td className="league-stat">{entry.bonusHits}</td>
+              <td className="league-stat league-total">{entry.points}</td>
             </tr>
           ))}
         </tbody>

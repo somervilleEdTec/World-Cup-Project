@@ -329,6 +329,20 @@ td {
   text-align: center;
 }
 
+.league-table-page .league-stat {
+  font-weight: 700;
+  text-align: center;
+}
+
+.league-table-page .league-total {
+  font-weight: 800;
+}
+
+.league-table-page th:last-child,
+.league-table-page td:last-child {
+  text-align: center;
+}
+
 .league-table th:first-child,
 .league-table td:first-child,
 .league-table th:nth-child(2),
