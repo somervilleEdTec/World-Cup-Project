@@ -77,6 +77,7 @@ npm run seed:ko-environment -- --no-purge
 - **My Predictions** shows **Your prediction**, **Official result**, and **Points scored** when locked/results exist.
 - **Comparison** lists all fixtures with known teams; group predictions after lock; **knockout after kickoff**.
 - Optional: seed every knockout result (all 32 fixtures unlocked) with `npm run seed:ko-environment -- --full-bracket`
+- **One final prediction left per user** (all other results + picks): see [FINAL_PREDICTION_HANDOVER.md](./FINAL_PREDICTION_HANDOVER.md) — `npm run seed:before-final`
 
 ## Bug evaluation (environment vs product)
 
