@@ -3,9 +3,14 @@ import { Pick } from '../types';
 
 export interface GroupRow {
   teamId: string;
-  pts: number;
-  gd: number;
+  gp: number;
+  w: number;
+  d: number;
+  l: number;
   gf: number;
+  ga: number;
+  gd: number;
+  pts: number;
 }
 
 function compareRows(a: GroupRow, b: GroupRow): number {
@@ -20,7 +25,9 @@ export function computeGroupStandings(groupId: string, picks: Record<string, Pic
 
   teams
     .filter((team) => team.group === groupId)
-    .forEach((team) => rows.set(team.id, { teamId: team.id, pts: 0, gd: 0, gf: 0 }));
+    .forEach((team) =>
+      rows.set(team.id, { teamId: team.id, gp: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0, gd: 0, pts: 0 })
+    );
 
   matchesInGroup.forEach((match) => {
     const pick = picks[match.id];
@@ -29,18 +36,28 @@ export function computeGroupStandings(groupId: string, picks: Record<string, Pic
     const away = rows.get(match.awayTeamId);
     if (!home || !away) return;
 
+    home.gp += 1;
+    away.gp += 1;
     home.gf += pick.homeScore;
     away.gf += pick.awayScore;
+    home.ga += pick.awayScore;
+    away.ga += pick.homeScore;
     home.gd += pick.homeScore - pick.awayScore;
     away.gd += pick.awayScore - pick.homeScore;
 
     if (pick.homeScore > pick.awayScore) {
       home.pts += 3;
+      home.w += 1;
+      away.l += 1;
     } else if (pick.homeScore < pick.awayScore) {
       away.pts += 3;
+      away.w += 1;
+      home.l += 1;
     } else {
       home.pts += 1;
       away.pts += 1;
+      home.d += 1;
+      away.d += 1;
     }
   });
 

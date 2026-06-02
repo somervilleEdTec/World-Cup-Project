@@ -136,6 +136,13 @@ select {
   margin-bottom: 0.8rem;
 }
 
+.button-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
 .button-row button.active-tab {
   background: #0b3d6e;
   color: #fff;
@@ -214,6 +221,18 @@ td {
 .comparison-row-you {
   background: #eef8f3;
   font-weight: 600;
+}
+
+.league-table th,
+.league-table td {
+  text-align: center;
+}
+
+.league-table th:first-child,
+.league-table td:first-child,
+.league-table th:nth-child(2),
+.league-table td:nth-child(2) {
+  text-align: left;
 }
 
 .fixture-list {
