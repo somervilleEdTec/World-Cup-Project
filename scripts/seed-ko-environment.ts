@@ -22,6 +22,11 @@ const TEST_PASSWORD = 'summer';
 const ADMIN_DISPLAY_NAME = 'Test 1';
 /** Simulates tournament after first kickoff — locks group + bonus picks in DB. */
 const SIMULATED_NOW_ISO = '2026-07-20T00:00:00Z';
+/** After third-place, before final kickoff — one final prediction left per user. */
+const SIMULATED_BEFORE_FINAL_ISO = '2026-07-19T12:00:00Z';
+/** When seeding KO predictions, must be before any KO fixture kickoff. */
+const SEED_KO_PICKS_NOW_ISO = '2026-06-27T00:00:00Z';
+const FINAL_MATCH_ID = 'final';
 
 function randomInt(maxInclusive: number): number {
   return Math.floor(Math.random() * (maxInclusive + 1));
@@ -118,8 +123,10 @@ async function generateOfficialGroupResults(maxAttempts = 80): Promise<Record<st
 }
 
 async function generateOfficialKnockoutResults(
-  groupActuals: Record<string, ActualResult>
+  groupActuals: Record<string, ActualResult>,
+  options?: { excludeResultMatchIds?: string[] }
 ): Promise<Record<string, ActualResult>> {
+  const exclude = new Set(options?.excludeResultMatchIds ?? []);
   const actuals = { ...groupActuals };
   let picks = picksFromActuals(actuals);
 
@@ -127,7 +134,7 @@ async function generateOfficialKnockoutResults(
     const resolved = buildKnockoutMatches(picks, actuals);
     const match = resolved.find((m) => m.id === template.id);
     if (!match || match.homeTeamId === 'tbd' || match.awayTeamId === 'tbd') continue;
-    if (actuals[match.id]) continue;
+    if (actuals[match.id] || exclude.has(match.id)) continue;
 
     const { homeScore, awayScore } = randomScorePair();
     actuals[match.id] = await insertResult(
@@ -165,6 +172,17 @@ async function seedTestUsers(): Promise<Map<string, string>> {
   return userIds;
 }
 
+function randomKnockoutPick(matchId: string, homeTeamId: string, awayTeamId: string): Pick {
+  const { homeScore, awayScore } = randomScorePair();
+  const progressingTeamId =
+    homeScore === awayScore
+      ? Math.random() < 0.5
+        ? homeTeamId
+        : awayTeamId
+      : undefined;
+  return { matchId, homeScore, awayScore, progressingTeamId };
+}
+
 async function seedUserPredictions(userId: string, displayName: string): Promise<void> {
   for (const match of groupMatches) {
     await saveDraftPick(userId, randomGroupPick(match.id));
@@ -174,8 +192,35 @@ async function seedUserPredictions(userId: string, displayName: string): Promise
   console.log(`  Picks saved for ${displayName} (72 group + tournament bonus).`);
 }
 
+async function seedUserKnockoutPredictions(
+  userId: string,
+  displayName: string,
+  actuals: Record<string, ActualResult>,
+  excludeMatchIds: string[],
+  pickNowIso: string
+): Promise<number> {
+  const excluded = new Set(excludeMatchIds);
+  const fixtures = buildConfirmedKnockoutFixtures(actuals).filter((m) => !excluded.has(m.id));
+  for (const match of fixtures) {
+    await saveDraftPick(
+      userId,
+      randomKnockoutPick(match.id, match.homeTeamId, match.awayTeamId),
+      pickNowIso
+    );
+  }
+  // eslint-disable-next-line no-console
+  console.log(`  KO predictions for ${displayName}: ${fixtures.length} saved (excluded: ${excludeMatchIds.join(', ') || 'none'}).`);
+  return fixtures.length;
+}
+
 async function main() {
   const skipPurge = process.argv.includes('--no-purge');
+  const beforeFinal = process.argv.includes('--before-final');
+  const fullBracket = process.argv.includes('--full-bracket');
+
+  if (beforeFinal && fullBracket) {
+    throw new Error('Use only one of --before-final or --full-bracket.');
+  }
 
   await initDatabase();
   if (!skipPurge) {
@@ -192,31 +237,61 @@ async function main() {
 
   // eslint-disable-next-line no-console
   console.log('\nGenerating official results (manual override, no API token)…');
-  const fullBracket = process.argv.includes('--full-bracket');
   const groupActuals = await generateOfficialGroupResults();
-  const allActuals = fullBracket
-    ? await generateOfficialKnockoutResults(groupActuals)
-    : groupActuals;
+  let allActuals: Record<string, ActualResult>;
+  if (beforeFinal) {
+    allActuals = await generateOfficialKnockoutResults(groupActuals, {
+      excludeResultMatchIds: [FINAL_MATCH_ID]
+    });
+    // eslint-disable-next-line no-console
+    console.log(`Official KO results through third-place; final (${FINAL_MATCH_ID}) has teams but no score.`);
+  } else if (fullBracket) {
+    allActuals = await generateOfficialKnockoutResults(groupActuals);
+  } else {
+    allActuals = groupActuals;
+  }
 
-  await runAutoLocks(SIMULATED_NOW_ISO);
+  if (beforeFinal) {
+    // eslint-disable-next-line no-console
+    console.log('\nSeeding knockout predictions (all confirmed fixtures except final)…');
+    for (const [displayName, userId] of userIds) {
+      await seedUserKnockoutPredictions(userId, displayName, allActuals, [FINAL_MATCH_ID], SEED_KO_PICKS_NOW_ISO);
+    }
+  }
+
+  const lockNowIso = beforeFinal ? SIMULATED_BEFORE_FINAL_ISO : SIMULATED_NOW_ISO;
+  await runAutoLocks(lockNowIso);
   // eslint-disable-next-line no-console
-  console.log(`Applied tournament locks (simulated date ${SIMULATED_NOW_ISO}).`);
+  console.log(`Applied tournament locks (simulated date ${lockNowIso}).`);
 
   const confirmed = buildConfirmedKnockoutFixtures(allActuals);
+  const finalFixture = confirmed.find((m) => m.id === FINAL_MATCH_ID);
   const leaderboard = await computeLeaderboard();
+
+  const scenarioLabel = beforeFinal
+    ? 'before-final (one prediction left per user)'
+    : fullBracket
+      ? 'full bracket'
+      : 'group stage only';
 
   // eslint-disable-next-line no-console
   console.log('\n--- KO environment summary ---');
+  // eslint-disable-next-line no-console
+  console.log(`Scenario: ${scenarioLabel}`);
   // eslint-disable-next-line no-console
   console.log(`Users: ${TEST_USER_COUNT} (password: ${TEST_PASSWORD})`);
   // eslint-disable-next-line no-console
   console.log(`Admin login: ${ADMIN_DISPLAY_NAME} / ${TEST_PASSWORD}`);
   // eslint-disable-next-line no-console
-  console.log(
-    `Official results: ${Object.keys(allActuals).length} matches (${fullBracket ? 'full bracket' : 'group stage only'})`
-  );
+  console.log(`Official results: ${Object.keys(allActuals).length} matches`);
   // eslint-disable-next-line no-console
   console.log(`Confirmed KO fixtures for picks UI: ${confirmed.length}`);
+  if (beforeFinal && finalFixture) {
+    // eslint-disable-next-line no-console
+    console.log(
+      `Final fixture: ${finalFixture.homeTeamId} vs ${finalFixture.awayTeamId} — no official result; no user prediction yet.`
+    );
+  }
   // eslint-disable-next-line no-console
   console.log('Leaderboard (points):');
   leaderboard
