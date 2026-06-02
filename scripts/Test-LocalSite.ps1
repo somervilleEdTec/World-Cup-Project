@@ -60,16 +60,32 @@ function Assert-Command([string] $Name) {
 function Invoke-Npm {
   param([Parameter(Mandatory)][string[]] $Command)
 
-  Write-Host "  npm $($Command -join ' ')" -ForegroundColor DarkGray
-  $proc = Start-Process `
-    -FilePath 'npm' `
-    -ArgumentList $Command `
-    -WorkingDirectory $RepoRoot `
-    -Wait `
-    -PassThru `
-    -NoNewWindow
-  if ($proc.ExitCode -ne 0) {
-    throw "npm $($Command -join ' ') failed with exit code $($proc.ExitCode)"
+  $label = "npm $($Command -join ' ')"
+  Write-Host "  $label" -ForegroundColor DarkGray
+
+  Push-Location $RepoRoot
+  try {
+    $onWindows = ($env:OS -eq 'Windows_NT') -or ($IsWindows -eq $true)
+    if ($onWindows) {
+      # npm is npm.cmd on Windows; Start-Process cannot launch it directly.
+      $proc = Start-Process `
+        -FilePath 'cmd.exe' `
+        -ArgumentList @('/d', '/c', $label) `
+        -WorkingDirectory $RepoRoot `
+        -Wait `
+        -PassThru `
+        -NoNewWindow
+      $exitCode = $proc.ExitCode
+    } else {
+      & npm @Command
+      $exitCode = $LASTEXITCODE
+    }
+
+    if ($exitCode -ne 0) {
+      throw "$label failed with exit code $exitCode"
+    }
+  } finally {
+    Pop-Location
   }
 }
 
