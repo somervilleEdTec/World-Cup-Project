@@ -8,7 +8,12 @@ import { fetchPredictionState, lockGroup, saveBonusDraft, saveDraftPick } from '
 import { TeamSelect } from '../components/TeamSelect';
 import { ALL_GROUP_IDS } from '../lib/pickLocks';
 import { computeMissingPicks } from '../lib/missingPicks';
-import { computeGroupStandings, shouldLockGroup } from '../lib/tournamentLogic';
+import {
+  computeGroupStandings,
+  isKnockoutFixtureLocked,
+  kickoffReached,
+  shouldLockGroup
+} from '../lib/tournamentLogic';
 import { ActualResult, Match, Pick, Stage, TournamentBonusPick } from '../types';
 
 const groupSequence = ALL_GROUP_IDS;
@@ -274,20 +279,24 @@ export function MyPicksPage() {
           {groupIsLocked && lockedGroups.includes(activeGroup) && (
             <p className="success">Group {activeGroup} is locked.</p>
           )}
-          {activeGroupMatches.map((match) => (
-            <FixturePickCard
-              key={match.id}
-              match={match}
-              pick={mergedPicks[match.id]}
-              actual={officialResults[match.id]}
-              nowIso={nowIso}
-              inputsDisabled={groupIsLocked}
-              onSave={saveMatchPick}
-              onScoresChange={(updated) =>
-                setPendingGroupPicks((current) => ({ ...current, [match.id]: updated }))
-              }
-            />
-          ))}
+          {activeGroupMatches.map((match) => {
+            const groupFixtureLocked = groupIsLocked || kickoffReached(match.kickoff, nowIso);
+            return (
+              <FixturePickCard
+                key={match.id}
+                match={match}
+                pick={mergedPicks[match.id]}
+                actual={officialResults[match.id]}
+                nowIso={nowIso}
+                inputsDisabled={groupIsLocked}
+                showLockedSummary={groupFixtureLocked}
+                onSave={saveMatchPick}
+                onScoresChange={(updated) =>
+                  setPendingGroupPicks((current) => ({ ...current, [match.id]: updated }))
+                }
+              />
+            );
+          })}
 
           <h4>Projected table (Group {activeGroup})</h4>
           <p className="fixture-meta">Based on your score predictions for this group.</p>
@@ -394,18 +403,25 @@ export function MyPicksPage() {
           {activeKoFixtures.length === 0 ? (
             <p className="warning">No fixtures are confirmed for this round yet.</p>
           ) : (
-            activeKoFixtures.map((match) => (
-              <FixturePickCard
-                key={match.id}
-                match={match}
-                pick={mergedPicks[match.id]}
-                actual={officialResults[match.id]}
-                nowIso={nowIso}
-                inputsDisabled={!koPicksAllowed}
-                onSave={saveMatchPick}
-                kickoffHint={`Locks in: ${formatCountdown(match.kickoff, nowIso)}`}
-              />
-            ))
+            activeKoFixtures.map((match) => {
+              const actual = officialResults[match.id];
+              const koFixtureLocked = isKnockoutFixtureLocked(match, nowIso, actual);
+              return (
+                <FixturePickCard
+                  key={match.id}
+                  match={match}
+                  pick={mergedPicks[match.id]}
+                  actual={actual}
+                  nowIso={nowIso}
+                  inputsDisabled={!koPicksAllowed}
+                  showLockedSummary={koFixtureLocked}
+                  onSave={saveMatchPick}
+                  kickoffHint={
+                    koFixtureLocked ? undefined : `Locks in: ${formatCountdown(match.kickoff, nowIso)}`
+                  }
+                />
+              );
+            })
           )}
         </article>
       )}

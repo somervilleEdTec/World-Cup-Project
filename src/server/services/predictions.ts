@@ -77,7 +77,8 @@ export async function getUserPredictionState(userId: string) {
   const meta = await getMeta(userId);
   const groupPicksCommittedCount = countCommittedGroupPicks(committedPicks);
   const results = await getResultsMap();
-  const confirmedKnockoutFixtures = buildConfirmedKnockoutFixtures(results);
+  const confirmedIds = new Set(buildConfirmedKnockoutFixtures(results).map((m) => m.id));
+  const confirmedKnockoutFixtures = getMatches({}, results).filter((m) => confirmedIds.has(m.id));
   return {
     committedPicks,
     draftPicks,
@@ -111,7 +112,7 @@ export async function saveDraftPick(userId: string, pick: Pick, nowIso = new Dat
   const match = getMatches(mergedPicks, results).find((m) => m.id === pick.matchId);
   if (!match) throw new Error('Match not found');
 
-  assertMatchEditable(match, groupLocked, nowIso);
+  assertMatchEditable(match, groupLocked, nowIso, results[pick.matchId]);
 
   if (isGroupStage(match) && match.group) {
     const lockedGroups = parseAcceptedGroups(meta?.accepted_groups);
@@ -238,7 +239,7 @@ export async function commitDraft(userId: string, nowIso: string) {
 
   const promotableDrafts = Object.values(state.draftPicks).filter((pick) => {
     const match = getMatches(merged, results).find((m) => m.id === pick.matchId);
-    return match && isMatchEditable(match, groupLocked, nowIso);
+    return match && isMatchEditable(match, groupLocked, nowIso, results[pick.matchId]);
   });
 
   const hasUnreviewed = promotableDrafts.some(

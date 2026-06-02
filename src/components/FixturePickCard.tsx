@@ -194,7 +194,10 @@ export interface FixturePickCardProps {
   pick?: Pick;
   actual?: ActualResult;
   nowIso: string;
+  /** Disables score inputs (e.g. 72 group picks not complete) without switching to locked summary. */
   inputsDisabled: boolean;
+  /** When true, show prediction as text with official result and points (group-style locked view). */
+  showLockedSummary: boolean;
   onSave: (pick: Pick) => Promise<void>;
   onScoresChange?: (pick: Pick) => void;
   kickoffHint?: string;
@@ -206,6 +209,7 @@ export function FixturePickCard({
   actual,
   nowIso,
   inputsDisabled,
+  showLockedSummary,
   onSave,
   onScoresChange,
   kickoffHint
@@ -214,7 +218,8 @@ export function FixturePickCard({
   const awayTeam = teams.find((team) => team.id === match.awayTeamId);
   const homeOk = homeTeam && homeTeam.id !== 'tbd';
   const awayOk = awayTeam && awayTeam.id !== 'tbd';
-  const fixtureLocked = inputsDisabled || kickoffReached(match.kickoff, nowIso);
+  const kickoffLocked = kickoffReached(match.kickoff, nowIso);
+  const inputsSaveDisabled = inputsDisabled || kickoffLocked;
   const points = computeMatchPoints(pick, actual);
 
   return (
@@ -226,7 +231,7 @@ export function FixturePickCard({
       </div>
       {kickoffHint && <p className="fixture-meta">{kickoffHint}</p>}
 
-      {fixtureLocked ? (
+      {showLockedSummary ? (
         <div className="fixture-scores-summary fixture-scores-locked">
           <p>
             <strong>Your prediction:</strong> {formatPickLine(pick, match)}
@@ -252,7 +257,7 @@ export function FixturePickCard({
           <EditableScoreInputs
             match={match}
             pick={pick}
-            disabled={inputsDisabled}
+            disabled={inputsSaveDisabled}
             onSave={onSave}
             onScoresChange={onScoresChange}
           />
