@@ -7,7 +7,7 @@ const links = [
   { to: '/comparison', label: 'Comparison' }
 ];
 
-export function AppLayout(): JSX.Element {
+export function AppLayout() {
   return (
     <div className="app-shell">
       <header className="app-header">

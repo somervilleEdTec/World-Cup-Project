@@ -15,7 +15,7 @@ function formatCountdown(targetIso: string, nowIso: string): string {
   return `${hours}h ${minutes}m`;
 }
 
-export function MyPicksPage(): JSX.Element {
+export function MyPicksPage() {
   const [groupIndex, setGroupIndex] = useState(0);
   const [message, setMessage] = useState<string>('');
 

@@ -6,7 +6,7 @@ import { LoginPage } from './pages/LoginPage';
 import { MyPicksPage } from './pages/MyPicksPage';
 import { WelcomePage } from './pages/WelcomePage';
 
-export function App(): JSX.Element {
+export function App() {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />

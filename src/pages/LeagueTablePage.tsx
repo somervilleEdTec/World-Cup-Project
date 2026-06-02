@@ -11,7 +11,7 @@ const finalPlacings: TournamentBonusPick = {
   fourthTeamId: 'kor'
 };
 
-export function LeagueTablePage(): JSX.Element {
+export function LeagueTablePage() {
   const committedPicks = useAppStore((state) => state.committedPicks);
   const bonusCommitted = useAppStore((state) => state.bonusCommitted);
 

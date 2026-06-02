@@ -2,7 +2,7 @@ import { matches, teams } from '../data/tournament';
 import { TeamLabel } from '../components/TeamLabel';
 import { useAppStore } from '../lib/store';
 
-export function ComparisonPage(): JSX.Element {
+export function ComparisonPage() {
   const committedPicks = useAppStore((state) => state.committedPicks);
   const nowIso = useAppStore((state) => state.nowIso);
 

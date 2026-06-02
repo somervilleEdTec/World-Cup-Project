@@ -1,7 +1,7 @@
 import { FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-export function LoginPage(): JSX.Element {
+export function LoginPage() {
   const navigate = useNavigate();
 
   const onSubmit = (event: FormEvent<HTMLFormElement>) => {

@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useAppStore } from '../lib/store';
 
-export function WelcomePage(): JSX.Element {
+export function WelcomePage() {
   const affectedMatches = useAppStore((state) => state.affectedMatches.length);
   const groupLocked = useAppStore((state) => state.commitState.groupLocked);
 

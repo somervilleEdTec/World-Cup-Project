@@ -1,12 +1,7 @@
 import { create } from 'zustand';
 import { matches } from '../data/tournament';
 import { Pick, PlayerPredictionState, TournamentBonusPick } from '../types';
-import {
-  affectedFutureMatches,
-  lockableKnockoutMatchIds,
-  shouldLockGroup,
-  validatePick
-} from './tournamentLogic';
+import { affectedFutureMatches, lockableKnockoutMatchIds, shouldLockGroup, validatePick } from './tournamentLogic';
 
 interface AppState extends PlayerPredictionState {
   nowIso: string;
@@ -40,37 +35,36 @@ export const useAppStore = create<AppState>((set, get) => ({
     const errors = validatePick(match, pick);
     const impacted = affectedFutureMatches(matchId);
 
-    set((state) => ({
-      draftPicks: {
-        ...state.draftPicks,
-        [matchId]: {
-          ...pick,
-          reviewed: true
-        },
-        ...Object.fromEntries(
-          impacted.map((id) => {
-            const previous = state.draftPicks[id] ?? state.committedPicks[id];
-            if (!previous) return [id, undefined];
-            return [id, { ...previous, reviewed: false }];
-          })
-        )
-      },
-      affectedMatches: [...new Set([...state.affectedMatches, ...impacted])]
-    }));
+    set((state) => {
+      const updated: Record<string, Pick> = { ...state.draftPicks, [matchId]: { ...pick, reviewed: true } };
+      impacted.forEach((id) => {
+        const previous = state.draftPicks[id] ?? state.committedPicks[id];
+        if (previous) {
+          updated[id] = { ...previous, reviewed: false };
+        }
+      });
+      return {
+        draftPicks: updated,
+        affectedMatches: [...new Set([...state.affectedMatches, ...impacted])]
+      };
+    });
 
     return errors;
   },
   reviewAffectedMatch: (matchId) => {
-    set((state) => ({
-      draftPicks: {
-        ...state.draftPicks,
-        [matchId]: {
-          ...(state.draftPicks[matchId] ?? state.committedPicks[matchId]),
-          reviewed: true
-        }
-      },
-      affectedMatches: state.affectedMatches.filter((id) => id !== matchId)
-    }));
+    set((state) => {
+      const existing = state.draftPicks[matchId] ?? state.committedPicks[matchId];
+      if (!existing) {
+        return { affectedMatches: state.affectedMatches.filter((id) => id !== matchId) };
+      }
+      return {
+        draftPicks: {
+          ...state.draftPicks,
+          [matchId]: { ...existing, reviewed: true }
+        },
+        affectedMatches: state.affectedMatches.filter((id) => id !== matchId)
+      };
+    });
   },
   setBonusDraft: (bonusDraft) => set({ bonusDraft }),
   commitDraft: () => {
@@ -85,11 +79,9 @@ export const useAppStore = create<AppState>((set, get) => ({
       return { ok: false, message: 'Review affected fixtures and Commit changes.' };
     }
 
-    const pendingMatches = Object.keys(state.draftPicks);
-    for (const matchId of pendingMatches) {
+    for (const [matchId, pick] of Object.entries(state.draftPicks)) {
       const match = matches.find((item) => item.id === matchId);
-      const pick = state.draftPicks[matchId];
-      if (!match || !pick) continue;
+      if (!match) continue;
       const errors = validatePick(match, pick);
       if (errors.length > 0) {
         return { ok: false, message: errors[0] };
