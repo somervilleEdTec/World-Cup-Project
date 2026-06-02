@@ -1,7 +1,7 @@
 import { getMatches } from '../../lib/matchResolver';
 import { canViewOthersPicks, getNextUpcomingMatchId } from '../../lib/comparisonVisibility';
 import { isGroupStage, kickoffReached, shouldLockGroup } from '../../lib/tournamentLogic';
-import { db } from '../db';
+import { getDb } from '../database';
 import { getResultsMap } from './leaderboard';
 
 export interface ComparisonPick {
@@ -49,8 +49,8 @@ function rowToPick(row: {
   };
 }
 
-export function listUpcomingMatches(nowIso = new Date().toISOString()) {
-  const results = getResultsMap();
+export async function listUpcomingMatches(nowIso = new Date().toISOString()) {
+  const results = await getResultsMap();
   return getMatches({}, results)
     .filter((m) => new Date(m.kickoff).getTime() > new Date(nowIso).getTime())
     .map((m) => ({
@@ -63,12 +63,13 @@ export function listUpcomingMatches(nowIso = new Date().toISOString()) {
     }));
 }
 
-export function getMatchComparison(
+export async function getMatchComparison(
   matchId: string,
   currentUserId: string,
   nowIso = new Date().toISOString()
-): MatchComparisonResponse | null {
-  const results = getResultsMap();
+): Promise<MatchComparisonResponse | null> {
+  const db = getDb();
+  const results = await getResultsMap();
   const match = getMatches({}, results).find((m) => m.id === matchId);
   if (!match) return null;
 
@@ -76,23 +77,21 @@ export function getMatchComparison(
   const matchLocked = kickoffReached(match.kickoff, nowIso);
   const groupLocked = shouldLockGroup(nowIso);
 
-  const users = db.prepare(`SELECT id, display_name FROM users ORDER BY display_name`).all() as Array<{
-    id: string;
-    display_name: string;
-  }>;
+  const users = await db.all<{ id: string; display_name: string }>(
+    `SELECT id, display_name FROM users ORDER BY display_name`
+  );
 
-  const pickRows = db
-    .prepare(
-      `SELECT user_id, home_score, away_score, progressing_team_id
-       FROM predictions
-       WHERE match_id = ? AND state = 'committed'`
-    )
-    .all(matchId) as Array<{
+  const pickRows = await db.all<{
     user_id: string;
     home_score: number;
     away_score: number;
     progressing_team_id: string | null;
-  }>;
+  }>(
+    `SELECT user_id, home_score, away_score, progressing_team_id
+     FROM predictions
+     WHERE match_id = ? AND state = 'committed'`,
+    [matchId]
+  );
 
   const pickByUser = new Map(pickRows.map((row) => [row.user_id, row]));
 
@@ -136,8 +135,8 @@ export function getMatchComparison(
   };
 }
 
-export function getNextMatchComparison(currentUserId: string, nowIso = new Date().toISOString()) {
-  const results = getResultsMap();
+export async function getNextMatchComparison(currentUserId: string, nowIso = new Date().toISOString()) {
+  const results = await getResultsMap();
   const allMatches = getMatches({}, results);
   const nextId = getNextUpcomingMatchId(
     nowIso,

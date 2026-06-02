@@ -1,5 +1,5 @@
 import crypto from 'node:crypto';
-import { db } from '../db';
+import { getDb } from '../database';
 
 const SESSION_TTL_HOURS = 24 * 30;
 
@@ -22,28 +22,33 @@ export interface AuthUser {
   isAdmin: boolean;
 }
 
-export function register(email: string, password: string, displayName: string): AuthUser {
+export async function register(email: string, password: string, displayName: string): Promise<AuthUser> {
+  const db = getDb();
   const id = crypto.randomUUID();
   const now = new Date().toISOString();
   const passwordHash = hashPassword(password);
 
-  db.prepare(
-    `INSERT INTO users (id, email, password_hash, display_name, created_at) VALUES (?, ?, ?, ?, ?)`
-  ).run(id, email.toLowerCase(), passwordHash, displayName, now);
+  await db.run(
+    `INSERT INTO users (id, email, password_hash, display_name, created_at) VALUES (?, ?, ?, ?, ?)`,
+    [id, email.toLowerCase(), passwordHash, displayName, now]
+  );
 
-  db.prepare(
-    `INSERT INTO prediction_meta (user_id, committed_at) VALUES (?, ?)`
-  ).run(id, now);
+  await db.run(`INSERT INTO prediction_meta (user_id, committed_at) VALUES (?, ?)`, [id, now]);
 
   return { id, email: email.toLowerCase(), displayName, isAdmin: false };
 }
 
-export function login(email: string, password: string): { user: AuthUser; token: string } {
-  const row = db
-    .prepare(`SELECT id, email, password_hash, display_name, is_admin FROM users WHERE email = ?`)
-    .get(email.toLowerCase()) as
-    | { id: string; email: string; password_hash: string; display_name: string; is_admin: number }
-    | undefined;
+export async function login(email: string, password: string): Promise<{ user: AuthUser; token: string }> {
+  const db = getDb();
+  const row = await db.get<{
+    id: string;
+    email: string;
+    password_hash: string;
+    display_name: string;
+    is_admin: number;
+  }>(`SELECT id, email, password_hash, display_name, is_admin FROM users WHERE email = ?`, [
+    email.toLowerCase()
+  ]);
 
   if (!row || !verifyPassword(password, row.password_hash)) {
     throw new Error('Invalid credentials');
@@ -53,8 +58,12 @@ export function login(email: string, password: string): { user: AuthUser; token:
   const now = new Date();
   const expires = new Date(now.getTime() + SESSION_TTL_HOURS * 60 * 60 * 1000);
 
-  db.prepare(`INSERT INTO sessions (token, user_id, created_at, expires_at) VALUES (?, ?, ?, ?)`)
-    .run(token, row.id, now.toISOString(), expires.toISOString());
+  await db.run(`INSERT INTO sessions (token, user_id, created_at, expires_at) VALUES (?, ?, ?, ?)`, [
+    token,
+    row.id,
+    now.toISOString(),
+    expires.toISOString()
+  ]);
 
   return {
     token,
@@ -62,18 +71,21 @@ export function login(email: string, password: string): { user: AuthUser; token:
   };
 }
 
-export function requireUser(token: string | undefined): AuthUser {
+export async function requireUser(token: string | undefined): Promise<AuthUser> {
   if (!token) throw new Error('Missing auth token');
 
-  const row = db
-    .prepare(
-      `SELECT u.id, u.email, u.display_name, u.is_admin
-       FROM sessions s JOIN users u ON u.id = s.user_id
-       WHERE s.token = ? AND s.expires_at > ?`
-    )
-    .get(token, new Date().toISOString()) as
-    | { id: string; email: string; display_name: string; is_admin: number }
-    | undefined;
+  const db = getDb();
+  const row = await db.get<{
+    id: string;
+    email: string;
+    display_name: string;
+    is_admin: number;
+  }>(
+    `SELECT u.id, u.email, u.display_name, u.is_admin
+     FROM sessions s JOIN users u ON u.id = s.user_id
+     WHERE s.token = ? AND s.expires_at > ?`,
+    [token, new Date().toISOString()]
+  );
 
   if (!row) throw new Error('Unauthorized');
   return { id: row.id, email: row.email, displayName: row.display_name, isAdmin: row.is_admin === 1 };

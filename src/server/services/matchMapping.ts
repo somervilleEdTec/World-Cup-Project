@@ -1,18 +1,6 @@
 import { groupMatches, teams } from '../../data/tournament';
 import { getMatches } from '../../lib/matchResolver';
-import { db } from '../db';
-
-export function ensureMatchMappingSchema() {
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS match_external_ids (
-      internal_id TEXT NOT NULL,
-      provider TEXT NOT NULL,
-      provider_id TEXT NOT NULL,
-      PRIMARY KEY (provider, provider_id)
-    );
-    CREATE INDEX IF NOT EXISTS idx_match_external_internal ON match_external_ids(internal_id);
-  `);
-}
+import { getDb } from '../database';
 
 function normalizeName(name: string): string {
   return name
@@ -48,29 +36,37 @@ export function teamIdFromProviderName(name: string): string | null {
   return team?.id ?? null;
 }
 
-export function registerExternalMapping(internalId: string, provider: string, providerId: string) {
-  db.prepare(
+export async function registerExternalMapping(
+  internalId: string,
+  provider: string,
+  providerId: string
+): Promise<void> {
+  const db = getDb();
+  await db.run(
     `INSERT INTO match_external_ids (internal_id, provider, provider_id)
      VALUES (?, ?, ?)
-     ON CONFLICT(provider, provider_id) DO UPDATE SET internal_id = excluded.internal_id`
-  ).run(internalId, provider, providerId);
+     ON CONFLICT(provider, provider_id) DO UPDATE SET internal_id = excluded.internal_id`,
+    [internalId, provider, providerId]
+  );
 }
 
-export function internalIdFromProvider(provider: string, providerId: string): string | null {
-  const row = db
-    .prepare(`SELECT internal_id FROM match_external_ids WHERE provider = ? AND provider_id = ?`)
-    .get(provider, providerId) as { internal_id: string } | undefined;
+export async function internalIdFromProvider(provider: string, providerId: string): Promise<string | null> {
+  const db = getDb();
+  const row = await db.get<{ internal_id: string }>(
+    `SELECT internal_id FROM match_external_ids WHERE provider = ? AND provider_id = ?`,
+    [provider, providerId]
+  );
   return row?.internal_id ?? null;
 }
 
 /** Map provider fixture to internal id by registered mapping or home/away team names. */
-export function resolveInternalMatchId(
+export async function resolveInternalMatchId(
   provider: string,
   providerId: string,
   homeName: string,
   awayName: string
-): string | null {
-  const existing = internalIdFromProvider(provider, providerId);
+): Promise<string | null> {
+  const existing = await internalIdFromProvider(provider, providerId);
   if (existing) return existing;
 
   const homeId = teamIdFromProviderName(homeName);
@@ -85,12 +81,12 @@ export function resolveInternalMatchId(
   );
   if (!found) return null;
 
-  registerExternalMapping(found.id, provider, providerId);
+  await registerExternalMapping(found.id, provider, providerId);
   return found.id;
 }
 
-export function seedGroupMatchMappings(provider = 'football-data.org') {
-  groupMatches.forEach((match) => {
-    registerExternalMapping(match.id, provider, `seed-${match.id}`);
-  });
+export async function seedGroupMatchMappings(provider = 'football-data.org'): Promise<void> {
+  for (const match of groupMatches) {
+    await registerExternalMapping(match.id, provider, `seed-${match.id}`);
+  }
 }

@@ -1,35 +1,36 @@
-import { db } from '../db';
+import { getDb } from '../database';
 import { getMatches } from '../../lib/matchResolver';
 import { getResultsMap } from './leaderboard';
 import { affectedFutureMatches, shouldLockGroup, validatePick } from '../../lib/tournamentLogic';
 import { Pick, TournamentBonusPick } from '../../types';
 
-function getMeta(userId: string) {
-  return db
-    .prepare(`SELECT commit_version, committed_at, group_locked, bonus_draft, bonus_committed, affected_matches FROM prediction_meta WHERE user_id = ?`)
-    .get(userId) as
-    | {
-        commit_version: number;
-        committed_at: string;
-        group_locked: number;
-        bonus_draft: string | null;
-        bonus_committed: string | null;
-        affected_matches: string;
-      }
-    | undefined;
+async function getMeta(userId: string) {
+  const db = getDb();
+  return db.get<{
+    commit_version: number;
+    committed_at: string;
+    group_locked: number;
+    bonus_draft: string | null;
+    bonus_committed: string | null;
+    affected_matches: string;
+  }>(
+    `SELECT commit_version, committed_at, group_locked, bonus_draft, bonus_committed, affected_matches FROM prediction_meta WHERE user_id = ?`,
+    [userId]
+  );
 }
 
-export function getUserPredictionState(userId: string) {
-  const rows = db
-    .prepare(`SELECT match_id, state, home_score, away_score, progressing_team_id, reviewed FROM predictions WHERE user_id = ?`)
-    .all(userId) as Array<{
+export async function getUserPredictionState(userId: string) {
+  const db = getDb();
+  const rows = await db.all<{
     match_id: string;
     state: 'draft' | 'committed';
     home_score: number;
     away_score: number;
     progressing_team_id: string | null;
     reviewed: number;
-  }>;
+  }>(`SELECT match_id, state, home_score, away_score, progressing_team_id, reviewed FROM predictions WHERE user_id = ?`, [
+    userId
+  ]);
 
   const committedPicks: Record<string, Pick> = {};
   const draftPicks: Record<string, Pick> = {};
@@ -46,7 +47,7 @@ export function getUserPredictionState(userId: string) {
     if (row.state === 'draft') draftPicks[row.match_id] = pick;
   });
 
-  const meta = getMeta(userId);
+  const meta = await getMeta(userId);
   return {
     committedPicks,
     draftPicks,
@@ -57,13 +58,16 @@ export function getUserPredictionState(userId: string) {
       groupLocked: (meta?.group_locked ?? 0) === 1
     },
     bonusDraft: meta?.bonus_draft ? (JSON.parse(meta.bonus_draft) as TournamentBonusPick) : undefined,
-    bonusCommitted: meta?.bonus_committed ? (JSON.parse(meta.bonus_committed) as TournamentBonusPick) : undefined
+    bonusCommitted: meta?.bonus_committed
+      ? (JSON.parse(meta.bonus_committed) as TournamentBonusPick)
+      : undefined
   };
 }
 
-export function saveDraftPick(userId: string, pick: Pick) {
-  const state = getUserPredictionState(userId);
-  const results = getResultsMap();
+export async function saveDraftPick(userId: string, pick: Pick) {
+  const db = getDb();
+  const state = await getUserPredictionState(userId);
+  const results = await getResultsMap();
   const mergedPicks = { ...state.committedPicks, ...state.draftPicks, [pick.matchId]: pick };
   const match = getMatches(mergedPicks, results).find((m) => m.id === pick.matchId);
   if (!match) throw new Error('Match not found');
@@ -71,93 +75,106 @@ export function saveDraftPick(userId: string, pick: Pick) {
   if (errors.length) throw new Error(errors[0]);
 
   const now = new Date().toISOString();
-  db.prepare(
+  await db.run(
     `INSERT INTO predictions (user_id, match_id, state, home_score, away_score, progressing_team_id, reviewed, updated_at)
      VALUES (?, ?, 'draft', ?, ?, ?, 1, ?)
-     ON CONFLICT(user_id, match_id, state) DO UPDATE SET home_score=excluded.home_score, away_score=excluded.away_score, progressing_team_id=excluded.progressing_team_id, reviewed=1, updated_at=excluded.updated_at`
-  ).run(userId, pick.matchId, pick.homeScore, pick.awayScore, pick.progressingTeamId ?? null, now);
+     ON CONFLICT(user_id, match_id, state) DO UPDATE SET home_score=excluded.home_score, away_score=excluded.away_score, progressing_team_id=excluded.progressing_team_id, reviewed=1, updated_at=excluded.updated_at`,
+    [userId, pick.matchId, pick.homeScore, pick.awayScore, pick.progressingTeamId ?? null, now]
+  );
 
   const impacted = affectedFutureMatches(pick.matchId);
-  impacted.forEach((matchId) => {
-    db.prepare(
-      `UPDATE predictions SET reviewed = 0, updated_at = ? WHERE user_id = ? AND match_id = ? AND state = 'draft'`
-    ).run(now, userId, matchId);
-  });
+  for (const matchId of impacted) {
+    await db.run(
+      `UPDATE predictions SET reviewed = 0, updated_at = ? WHERE user_id = ? AND match_id = ? AND state = 'draft'`,
+      [now, userId, matchId]
+    );
+  }
 
-  const current = getMeta(userId);
+  const current = await getMeta(userId);
   const existing = current ? (JSON.parse(current.affected_matches) as string[]) : [];
   const affected = [...new Set([...existing, ...impacted])];
-  db.prepare(`UPDATE prediction_meta SET affected_matches = ? WHERE user_id = ?`).run(JSON.stringify(affected), userId);
+  await db.run(`UPDATE prediction_meta SET affected_matches = ? WHERE user_id = ?`, [
+    JSON.stringify(affected),
+    userId
+  ]);
 }
 
-export function setBonusDraft(userId: string, bonus: TournamentBonusPick) {
-  db.prepare(`UPDATE prediction_meta SET bonus_draft = ? WHERE user_id = ?`).run(JSON.stringify(bonus), userId);
+export async function setBonusDraft(userId: string, bonus: TournamentBonusPick) {
+  const db = getDb();
+  await db.run(`UPDATE prediction_meta SET bonus_draft = ? WHERE user_id = ?`, [JSON.stringify(bonus), userId]);
 }
 
-export function markReviewed(userId: string, matchId: string) {
-  db.prepare(`UPDATE predictions SET reviewed = 1 WHERE user_id = ? AND match_id = ? AND state = 'draft'`).run(userId, matchId);
-  const current = getMeta(userId);
+export async function markReviewed(userId: string, matchId: string) {
+  const db = getDb();
+  await db.run(`UPDATE predictions SET reviewed = 1 WHERE user_id = ? AND match_id = ? AND state = 'draft'`, [
+    userId,
+    matchId
+  ]);
+  const current = await getMeta(userId);
   const existing = current ? (JSON.parse(current.affected_matches) as string[]) : [];
   const updated = existing.filter((id) => id !== matchId);
-  db.prepare(`UPDATE prediction_meta SET affected_matches = ? WHERE user_id = ?`).run(JSON.stringify(updated), userId);
+  await db.run(`UPDATE prediction_meta SET affected_matches = ? WHERE user_id = ?`, [
+    JSON.stringify(updated),
+    userId
+  ]);
 }
 
-export function commitDraft(userId: string, nowIso: string) {
-  const state = getUserPredictionState(userId);
+export async function commitDraft(userId: string, nowIso: string) {
+  const db = getDb();
+  const state = await getUserPredictionState(userId);
   const hasUnreviewed = state.affectedMatches.some((matchId) => !state.draftPicks[matchId]?.reviewed);
   if (hasUnreviewed) throw new Error('Review affected fixtures and Commit changes.');
 
-  const results = getResultsMap();
+  const results = await getResultsMap();
   const merged = { ...state.committedPicks, ...state.draftPicks };
-  Object.values(state.draftPicks).forEach((pick) => {
+  for (const pick of Object.values(state.draftPicks)) {
     const match = getMatches(merged, results).find((m) => m.id === pick.matchId);
-    if (!match) return;
+    if (!match) continue;
     const errors = validatePick(match, pick);
     if (errors.length) throw new Error(errors[0]);
-  });
+  }
 
-  const tx = db.transaction(() => {
-    Object.values(state.draftPicks).forEach((pick) => {
-      db.prepare(
+  await db.transaction(async (tx) => {
+    for (const pick of Object.values(state.draftPicks)) {
+      await tx.run(
         `INSERT INTO predictions (user_id, match_id, state, home_score, away_score, progressing_team_id, reviewed, updated_at)
          VALUES (?, ?, 'committed', ?, ?, ?, 1, ?)
-         ON CONFLICT(user_id, match_id, state) DO UPDATE SET home_score=excluded.home_score, away_score=excluded.away_score, progressing_team_id=excluded.progressing_team_id, reviewed=1, updated_at=excluded.updated_at`
-      ).run(userId, pick.matchId, pick.homeScore, pick.awayScore, pick.progressingTeamId ?? null, nowIso);
-    });
+         ON CONFLICT(user_id, match_id, state) DO UPDATE SET home_score=excluded.home_score, away_score=excluded.away_score, progressing_team_id=excluded.progressing_team_id, reviewed=1, updated_at=excluded.updated_at`,
+        [userId, pick.matchId, pick.homeScore, pick.awayScore, pick.progressingTeamId ?? null, nowIso]
+      );
+    }
 
-    db.prepare(`DELETE FROM predictions WHERE user_id = ? AND state = 'draft'`).run(userId);
+    await tx.run(`DELETE FROM predictions WHERE user_id = ? AND state = 'draft'`, [userId]);
 
-    db.prepare(
+    await tx.run(
       `UPDATE prediction_meta
        SET commit_version = commit_version + 1,
            committed_at = ?,
            affected_matches = '[]',
            bonus_committed = COALESCE(bonus_draft, bonus_committed),
            bonus_draft = NULL
-       WHERE user_id = ?`
-    ).run(nowIso, userId);
+       WHERE user_id = ?`,
+      [nowIso, userId]
+    );
   });
-
-  tx();
 }
 
-export function runAutoLocks(nowIso: string) {
+export async function runAutoLocks(nowIso: string) {
+  const db = getDb();
   const lockGroup = shouldLockGroup(nowIso);
-  const userRows = db.prepare(`SELECT user_id FROM prediction_meta`).all() as Array<{ user_id: string }>;
+  const userRows = await db.all<{ user_id: string }>(`SELECT user_id FROM prediction_meta`);
   if (lockGroup) {
-    userRows.forEach((row) => {
-      db.prepare(`UPDATE prediction_meta SET group_locked = 1 WHERE user_id = ?`).run(row.user_id);
-    });
+    for (const row of userRows) {
+      await db.run(`UPDATE prediction_meta SET group_locked = 1 WHERE user_id = ?`, [row.user_id]);
+    }
   }
 
-  const results = getResultsMap();
+  const results = await getResultsMap();
   const lockable = getMatches({}, results)
     .filter((m) => m.stage !== 'GROUP' && new Date(nowIso).getTime() >= new Date(m.kickoff).getTime())
     .map((m) => m.id);
 
-  lockable.forEach((matchId) => {
-    db.prepare(
-      `UPDATE predictions SET reviewed = 1 WHERE match_id = ? AND state = 'committed'`
-    ).run(matchId);
-  });
+  for (const matchId of lockable) {
+    await db.run(`UPDATE predictions SET reviewed = 1 WHERE match_id = ? AND state = 'committed'`, [matchId]);
+  }
 }

@@ -1,4 +1,5 @@
-import { FIRST_MATCH_KICKOFF, teams } from '../data/tournament';
+import { teams } from '../data/tournament';
+import { getFirstMatchKickoff } from './kickoffOverrides';
 import { getDownstreamKnockoutMatchIds } from './bracketEngine';
 import { computeGroupPositions } from './groupStandings';
 import { getMatches } from './matchResolver';
@@ -35,7 +36,7 @@ export function kickoffReached(isoKickoff: string, nowIso = new Date().toISOStri
 }
 
 export function shouldLockGroup(nowIso = new Date().toISOString()): boolean {
-  return kickoffReached(FIRST_MATCH_KICKOFF, nowIso);
+  return kickoffReached(getFirstMatchKickoff(), nowIso);
 }
 
 export function lockableKnockoutMatchIds(

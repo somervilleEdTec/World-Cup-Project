@@ -2,8 +2,9 @@
 
 **Last updated:** 2026-06-02  
 **Repository:** https://github.com/somervilleEdTec/World-Cup-Project  
-**Active branch:** `cursor/world-cup-p0-complete-21eb`  
-**Pull request:** https://github.com/somervilleEdTec/World-Cup-Project/pull/2 (draft)  
+**Active branch:** `main` (P0/P1 merged); P2 on `cursor/p2-operations-complete-21eb`  
+**Release:** `v0.1.0` — P0/P1 baseline  
+**Deploy guide:** [docs/DEPLOY.md](./DEPLOY.md)  
 **Prior PR:** https://github.com/somervilleEdTec/World-Cup-Project/pull/1 (planning scaffold, superseded for implementation)
 
 ---
@@ -107,13 +108,17 @@ If regulation is predicted as a draw in KO, user must pick **team to progress** 
 - [ ] **Real fixture kickoffs** — group KO kickoffs are approximate ISO dates; import from football-data still P2
 - [ ] **football-data live sync** — needs valid `FOOTBALL_DATA_TOKEN` and matching team names in API responses
 - [ ] **Zustand store** — legacy client-only path; prefer API
-- [ ] **Production** — SQLite only; no deploy docs yet (P2)
+- [ ] **Production** — use Postgres + [DEPLOY.md](./DEPLOY.md); SQLite remains default for local dev
 
-### Not started (see TODO P2–P3)
+### P2 complete (2026-06-02)
 
-- [ ] Postgres + migrations
-- [ ] Production deployment documentation
-- [ ] API integration tests (Supertest)
+- [x] Postgres + migrations (`DATABASE_URL`, `npm run migrate`)
+- [x] Production deployment documentation ([DEPLOY.md](./DEPLOY.md))
+- [x] API integration tests (Supertest, 4 tests)
+- [x] Seed kickoffs from football-data (`npm run seed:fixtures`, `match_kickoffs` table)
+
+### Not started (P3)
+
 - [ ] OAuth, PWA, PDF export
 
 ---
@@ -132,9 +137,9 @@ If regulation is predicted as a draw in KO, user must pick **team to progress** 
 └──────────────────────────┬──────────────────────────────┘
                            │
 ┌──────────────────────────▼──────────────────────────────┐
-│  SQLite — data.db (runtime, gitignored)                   │
+│  SQLite (dev) or PostgreSQL (prod) — see DATABASE_URL     │
 │  tables: users, sessions, predictions, results,         │
-│          match_external_ids, sync_status                  │
+│          match_external_ids, match_kickoffs, sync_status  │
 └─────────────────────────────────────────────────────────┘
 
 Scheduler: src/server/jobs.ts (locks + sync poll)
@@ -223,8 +228,11 @@ sqlite3 data.db "UPDATE users SET is_admin = 1 WHERE email = 'you@example.com';"
 **Quality gates:**
 
 ```bash
-npm test    # 11 tests
+npm test              # 15 tests (11 unit + 4 API integration)
+npm run test:unit
+npm run test:integration
 npm run build
+npm run migrate       # apply schema (SQLite or Postgres)
 ```
 
 ---
@@ -233,7 +241,9 @@ npm run build
 
 | Variable | Required | Purpose |
 |----------|----------|---------|
-| `FOOTBALL_DATA_TOKEN` | For live sync | football-data.org `X-Auth-Token` |
+| `DATABASE_URL` | Production | PostgreSQL connection string |
+| `SQLITE_PATH` | No | SQLite file when `DATABASE_URL` unset (default `data.db`) |
+| `FOOTBALL_DATA_TOKEN` | For live sync / seed | football-data.org `X-Auth-Token` |
 | `VITE_API_BASE_URL` | No | Frontend → API (default `http://localhost:8787`) |
 | `PORT` | No | API port (default `8787`) |
 

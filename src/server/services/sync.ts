@@ -1,6 +1,6 @@
 import { fetchLatestResults, PROVIDER } from '../../services/footballDataService';
 import { getMatches } from '../../lib/matchResolver';
-import { db } from '../db';
+import { getDb } from '../database';
 import { resolveInternalMatchId, teamIdFromProviderName } from './matchMapping';
 
 function progressingTeamId(
@@ -29,26 +29,32 @@ function fixtureTeamIds(internalId: string, homeName: string, awayName: string):
 }
 
 export async function syncFootballData(apiToken: string) {
+  const db = getDb();
   const now = new Date().toISOString();
-  db.prepare(`UPDATE sync_status SET last_attempt_at = ? WHERE id = 1`).run(now);
+  await db.run(`UPDATE sync_status SET last_attempt_at = ? WHERE id = 1`, [now]);
 
   try {
     const results = await fetchLatestResults(apiToken);
     let updated = 0;
     let skipped = 0;
 
-    const tx = db.transaction(() => {
-      results.forEach((result) => {
-        const internalId = resolveInternalMatchId(PROVIDER, result.providerId, result.homeName, result.awayName);
+    await db.transaction(async (tx) => {
+      for (const result of results) {
+        const internalId = await resolveInternalMatchId(
+          PROVIDER,
+          result.providerId,
+          result.homeName,
+          result.awayName
+        );
         if (!internalId) {
           skipped += 1;
-          return;
+          continue;
         }
 
         const teamsInFixture = fixtureTeamIds(internalId, result.homeName, result.awayName);
         if (!teamsInFixture) {
           skipped += 1;
-          return;
+          continue;
         }
 
         const prog = progressingTeamId(
@@ -59,7 +65,7 @@ export async function syncFootballData(apiToken: string) {
           result.progressingTeamId
         );
 
-        db.prepare(
+        await tx.run(
           `INSERT INTO results (match_id, home_score, away_score, progressing_team_id, status, source, updated_at)
            VALUES (?, ?, ?, ?, 'FINISHED', 'football-data.org', ?)
            ON CONFLICT(match_id) DO UPDATE SET
@@ -68,26 +74,27 @@ export async function syncFootballData(apiToken: string) {
              progressing_team_id=excluded.progressing_team_id,
              status=excluded.status,
              source=excluded.source,
-             updated_at=excluded.updated_at`
-        ).run(internalId, result.homeScore, result.awayScore, prog ?? null, now);
+             updated_at=excluded.updated_at`,
+          [internalId, result.homeScore, result.awayScore, prog ?? null, now]
+        );
         updated += 1;
-      });
+      }
     });
 
-    tx();
-    db.prepare(`UPDATE sync_status SET last_success_at = ?, last_error = NULL WHERE id = 1`).run(now);
+    await db.run(`UPDATE sync_status SET last_success_at = ?, last_error = NULL WHERE id = 1`, [now]);
     return { ok: true, updated, skipped };
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown sync error';
-    db.prepare(`UPDATE sync_status SET last_error = ? WHERE id = 1`).run(message);
+    await db.run(`UPDATE sync_status SET last_error = ? WHERE id = 1`, [message]);
     return { ok: false, updated: 0, skipped: 0, error: message };
   }
 }
 
-export function getSyncStatus() {
-  return db.prepare(`SELECT last_success_at, last_error, last_attempt_at FROM sync_status WHERE id = 1`).get() as {
+export async function getSyncStatus() {
+  const db = getDb();
+  return db.get<{
     last_success_at: string | null;
     last_error: string | null;
     last_attempt_at: string | null;
-  };
+  }>(`SELECT last_success_at, last_error, last_attempt_at FROM sync_status WHERE id = 1`);
 }

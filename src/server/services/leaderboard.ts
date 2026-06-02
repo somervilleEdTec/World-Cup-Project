@@ -1,13 +1,17 @@
-import { db } from '../db';
+import { getDb } from '../database';
 import { TournamentBonusPick, ActualResult } from '../../types';
 import { computeScore } from '../../lib/tournamentLogic';
 import { deriveFinalPlacings } from '../../lib/bracketEngine';
 import { picksFromActuals } from '../../lib/pickUtils';
 
-export function getResultsMap(): Record<string, ActualResult> {
-  const rows = db
-    .prepare(`SELECT match_id, home_score, away_score, progressing_team_id FROM results WHERE status = 'FINISHED'`)
-    .all() as Array<{ match_id: string; home_score: number; away_score: number; progressing_team_id: string | null }>;
+export async function getResultsMap(): Promise<Record<string, ActualResult>> {
+  const db = getDb();
+  const rows = await db.all<{
+    match_id: string;
+    home_score: number;
+    away_score: number;
+    progressing_team_id: string | null;
+  }>(`SELECT match_id, home_score, away_score, progressing_team_id FROM results WHERE status = 'FINISHED'`);
 
   return Object.fromEntries(
     rows.map((row) => [
@@ -22,25 +26,27 @@ export function getResultsMap(): Record<string, ActualResult> {
   );
 }
 
-export function computeLeaderboard() {
-  const users = db.prepare(`SELECT id, display_name FROM users`).all() as Array<{ id: string; display_name: string }>;
-  const results = getResultsMap();
+export async function computeLeaderboard() {
+  const db = getDb();
+  const users = await db.all<{ id: string; display_name: string }>(
+    `SELECT id, display_name FROM users`
+  );
+  const results = await getResultsMap();
   const finalPlacings = deriveFinalPlacings(picksFromActuals(results), results);
 
-  return users
-    .map((user) => {
-      const committedRows = db
-        .prepare(
-          `SELECT match_id, home_score, away_score, progressing_team_id, reviewed
-           FROM predictions WHERE user_id = ? AND state = 'committed'`
-        )
-        .all(user.id) as Array<{
+  const entries = await Promise.all(
+    users.map(async (user) => {
+      const committedRows = await db.all<{
         match_id: string;
         home_score: number;
         away_score: number;
         progressing_team_id: string | null;
         reviewed: number;
-      }>;
+      }>(
+        `SELECT match_id, home_score, away_score, progressing_team_id, reviewed
+         FROM predictions WHERE user_id = ? AND state = 'committed'`,
+        [user.id]
+      );
 
       const picks = Object.fromEntries(
         committedRows.map((row) => [
@@ -55,10 +61,13 @@ export function computeLeaderboard() {
         ])
       );
 
-      const meta = db
-        .prepare(`SELECT bonus_committed FROM prediction_meta WHERE user_id = ?`)
-        .get(user.id) as { bonus_committed: string | null };
-      const bonus = meta?.bonus_committed ? (JSON.parse(meta.bonus_committed) as TournamentBonusPick) : undefined;
+      const meta = await db.get<{ bonus_committed: string | null }>(
+        `SELECT bonus_committed FROM prediction_meta WHERE user_id = ?`,
+        [user.id]
+      );
+      const bonus = meta?.bonus_committed
+        ? (JSON.parse(meta.bonus_committed) as TournamentBonusPick)
+        : undefined;
 
       const summary = computeScore(picks, results, bonus, finalPlacings);
       return {
@@ -67,11 +76,14 @@ export function computeLeaderboard() {
         ...summary
       };
     })
-    .sort((a, b) =>
+  );
+
+  return entries.sort(
+    (a, b) =>
       b.points - a.points ||
       b.exactScores - a.exactScores ||
       b.correctResults - a.correctResults ||
       b.exactGroupPositions - a.exactGroupPositions ||
       b.bonusHits - a.bonusHits
-    );
+  );
 }

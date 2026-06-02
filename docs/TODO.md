@@ -28,10 +28,10 @@
 
 ## P2 — Ops
 
-- [ ] Postgres + migrations
-- [ ] Production deploy docs
-- [ ] API integration tests
-- [ ] Seed/import real fixtures from football-data.org
+- [x] Postgres + migrations
+- [x] Production deploy docs
+- [x] API integration tests
+- [x] Seed/import real fixtures from football-data.org
 
 ## P3 — Later
 

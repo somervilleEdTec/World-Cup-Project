@@ -13,6 +13,7 @@ interface FootballDataTeam {
 interface FootballDataMatch {
   id: number;
   status: string;
+  utcDate: string;
   homeTeam: FootballDataTeam;
   awayTeam: FootballDataTeam;
   score: {
@@ -62,6 +63,34 @@ export async function fetchLatestResults(apiToken: string): Promise<FootballData
             ? 'away'
             : undefined
     }));
+}
+
+export interface FootballDataFixtureRow {
+  providerId: string;
+  homeName: string;
+  awayName: string;
+  kickoff: string;
+  status: string;
+}
+
+export async function fetchCompetitionFixtures(apiToken: string): Promise<FootballDataFixtureRow[]> {
+  const response = await fetch(`${API_BASE}/competitions/${WORLD_CUP_CODE}/matches`, {
+    headers: { 'X-Auth-Token': apiToken }
+  });
+
+  if (!response.ok) {
+    throw new Error(`football-data fetch failed: ${response.status}`);
+  }
+
+  const payload = (await response.json()) as FootballDataResponse;
+
+  return payload.matches.map((match) => ({
+    providerId: String(match.id),
+    homeName: match.homeTeam.shortName ?? match.homeTeam.name,
+    awayName: match.awayTeam.shortName ?? match.awayTeam.name,
+    kickoff: new Date(match.utcDate).toISOString(),
+    status: match.status
+  }));
 }
 
 export { PROVIDER };

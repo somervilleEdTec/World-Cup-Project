@@ -22,8 +22,15 @@ npm run dev       # frontend on :5173
 ```
 
 ```bash
-npm test          # 11 unit tests
+npm test          # 15 tests (unit + API integration)
 npm run build
+npm run migrate   # SQLite or Postgres (see DATABASE_URL)
+```
+
+Production setup: **[docs/DEPLOY.md](docs/DEPLOY.md)**. Import real kickoffs:
+
+```bash
+FOOTBALL_DATA_TOKEN=your_token npm run seed:fixtures
 ```
 
 Log in at `/login`. Routes except login require authentication.
@@ -32,7 +39,8 @@ Log in at `/login`. Routes except login require authentication.
 
 | Variable | Purpose |
 |----------|---------|
-| `FOOTBALL_DATA_TOKEN` | football-data.org API token (sync + jobs) |
+| `DATABASE_URL` | PostgreSQL (production); omit for SQLite `data.db` |
+| `FOOTBALL_DATA_TOKEN` | football-data.org API token (sync, jobs, seed) |
 | `VITE_API_BASE_URL` | Frontend API base (default `http://localhost:8787`) |
 | `PORT` | API port (default `8787`) |
 
@@ -48,8 +56,8 @@ sqlite3 data.db "UPDATE users SET is_admin = 1 WHERE email = 'you@example.com';"
 
 | Item | Link |
 |------|------|
-| Latest feature branch | `cursor/world-cup-p0-complete-21eb` |
-| Draft PR (P0 + P1 complete) | https://github.com/somervilleEdTec/World-Cup-Project/pull/2 |
+| Release | `v0.1.0` (P0/P1 on `main`) |
+| P2 branch | `cursor/p2-operations-complete-21eb` |
 | Earlier planning PR | https://github.com/somervilleEdTec/World-Cup-Project/pull/1 |
 
 ## Key features (current)
@@ -66,7 +74,8 @@ sqlite3 data.db "UPDATE users SET is_admin = 1 WHERE email = 'you@example.com';"
 |------|-------------|
 | [docs/AGENT_PROMPT.md](docs/AGENT_PROMPT.md) | Copy-paste prompt for the next agent |
 | [docs/HANDOVER.md](docs/HANDOVER.md) | Technical handover |
-| [docs/TODO.md](docs/TODO.md) | Backlog (P0/P1 done; P2+ open) |
+| [docs/TODO.md](docs/TODO.md) | Backlog (P0–P2 done; P3 open) |
+| [docs/DEPLOY.md](docs/DEPLOY.md) | Production deployment |
 | [docs/FINAL_PLAN.md](docs/FINAL_PLAN.md) | Locked competition rules |
 | [docs/PROJECT_PLAN.md](docs/PROJECT_PLAN.md) | Original exploration (superseded for rules) |
 
