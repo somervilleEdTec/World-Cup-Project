@@ -67,6 +67,37 @@ describe('API integration', () => {
     expect(res.status).toBe(401);
   });
 
+  it('rejects knockout draft until fixture is officially confirmed', async () => {
+    await request(app)
+      .post('/api/auth/register')
+      .send({ email: 'ko-fixture@example.com', password: 'password1', displayName: 'KO Fixture' });
+
+    const login = await request(app)
+      .post('/api/auth/login')
+      .send({ email: 'ko-fixture@example.com', password: 'password1' });
+    const token = login.body.token as string;
+
+    const { groupMatches } = await import('../../data/tournament');
+    for (const match of groupMatches) {
+      const draft = await request(app)
+        .post('/api/predictions/draft')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ matchId: match.id, homeScore: 1, awayScore: 0 });
+      expect(draft.status).toBe(200);
+    }
+    const commit = await request(app)
+      .post('/api/predictions/commit')
+      .set('Authorization', `Bearer ${token}`);
+    expect(commit.status).toBe(200);
+
+    const unconfirmed = await request(app)
+      .post('/api/predictions/draft')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ matchId: 'r32-1', homeScore: 2, awayScore: 1 });
+    expect(unconfirmed.status).toBe(400);
+    expect(String(unconfirmed.body.error)).toMatch(/not available yet/i);
+  });
+
   it('rejects knockout draft until all group picks are committed', async () => {
     await request(app)
       .post('/api/auth/register')

@@ -16,6 +16,7 @@ import {
   shouldLockGroup
 } from '../../lib/pickLocks';
 import { Pick, TournamentBonusPick } from '../../types';
+import { assertKnockoutFixtureConfirmed, buildConfirmedKnockoutFixtures } from '../../lib/knockoutFixtureAvailability';
 import { getResultsMap } from './leaderboard';
 
 const VALID_GROUPS = new Set(['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L']);
@@ -76,6 +77,8 @@ export async function getUserPredictionState(userId: string) {
 
   const meta = await getMeta(userId);
   const groupPicksCommittedCount = countCommittedGroupPicks(committedPicks);
+  const results = await getResultsMap();
+  const confirmedKnockoutFixtures = buildConfirmedKnockoutFixtures(results);
   return {
     committedPicks,
     draftPicks,
@@ -84,6 +87,7 @@ export async function getUserPredictionState(userId: string) {
     groupPicksCommittedCount,
     groupPicksRequired: GROUP_MATCH_COUNT,
     allGroupPicksCommitted: allGroupPicksCommitted(committedPicks),
+    confirmedKnockoutFixtures,
     commitState: {
       version: meta?.commit_version ?? 1,
       committedAt: meta?.committed_at ?? new Date().toISOString(),
@@ -111,6 +115,7 @@ export async function saveDraftPick(userId: string, pick: Pick, nowIso = new Dat
 
   if (isKnockout(match)) {
     assertAllGroupPicksCommitted(state.committedPicks, groupLocked, nowIso);
+    assertKnockoutFixtureConfirmed(pick.matchId, results);
   }
 
   const errors = validatePick(match, pick);
