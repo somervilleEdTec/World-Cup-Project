@@ -4,8 +4,9 @@ Use before inviting your group (~10 friends). After June 2026 UX work, run **str
 
 ## 1. Environment
 
-- [ ] Copy `.env.example` → `.env` (if present) or set env vars
-- [ ] Set `FOOTBALL_DATA_TOKEN` (football-data.org) for live results
+- [ ] Copy `.env.example` → `.env`
+- [ ] Set **`FOOTBALL_DATA_TOKEN`** (required) — live kickoffs and results from [football-data.org](https://www.football-data.org/)
+- [ ] Use **`main`** branch; database must be **empty** (no `seed:ko-environment` on production)
 - [ ] Optional: `JOIN_PASSWORD` if not using default `MadSlags1`
 - [ ] Set `VITE_API_BASE_URL` when building for a public domain
 
@@ -32,7 +33,7 @@ npm run build
 
 For a small friends pool, **SQLite** (`data.db`) is sufficient. Back up `data.db` regularly.
 
-Fresh start (destroys all users/picks): `npm run db:purge`
+Fresh start (destroys all users/picks/results): `npm run db:purge` — **do this before first go-live** on `main`
 
 ## 3. Start processes
 

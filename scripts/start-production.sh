@@ -8,6 +8,18 @@ if [[ ! -f .env ]]; then
   exit 1
 fi
 
+set -a
+# shellcheck disable=SC1091
+source .env
+set +a
+
+if [[ -z "${FOOTBALL_DATA_TOKEN:-}" ]]; then
+  echo "FOOTBALL_DATA_TOKEN is required for production (live results from football-data.org)."
+  exit 1
+fi
+
+export NODE_ENV="${NODE_ENV:-production}"
+
 npm install
 npm run migrate
 npm run build

@@ -118,7 +118,7 @@ Friends-and-family prediction app for **FIFA World Cup 2026** (48 teams, 12 grou
 ### Ops / partial
 
 - [ ] Admin role — manual SQL after register (`display_name`, not email)
-- [ ] Live football-data — needs `FOOTBALL_DATA_TOKEN`
+- [x] Live football-data — `FOOTBALL_DATA_TOKEN` required on production; server + `npm run jobs` sync from api.football-data.org
 - [ ] Production — Postgres + [DEPLOY.md](./DEPLOY.md)
 - [ ] E2E browser tests — none
 
@@ -241,8 +241,9 @@ npm run db:purge      # reset local SQLite data
 
 1. Owner go-live on production ([GO_LIVE.md](./GO_LIVE.md)).
 2. Keep `npm run jobs` + football-data sync during tournament.
-3. Use `npm run seed:ko-environment` only for local KO/regression testing.
-4. Log new issues in [UI_HANDOVER.md](./UI_HANDOVER.md) §6.
+3. On **`main`**: empty DB + `FOOTBALL_DATA_TOKEN` only — never run KO seed scripts in production.
+4. On **`Debug`**: `ALLOW_KO_SEED=1 npm run seed:ko-environment` for local KO/regression testing.
+5. Log new issues in [UI_HANDOVER.md](./UI_HANDOVER.md) §6.
 
 ---
 

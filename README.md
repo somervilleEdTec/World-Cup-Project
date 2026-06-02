@@ -38,7 +38,9 @@ Set-ExecutionPolicy -Scope CurrentUser RemoteSigned   # once, if scripts are blo
 
 - **`-Mode Dev`** — API on :8787 + Vite on :5173 (hot reload)  
 
-**Fresh database:** `npm run db:purge` (wipes users and picks)
+**Fresh database (main / production):** `npm run db:purge` then set `FOOTBALL_DATA_TOKEN` in `.env` for live results from football-data.org
+
+**Local test data (Debug only):** `ALLOW_KO_SEED=1 npm run seed:ko-environment` — see [docs/KO_ENVIRONMENT.md](docs/KO_ENVIRONMENT.md)
 
 **Register:** Name + password (≤6 chars) + sign-up password **`MadSlags1`**
 

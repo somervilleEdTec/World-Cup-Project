@@ -1,6 +1,6 @@
 # KO Environment — local knockout testing
 
-Script and docs live on **`main`** (originally developed on `KO-Environment`).
+**Debug branch only** (or `ALLOW_KO_SEED=1`). Do **not** run these seeds on production **`main`** — use an empty database and [football-data.org](https://www.football-data.org/) via `FOOTBALL_DATA_TOKEN` instead.
 
 Use this to evaluate **league rankings** and **knockout prediction entry** with ten seeded users, random group/tournament predictions, and **official results** injected via the database (no `FOOTBALL_DATA_TOKEN` required).
 

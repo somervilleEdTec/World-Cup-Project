@@ -4,8 +4,8 @@ import { fileURLToPath } from 'node:url';
 import express from 'express';
 import { createApp } from './app';
 import { initDatabase, closeDatabase } from './database';
+import { bootstrapFootballData, warnIfNonLiveResultsPresent } from './footballDataStartup';
 import { seedGroupMatchMappings } from './services/matchMapping';
-import { syncKickoffsFromFootballData } from './services/sync';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -16,13 +16,24 @@ async function main() {
   const footballToken = process.env.FOOTBALL_DATA_TOKEN;
   if (footballToken) {
     try {
-      const kickoffs = await syncKickoffsFromFootballData(footballToken);
-      // eslint-disable-next-line no-console
-      console.log(`Kickoffs loaded from football-data.org: ${kickoffs.mapped}/${kickoffs.total}`);
+      await bootstrapFootballData(footballToken);
     } catch (error) {
       // eslint-disable-next-line no-console
-      console.warn('Kickoff import skipped:', error instanceof Error ? error.message : error);
+      console.warn('football-data.org bootstrap skipped:', error instanceof Error ? error.message : error);
     }
+    await warnIfNonLiveResultsPresent();
+  } else if (process.env.NODE_ENV === 'production') {
+    // eslint-disable-next-line no-console
+    console.error(
+      'FOOTBALL_DATA_TOKEN is required in production for live results from football-data.org.'
+    );
+    process.exit(1);
+  } else {
+    // eslint-disable-next-line no-console
+    console.warn(
+      'FOOTBALL_DATA_TOKEN not set — no live results. Use npm run jobs or set the token in .env.'
+    );
+    await warnIfNonLiveResultsPresent();
   }
 
   const app = createApp();

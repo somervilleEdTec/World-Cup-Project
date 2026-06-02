@@ -6,8 +6,8 @@ This repo uses **two branches only**:
 
 | Branch | Purpose |
 |--------|---------|
-| **`main`** | Production-ready product. Deploy and tag releases from here. |
-| **`Debug`** | Active development, bugfixes, and agent work. Merge into `main` when stable. |
+| **`main`** | Production-ready product. **Empty database** — no test users or fake results. Official scores come from **football-data.org** via `FOOTBALL_DATA_TOKEN`. |
+| **`Debug`** | Active development, bugfixes, and agent work. May use `npm run seed:*` for local test data. Merge into `main` when stable. |
 
 Historical `cursor/*` and feature branches have been removed. All current documentation lives on both branches.
 
@@ -67,9 +67,27 @@ Work on **`Debug`**; merge doc updates to **`main`** with code.
 
 ## Local database
 
-`data.db` is not in git. After switching branches, re-seed if needed:
+`data.db` is **not** in git and is **never** committed.
+
+### On `main` (production-style)
 
 ```bash
-npm run seed:before-final    # end-of-tournament debug scenario
-npm run seed:ko-environment  # lighter KO entry test
+npm run db:purge              # empty users, picks, and results
+# Set FOOTBALL_DATA_TOKEN in .env
+npm run migrate
+npm run jobs                  # locks + live football-data.org sync (every 2 min)
+npm run server                # also bootstraps kickoffs + results on start
 ```
+
+Or: `./scripts/start-production.sh` (requires token; sets `NODE_ENV=production`).
+
+Register users in the app — do **not** run `seed:ko-environment` on main unless you are intentionally testing on Debug.
+
+### On `Debug` (local test data)
+
+```bash
+ALLOW_KO_SEED=1 npm run seed:before-final
+ALLOW_KO_SEED=1 npm run seed:ko-environment
+```
+
+See [KO_ENVIRONMENT.md](./KO_ENVIRONMENT.md) and [FINAL_PREDICTION_HANDOVER.md](./FINAL_PREDICTION_HANDOVER.md).

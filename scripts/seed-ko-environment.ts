@@ -6,6 +6,7 @@
  *   Scores are random 0–3 per team; no FOOTBALL_DATA_TOKEN required.
  */
 import 'dotenv/config';
+import { assertDevSeedAllowed } from './lib/devSeedGuard.js';
 import { groupMatches, teams } from '../src/data/tournament.js';
 import { KNOCKOUT_TEMPLATES, buildKnockoutMatches } from '../src/lib/bracketEngine.js';
 import { buildConfirmedKnockoutFixtures } from '../src/lib/knockoutFixtureAvailability.js';
@@ -214,6 +215,8 @@ async function seedUserKnockoutPredictions(
 }
 
 async function main() {
+  assertDevSeedAllowed('npm run seed:ko-environment / seed:before-final');
+
   const skipPurge = process.argv.includes('--no-purge');
   const beforeFinal = process.argv.includes('--before-final');
   const fullBracket = process.argv.includes('--full-bracket');

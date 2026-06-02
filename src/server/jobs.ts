@@ -1,7 +1,8 @@
 import 'dotenv/config';
 import { initDatabase } from './database';
 import { runAutoLocks } from './services/predictions';
-import { runFullFootballDataSync, syncFootballData, syncKickoffsFromFootballData } from './services/sync';
+import { bootstrapFootballData } from './footballDataStartup';
+import { syncFootballData, syncKickoffsFromFootballData } from './services/sync';
 import { seedGroupMatchMappings } from './services/matchMapping';
 
 const LOCK_INTERVAL_MS = 30 * 1000;
@@ -19,11 +20,7 @@ async function main() {
   const token = process.env.FOOTBALL_DATA_TOKEN;
   if (token) {
     try {
-      const initial = await runFullFootballDataSync(token);
-      // eslint-disable-next-line no-console
-      console.log(
-        `Initial football-data sync: ${initial.kickoffs.mapped} kickoffs, ${initial.results.updated} results updated`
-      );
+      await bootstrapFootballData(token);
     } catch (error) {
       // eslint-disable-next-line no-console
       console.error('Initial football-data sync failed:', error);
