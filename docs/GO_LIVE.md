@@ -69,27 +69,32 @@ sqlite3 data.db "UPDATE users SET is_admin = 1 WHERE display_name = 'YourName';"
 
 ### Tournament Results
 
-- [ ] Save winner / runner-up / third / fourth (no group picks required)
-- [ ] Missing-picks list clears tournament lines
+- [ ] Save winner / runner-up / third / fourth (no group predictions required)
+- [ ] Missing-predictions list clears tournament lines
+- [ ] After first kickoff: tournament tab read-only
 
 ### Group Stage (sample groups)
 
-- [ ] Enter scores — auto-save; projected table shows zeros until input
+- [ ] Enter scores — auto-save; projected table updates; actual table when results exist
 - [ ] **Lock group** — cannot edit after lock
 - [ ] Complete all 12 groups for full pool (or accept partial for limited test)
+- [ ] After global lock: scores show as text with points when results in
 
-### Knockout Stage
+### Knockout (per-round tabs)
 
-- [ ] Tab empty until official results confirm fixtures
-- [ ] After **72** group picks saved: can enter KO scores
+- [ ] Round tabs empty until official results confirm fixtures for that stage
+- [ ] After **72** group predictions saved: can enter KO scores
 - [ ] Draw + progression team auto-saves
+- [ ] Comparison: others’ KO predictions hidden until fixture kickoff
 
 ### General
 
-- [ ] Missing-picks header accurate on all tabs
-- [ ] Leaderboard + comparison reflect picks
+- [ ] Missing-predictions header accurate on all tabs
+- [ ] Leaderboard + comparison reflect predictions; comparison colours when results in
+- [ ] Kickoff times display in **BST**
 - [ ] Mobile bottom nav usable at ~375px width
 - [ ] Rules visible on **Welcome** (no Rules tab)
+- [ ] Optional local KO regression: `npm run seed:ko-environment` — see [KO_ENVIRONMENT.md](./KO_ENVIRONMENT.md)
 
 ## 6. During tournament
 
@@ -99,8 +104,6 @@ sqlite3 data.db "UPDATE users SET is_admin = 1 WHERE display_name = 'YourName';"
 
 ## 7. Phase status
 
-**Done:** Rules engine, auth, picks, locks, scoring, comparison, admin sync, deploy docs, owner UI polish (PRs #7–#11).
+**Done:** Rules engine, auth, predictions UX, locks, scoring, comparison (group/KO visibility rules), admin sync, deploy docs, UI polish (PRs #7–#11), KO-environment merge (2026-06-02).
 
-**Current:** Stress test & debug — [STRESS_TEST_HANDOVER.md](./STRESS_TEST_HANDOVER.md).
-
-**Later:** OAuth, PWA, PDF export.
+**Later:** OAuth, PWA, PDF export, Playwright E2E.

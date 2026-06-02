@@ -1,8 +1,8 @@
 # KO Environment — local knockout testing
 
-Branch: **`KO-Environment`**
+Script and docs live on **`main`** (originally developed on `KO-Environment`).
 
-Use this branch to evaluate **league rankings** and **knockout pick entry** with ten seeded users, random group/tournament predictions, and **official results** injected via the database (no `FOOTBALL_DATA_TOKEN` required).
+Use this to evaluate **league rankings** and **knockout prediction entry** with ten seeded users, random group/tournament predictions, and **official results** injected via the database (no `FOOTBALL_DATA_TOKEN` required).
 
 ## What gets created
 
@@ -11,10 +11,10 @@ Use this branch to evaluate **league rankings** and **knockout pick entry** with
 | Users | `Test 1` … `Test 10` |
 | Password | `summer` (all accounts) |
 | Admin | `Test 1` (for Admin page if needed) |
-| Group picks | 72 random scores per user (0–3 goals each side) |
-| Tournament picks | Random winner / runner-up / third / fourth per user |
+| Group predictions | 72 random scores per user (0–3 goals each side) |
+| Tournament predictions | Random winner / runner-up / third / fourth per user |
 | Official results | All 72 group games (random 0–3 per team). **R32 only** by default — not later KO rounds |
-| Locks | Group + tournament bonus picks locked in DB (simulated post–first kickoff) |
+| Locks | Group + tournament bonus predictions locked in DB (simulated post–first kickoff) |
 
 Sign-up password for **new** registrations is unchanged (`MadSlags1` by default). Seeded users are created by the script, not the register form.
 
@@ -23,8 +23,8 @@ Sign-up password for **new** registrations is unchanged (`MadSlags1` by default)
 ```powershell
 cd C:\Users\tomso\World-Cup-Project
 git fetch origin
-git checkout KO-Environment
-git pull origin KO-Environment
+git checkout main
+git pull origin main
 npm install
 npm run build
 npm run seed:ko-environment
@@ -37,8 +37,8 @@ Open **http://localhost:8787/login**
 
 ```bash
 git fetch origin
-git checkout KO-Environment
-git pull origin KO-Environment
+git checkout main
+git pull origin main
 npm install
 npm run build
 npm run seed:ko-environment
@@ -51,7 +51,7 @@ Open **http://localhost:8787/login**
 
 1. Log in as **`Test 1`** / **`summer`** (admin).
 2. **League Table** — ten users with different point totals from random picks vs official results.
-3. **My Picks → Knockout Stage** — confirmed fixtures listed; enter scores (auto-save). Draws require a progressing team.
+3. **My Predictions → Round of 32** (etc.) — confirmed fixtures per tab; enter scores (auto-save). Draws require a progressing team.
 4. Repeat with **`Test 2`** … **`Test 10`** / **`summer`** to confirm KO saves for multiple accounts.
 5. **Comparison** — pick a fixture and compare users.
 
@@ -74,10 +74,9 @@ npm run seed:ko-environment -- --no-purge
 - Official results use source `ko-environment-seed` in the `results` table — same path as Admin manual override, not football-data.org.
 - Group results are retried until all **16 R32** fixtures have both teams (valid third-place mapping).
 - Knockout **predictions** are not pre-filled; you enter those in the UI to test the flow.
-- **My Picks** shows **Your prediction** and **Official result** side by side when a result exists.
-- **Comparison** lists all fixtures with known teams (not only future kickoffs) and shows others’ group picks once the tournament is locked.
+- **My Predictions** shows **Your prediction**, **Official result**, and **Points scored** when locked/results exist.
+- **Comparison** lists all fixtures with known teams; group predictions after lock; **knockout after kickoff**.
 - Optional: seed every knockout result (all 32 fixtures unlocked) with `npm run seed:ko-environment -- --full-bracket`
-- To return to normal development: `git checkout main`.
 
 ## Bug evaluation (environment vs product)
 

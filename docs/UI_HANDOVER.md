@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-06-02  
 **Branch:** `main`  
-**Status:** Owner polish pass **complete** (PRs #7–#11). Next work: **stress test & debug** — see [STRESS_TEST_HANDOVER.md](./STRESS_TEST_HANDOVER.md).
+**Status:** Owner polish + KO-environment UX **merged to `main`** (2026-06-02). See [HANDOVER.md](./HANDOVER.md) for current behaviour.
 
 ---
 
@@ -22,7 +22,9 @@
 
 | Area | File(s) | Notes |
 |------|---------|--------|
-| **My Picks** | `src/pages/MyPicksPage.tsx` | 3 tabs; auto-save; lock group; missing picks |
+| **My Predictions** | `src/pages/MyPicksPage.tsx` | 7 phase tabs; projected/actual tables; locked text view |
+| **Fixture card** | `src/components/FixturePickCard.tsx` | Prediction / result / points per fixture |
+| **Group tables** | `src/components/GroupStandingsTable.tsx` | Projected + actual standings |
 | **Team picker** | `src/components/TeamSelect.tsx` | Flags + A–Z names |
 | **Layout / nav** | `src/components/AppLayout.tsx`, `src/styles/app.css` | Mobile 2×2 bottom nav |
 | **Welcome + rules** | `src/pages/WelcomePage.tsx` | Rules on welcome; no `/rules` |
@@ -71,7 +73,18 @@ http://localhost:8787/login
 
 ---
 
-## 6. Stress-test / bug log (agent fills in)
+## 6. Merged to `main` (KO-Environment, 2026-06-02)
+
+| Area | Summary |
+|------|---------|
+| My Predictions | Per-round KO tabs; locked fixtures as text; points per fixture |
+| Group Stage | Actual standings table below projected |
+| Comparison | BST times; green/amber/red; KO hidden until kickoff |
+| League Table | Bonus Points column; total Points last and bold |
+| Terminology | User-facing **prediction** throughout |
+| Local testing | `npm run seed:ko-environment` — [KO_ENVIRONMENT.md](./KO_ENVIRONMENT.md) |
+
+## 7. Stress-test / bug log (agent fills in)
 
 | # | Page / flow | Steps | Expected | Actual | Status |
 |---|-------------|-------|----------|--------|--------|

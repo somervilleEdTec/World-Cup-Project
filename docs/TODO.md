@@ -1,8 +1,7 @@
 # World Cup Boys — Agent TODO Tracker
 
 > Sync with [HANDOVER.md](./HANDOVER.md).  
-> **Current phase:** Stress testing & debugging — [STRESS_TEST_HANDOVER.md](./STRESS_TEST_HANDOVER.md)  
-> New agents: read [AGENT_PROMPT.md](./AGENT_PROMPT.md).
+> **Current phase:** Go-live — [GO_LIVE.md](./GO_LIVE.md)
 
 ## Status legend
 
@@ -12,24 +11,24 @@
 
 ---
 
-## Current focus — stress test & debug
+## Current focus — go-live
 
-- [ ] Run full checklist in [STRESS_TEST_HANDOVER.md](./STRESS_TEST_HANDOVER.md) §4
-- [ ] Two-user + mobile (~375px) pass on `main`
-- [ ] Log all bugs in [UI_HANDOVER.md](./UI_HANDOVER.md) §6
-- [ ] Fix critical/high bugs with PRs to `main`
-- [ ] Update [GO_LIVE.md](./GO_LIVE.md) checklist from findings
-- [ ] Owner sign-off for go-live
+- [x] Stress test playbook ([STRESS_TEST_HANDOVER.md](./STRESS_TEST_HANDOVER.md))
+- [x] KO-environment UX merged to `main` (predictions UI, comparison, seed script)
+- [ ] Owner production deploy ([DEPLOY.md](./DEPLOY.md))
+- [ ] `FOOTBALL_DATA_TOKEN` + `npm run jobs` during tournament
+- [ ] Owner sign-off on [GO_LIVE.md](./GO_LIVE.md)
 
 ---
 
 ## Owner UI polish (complete)
 
 - [x] Name-only auth + join password + `db:purge` (PR #7)
-- [x] My Picks tabs, auto-save, projected table, spacing (PR #7–#8)
+- [x] My Predictions tabs, auto-save, projected table (PR #7–#8)
 - [x] Tournament standalone + TeamSelect flags (PR #9)
 - [x] Welcome rules + mobile nav (PR #10)
-- [x] Lock group + missing picks list (PR #11)
+- [x] Lock group + missing predictions list (PR #11)
+- [x] KO tabs, actual tables, comparison rules, BST (KO-Environment → main)
 
 ---
 
@@ -39,24 +38,25 @@
 - [x] football-data match ID mapping
 - [x] Scoring (group position, tournament bonus)
 - [x] Dynamic KO fixtures from results
-- [x] Knockout only when fixture officially confirmed
+- [x] Knockout only when officially confirmed
 
 ## P1 — Product
 
 - [x] Auth-protected routes + logout
-- [x] Comparison fixture picker
-- [x] Rules on Welcome page (no separate Rules route)
-- [x] Group / Knockout / Tournament tabs on My Picks
-- [x] Per-group lock + auto-save picks
+- [x] Comparison fixture picker + visibility rules
+- [x] Rules on Welcome page
+- [x] Per-round knockout tabs + group actual tables
+- [x] Per-group lock + auto-save predictions
 
 ## P2 — Ops
 
 - [x] Postgres + migrations
 - [x] Deploy docs ([DEPLOY.md](./DEPLOY.md), [GO_LIVE.md](./GO_LIVE.md))
-- [x] API integration tests (36 tests total)
+- [x] API integration tests (43 tests)
 - [x] football-data seed + sync
 - [x] Windows `scripts/Test-LocalSite.ps1`
 - [x] SVG team flags
+- [x] `npm run seed:ko-environment` for local KO testing
 
 ## P3 — Later
 
@@ -68,21 +68,4 @@
 
 ---
 
-## Plan artifact todos (final plan)
-
-| ID | Status |
-|----|--------|
-| competition-rule-refactor | [x] |
-| group-position-bonus | [x] |
-| bonus-picks-page | [x] |
-| ko-rolling-locks | [x] |
-| draft-commit-safety | [x] (server; UI uses direct commit) |
-| football-data-sync | [x] |
-
----
-
-## Completed baseline
-
-- [x] React/Vite + Express API + SQLite/Postgres
-- [x] Leaderboard, comparison, admin sync
-- [x] **36** automated tests (`npm test`)
+*End of TODO.*

@@ -3,8 +3,8 @@
 **Last updated:** 2026-06-02  
 **Repository:** https://github.com/somervilleEdTec/World-Cup-Project  
 **Active branch:** `main`  
-**Phase:** Stress testing & debugging (UI polish complete, PRs #7–#11)  
-**Deploy:** [docs/DEPLOY.md](./DEPLOY.md) · **Go-live:** [docs/GO_LIVE.md](./GO_LIVE.md)
+**Phase:** Go-live ready (UI polish + KO-environment hardening merged)  
+**Deploy:** [docs/DEPLOY.md](./DEPLOY.md) · **Go-live:** [docs/GO_LIVE.md](./GO_LIVE.md) · **KO test seed:** [docs/KO_ENVIRONMENT.md](./KO_ENVIRONMENT.md)
 
 **Next agent starts here:** [docs/STRESS_TEST_HANDOVER.md](./STRESS_TEST_HANDOVER.md) · Prompt: [docs/AGENT_PROMPT.md](./AGENT_PROMPT.md)
 
@@ -63,7 +63,8 @@ Friends-and-family prediction app for **FIFA World Cup 2026** (48 teams, 12 grou
 
 | File | Role |
 |------|------|
-| [STRESS_TEST_HANDOVER.md](./STRESS_TEST_HANDOVER.md) | **Next agent — stress test playbook** |
+| [STRESS_TEST_HANDOVER.md](./STRESS_TEST_HANDOVER.md) | Stress test playbook (reference) |
+| [KO_ENVIRONMENT.md](./KO_ENVIRONMENT.md) | Local KO test seed (`npm run seed:ko-environment`) |
 | [AGENT_PROMPT.md](./AGENT_PROMPT.md) | Copy-paste session prompt |
 | [UI_HANDOVER.md](./UI_HANDOVER.md) | UI history + bug log table |
 | [HANDOVER.md](./HANDOVER.md) | This file |
@@ -84,6 +85,7 @@ Friends-and-family prediction app for **FIFA World Cup 2026** (48 teams, 12 grou
 | #9 | Tournament standalone, TeamSelect flags, no commit panel |
 | #10 | Rules on Welcome, mobile nav, remove Rules route |
 | #11 | Lock group, missing picks list, debounced auto-save |
+| KO-Environment → main | KO phase tabs, actual tables, comparison rules, BST, prediction copy |
 
 **Stack:** React 19, Vite 8, TypeScript, Express 5, better-sqlite3 / Postgres. Legacy Zustand: `src/lib/store.ts` (unused in production path).
 
@@ -101,13 +103,16 @@ Friends-and-family prediction app for **FIFA World Cup 2026** (48 teams, 12 grou
 
 ### App & UX (current)
 
-- [x] Pages: Login, Welcome (with rules), My Picks, League Table, Comparison, Admin
+- [x] Pages: Login, Welcome (with rules), **My Predictions**, League Table, Comparison, Admin
 - [x] Auth: **display name** + password; join password; sessions
-- [x] My Picks: **Tournament Results · Group Stage · Knockout Stage**
-- [x] Auto-save match scores; **Lock group**; missing picks summary (`src/lib/missingPicks.ts`)
+- [x] My Predictions: **Tournament Results · Group Stage · R32 · R16 · QF · SF · Final / 3rd Place**
+- [x] Auto-save match scores; **Lock group**; missing predictions list (`src/lib/missingPicks.ts`)
+- [x] Group **projected** + **actual** standings tables; locked fixtures show prediction / result / points as text
+- [x] Comparison: colour-coded accuracy when results in; group predictions after lock; **KO after fixture kickoff**
+- [x] All kickoff times shown in **BST** (`src/lib/formatDateTime.ts`)
 - [x] `TeamSelect` — flags + alphabetical teams
 - [x] SVG flags (`CountryFlag`, `public/flags/4x3/`)
-- [x] **36 tests**; `npm run build`; Windows `scripts/Test-LocalSite.ps1`
+- [x] **43 tests**; `npm run build`; Windows `scripts/Test-LocalSite.ps1`; `npm run seed:ko-environment`
 
 ### Ops / partial
 
@@ -139,9 +144,15 @@ Jobs: src/server/jobs.ts (locks, sync poll)
 
 | Path | Purpose |
 |------|---------|
-| `src/pages/MyPicksPage.tsx` | Tabs, auto-save, lock, missing picks |
-| `src/lib/missingPicks.ts` | Missing picks list for header |
+| `src/pages/MyPicksPage.tsx` | Phase tabs, auto-save, lock, projected/actual tables |
+| `src/components/FixturePickCard.tsx` | Fixture UI; locked text + points |
+| `src/components/GroupStandingsTable.tsx` | Group projected/actual tables |
+| `src/lib/missingPicks.ts` | Missing predictions list for header |
+| `src/lib/matchScoring.ts` | Per-fixture points (+1 / +5) |
+| `src/lib/comparisonVisibility.ts` | When others’ predictions are visible |
+| `src/lib/formatDateTime.ts` | BST kickoff formatting |
 | `src/components/TeamSelect.tsx` | Flag + name picker |
+| `scripts/seed-ko-environment.ts` | `npm run seed:ko-environment` |
 | `src/server/services/predictions.ts` | Saves, locks, bonus |
 | `src/server/services/auth.ts` | Register / login |
 | `src/lib/pickLocks.ts` | Lock rules, 72-group gate |
@@ -160,7 +171,7 @@ Base: `http://localhost:8787` · Auth: `Authorization: Bearer <token>`
 |--------|------|--------|
 | POST | `/api/auth/register` | `{ displayName, password, joinPassword }` |
 | POST | `/api/auth/login` | `{ displayName, password }` |
-| GET | `/api/predictions/state` | Bearer |
+| GET | `/api/predictions/state` | Bearer — includes `officialResults`, `confirmedKnockoutFixtures` |
 | POST | `/api/predictions/draft` | Saves **committed** match pick |
 | POST | `/api/predictions/bonus` | Saves **bonus_committed** |
 | POST | `/api/predictions/groups/:groupId/lock` | One-way group lock |
@@ -204,7 +215,8 @@ sqlite3 data.db "UPDATE users SET is_admin = 1 WHERE display_name = 'YourName';"
 ### Quality gates
 
 ```bash
-npm test              # 36 tests
+npm test              # 43 tests
+npm run seed:ko-environment   # optional local KO test DB (see KO_ENVIRONMENT.md)
 npm run build
 npm run db:purge      # reset local SQLite data
 ```
@@ -226,10 +238,10 @@ npm run db:purge      # reset local SQLite data
 
 ## 10. Next agent priorities
 
-1. Execute [STRESS_TEST_HANDOVER.md](./STRESS_TEST_HANDOVER.md) checklist.
-2. Fix bugs; log in [UI_HANDOVER.md](./UI_HANDOVER.md) §6.
-3. Align [GO_LIVE.md](./GO_LIVE.md) and [COMPLIANCE.md](./COMPLIANCE.md) with verified behaviour.
-4. Owner go-live sign-off.
+1. Owner go-live on production ([GO_LIVE.md](./GO_LIVE.md)).
+2. Keep `npm run jobs` + football-data sync during tournament.
+3. Use `npm run seed:ko-environment` only for local KO/regression testing.
+4. Log new issues in [UI_HANDOVER.md](./UI_HANDOVER.md) §6.
 
 ---
 

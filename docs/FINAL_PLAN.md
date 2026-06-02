@@ -113,7 +113,7 @@ Two states:
 ## Comparison visibility
 
 - **Group:** other players’ picks visible after first kickoff (group lock).
-- **Knockout:** other players’ committed picks visible once saved (pre-kickoff comparison).
+- **Knockout:** other players’ predictions visible after that fixture’s kickoff (when locked).
 
 ## Messaging (required in UI)
 

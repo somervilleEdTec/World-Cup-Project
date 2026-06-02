@@ -1,6 +1,6 @@
 # FINAL_PLAN compliance checklist
 
-Verified against [FINAL_PLAN.md](./FINAL_PLAN.md). **Last reviewed:** 2026-06-02 (post UI polish PRs #7–#11).
+Verified against [FINAL_PLAN.md](./FINAL_PLAN.md). **Last reviewed:** 2026-06-02 (KO-environment merge to `main`).
 
 > **Note:** UI no longer uses a draft/commit panel. Match picks are written **committed** on save; tournament picks use **bonus_committed**. See [STRESS_TEST_HANDOVER.md](./STRESS_TEST_HANDOVER.md) for current behaviour.
 
@@ -25,7 +25,9 @@ Verified against [FINAL_PLAN.md](./FINAL_PLAN.md). **Last reviewed:** 2026-06-02
 
 - No separate Rules route — rules on Welcome.
 - No global “Commit changes” button — auto-save + Lock group.
-- Tournament picks do not require all groups accepted first.
+- Tournament predictions do not require all groups accepted first.
 - Auth uses **display name**, not email.
+- **Comparison — knockout:** others’ predictions hidden until fixture kickoff (not visible pre-kickoff).
+- User-facing label **prediction**; API/DB still use `committed` state naming.
 
 **Deferred (P3):** OAuth, PWA, PDF export, E2E tests, production CORS hardening.

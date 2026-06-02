@@ -46,7 +46,8 @@ sqlite3 data.db "UPDATE users SET is_admin = 1 WHERE display_name = 'YourName';"
 **Quality gates:**
 
 ```bash
-npm test        # 36 tests (10 files)
+npm test        # 43 tests (12 files)
+npm run seed:ko-environment   # optional — see KO_ENVIRONMENT.md
 npm run build
 npm run lint    # optional
 ```
@@ -69,45 +70,63 @@ npm run lint    # optional
 | Route | Purpose |
 |-------|---------|
 | `/` | Welcome + **rules** (scoring, locks, tie-breakers) |
-| `/my-picks` | Tournament Results · Group Stage · Knockout Stage tabs |
+| `/my-picks` | **My Predictions:** Tournament Results · Group Stage · R32 · R16 · QF · SF · Final / 3rd Place |
 | `/league-table` | Leaderboard |
 | `/comparison` | Multi-user fixture comparison |
 | `/admin` | Sync, diagnostics, overrides (admin only) |
 
 **No `/rules` route** — rules live on Welcome only.
 
-**Mobile:** bottom nav 2×2 grid (Home · Picks · Table · Compare); desktop header nav.
+**Mobile:** bottom nav 2×2 grid (Home · Predict · Table · Compare); desktop header nav.
+
+**Terminology:** user-facing copy says **prediction** (not “pick”). Route remains `/my-picks`.
+
+**Times:** all displayed kickoffs use **BST** (`formatKickoffBst`).
 
 ### My Picks — Tournament Results
 
 - **Standalone** — no group picks required.
 - **TeamSelect** dropdowns: teams **A–Z**, **flag + name** (`src/components/TeamSelect.tsx`).
-- **Save tournament picks** → writes `bonus_committed` immediately.
+- **Save tournament predictions** → writes `bonus_committed` immediately.
+- When locked: four teams shown as text (no dropdowns).
 - Locks at **first match kickoff** (global group lock).
 
 ### My Picks — Group Stage
 
 - Scores **auto-save** (~450 ms debounce) → stored as **committed** picks.
 - **No** per-match Save / Commit buttons.
-- **Projected table:** GP, W, D, L, GF, GA, Pts (zeros until user enters scores).
+- **Projected table** + **Actual table** (from official results when available).
 - **Lock group** (one-way) — prevents accidental edits; stored in `accepted_groups`.
-- **Previous / Next group** — no longer requires lock to advance.
+- **Previous / Next group** — flushes pending auto-save before navigating.
 
-### My Picks — Knockout Stage
+### My Predictions — Knockout (per-round tabs)
 
-- Only **officially confirmed** fixtures (both teams from real results).
+- **R32 / R16 / QF / SF / Final / 3rd Place** — each lists only confirmed fixtures for that round.
 - Scores **auto-save** like group stage.
-- Server still requires **72 group picks committed** before KO saves (unless tournament globally locked). See `pickLocks.ts`.
+- When locked or past kickoff: prediction, official result, and **Points scored** shown as text (no spinners).
+- Server requires **72 group predictions saved** before KO saves (unless tournament globally locked). See `pickLocks.ts`.
 
-### My Picks — header (all tabs)
+### My Predictions — header (all tabs)
 
-**“You have the following missing picks:”** lists:
+**“You have the following missing predictions:”** lists:
 
 - `Tournament Place: Winner` / `Runner-up` / `Third` / `Fourth`
 - `Group A` … `Group L` (any incomplete group)
 - `Knockout: R32 — Team vs Team` (confirmed fixtures without a pick)
 
-Shows green “None — all current picks are complete.” when empty.
+Shows green “None — all current predictions are complete.” when empty.
+
+### Comparison
+
+- Fixture picker includes all matches with known teams (not only future kickoffs).
+- **Group:** others’ predictions visible after tournament group lock (first kickoff).
+- **Knockout:** others’ predictions visible **after that fixture’s kickoff** only.
+- When results exist: green = exact score, amber = correct result only, red = wrong.
+- Official result shown for the selected fixture.
+
+### League Table
+
+- Columns: Rank · Player · Exact Scores · Correct Results · Exact Group Positions · **Bonus Points** · **Points** (last column, bold).
 
 ### Removed UX (do not reintroduce without owner ask)
 
