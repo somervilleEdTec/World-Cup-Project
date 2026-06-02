@@ -132,6 +132,12 @@ select {
   margin-bottom: 0.8rem;
 }
 
+.button-row button.active-tab {
+  background: #0b3d6e;
+  color: #fff;
+  border-color: #0b3d6e;
+}
+
 .fixture-row {
   display: flex;
   flex-wrap: wrap;

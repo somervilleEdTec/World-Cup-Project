@@ -9,7 +9,6 @@ import {
   saveDraftPick,
   setGroupAccepted
 } from '../services/apiClient';
-import { getMatches } from '../lib/matchResolver';
 import { ALL_GROUP_IDS, GROUP_MATCH_COUNT } from '../lib/pickLocks';
 import { computeGroupPositions, shouldLockGroup } from '../lib/tournamentLogic';
 import { Match, Pick, TournamentBonusPick } from '../types';
@@ -45,7 +44,10 @@ interface RemoteState {
   bonusDraft?: TournamentBonusPick;
   bonusCommitted?: TournamentBonusPick;
   commitState: { groupLocked: boolean };
+  confirmedKnockoutFixtures?: Match[];
 }
+
+type PicksPhase = 'group' | 'knockout';
 
 const initialState: RemoteState = {
   committedPicks: {},
@@ -57,6 +59,7 @@ const initialState: RemoteState = {
 
 export function MyPicksPage() {
   const [groupIndex, setGroupIndex] = useState(0);
+  const [phase, setPhase] = useState<PicksPhase>('group');
   const [message, setMessage] = useState<string>('');
   const [state, setState] = useState<RemoteState>(initialState);
 
@@ -84,7 +87,7 @@ export function MyPicksPage() {
   const groupLocked = state.commitState.groupLocked || shouldLockGroup(nowIso);
 
   const mergedPicks = { ...state.committedPicks, ...state.draftPicks };
-  const resolvedMatches = useMemo(() => getMatches(mergedPicks), [mergedPicks]);
+  const confirmedKnockoutFixtures = state.confirmedKnockoutFixtures ?? [];
   const groupPreview = useMemo(() => computeGroupPositions(activeGroup, mergedPicks), [activeGroup, mergedPicks]);
 
   const groupComplete = activeGroupMatches.every((match) => mergedPicks[match.id] !== undefined);
@@ -95,7 +98,8 @@ export function MyPicksPage() {
   const allGroupPicksCommitted =
     state.allGroupPicksCommitted ?? groupPicksCommittedCount >= groupPicksRequired;
   const bonus = bonusValues(state);
-  const koUnlocked = allGroupPicksCommitted || groupLocked;
+  const koPicksAllowed = allGroupPicksCommitted || groupLocked;
+  const hasConfirmedKnockout = confirmedKnockoutFixtures.length > 0;
 
   const saveMatch = async (event: FormEvent<HTMLFormElement>, match: Match) => {
     event.preventDefault();
@@ -152,8 +156,27 @@ export function MyPicksPage() {
             ? ' — commit all group-stage picks before first kickoff to unlock bonus and knockout picks.'
             : ''}
         </p>
+        <div className="button-row">
+          <button type="button" className={phase === 'group' ? 'active-tab' : ''} onClick={() => setPhase('group')}>
+            Group stage
+          </button>
+          <button
+            type="button"
+            className={phase === 'knockout' ? 'active-tab' : ''}
+            onClick={() => setPhase('knockout')}
+          >
+            Knockout stage
+            {hasConfirmedKnockout ? ` (${confirmedKnockoutFixtures.length})` : ''}
+          </button>
+        </div>
+        {phase === 'knockout' && !hasConfirmedKnockout && (
+          <p className="warning">
+            Knockout picks appear here once official group results confirm each fixture (both teams known).
+          </p>
+        )}
       </article>
 
+      {phase === 'group' && (
       <article className="card">
         <h3>Group {activeGroup} predictions</h3>
         {activeGroupMatches.map((match) => {
@@ -230,7 +253,9 @@ export function MyPicksPage() {
           </button>
         </div>
       </article>
+      )}
 
+      {phase === 'group' && (
       <article className="card">
         <h3>Tournament bonus picks</h3>
         <p>Select winner, runner-up, third, and fourth from all teams (repeats allowed).</p>
@@ -278,17 +303,26 @@ export function MyPicksPage() {
           </button>
         </form>
       </article>
+      )}
 
+      {phase === 'knockout' && (
       <article className="card">
         <h3>Knockout fixture picks</h3>
-        {!koUnlocked && (
+        <p>Only officially confirmed fixtures are listed — not projected from your group picks.</p>
+        {!koPicksAllowed && (
           <p className="warning">
-            Commit all {groupPicksRequired} group-stage picks before first kickoff to unlock knockout predictions.
+            Commit all {groupPicksRequired} group-stage picks before first kickoff to save knockout predictions.
           </p>
         )}
-        {resolvedMatches
-          .filter((match) => match.stage !== 'GROUP')
-          .map((match) => {
+        {hasConfirmedKnockout && !koPicksAllowed && (
+          <p className="warning">Finish committing your group-stage picks to enable saving knockout scores.</p>
+        )}
+        {!hasConfirmedKnockout && (
+          <p className="warning">
+            No knockout fixtures are confirmed yet. They unlock as group games finish and FIFA assigns teams.
+          </p>
+        )}
+        {confirmedKnockoutFixtures.map((match) => {
             const homeTeam = teams.find((team) => team.id === match.homeTeamId);
             const awayTeam = teams.find((team) => team.id === match.awayTeamId);
             const homeOk = homeTeam && homeTeam.id !== 'tbd';
@@ -333,7 +367,7 @@ export function MyPicksPage() {
                     </select>
                   </label>
                 )}
-                <button type="submit" disabled={locked || !koUnlocked}>
+                <button type="submit" disabled={locked || !koPicksAllowed}>
                   Save knockout pick
                 </button>
                 {state.affectedMatches.includes(match.id) && (
@@ -351,6 +385,7 @@ export function MyPicksPage() {
             );
           })}
       </article>
+      )}
 
       <article className="card">
         <button

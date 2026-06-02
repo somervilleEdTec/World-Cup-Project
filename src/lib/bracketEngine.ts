@@ -69,6 +69,7 @@ const LATER_KO_TEMPLATES: KoTemplate[] = [
 export const KNOCKOUT_TEMPLATES: KoTemplate[] = [...R32_TEMPLATES, ...LATER_KO_TEMPLATES];
 
 function buildThirdPlaceQualifier(groupId: string, picks: Record<string, Pick>): GroupQualifier | null {
+  if (!isGroupFullyPlayedInPicks(groupId, picks)) return null;
   const standings = computeGroupStandings(groupId, picks);
   if (standings.length < 3) return null;
   const third = standings[2];
@@ -88,6 +89,8 @@ export function thirdPlaceCombinationKey(qualifiers: GroupQualifier[]): string {
 }
 
 export function resolveThirdPlaceTeam(slot: ThirdPlaceSlot, picks: Record<string, Pick>): string | null {
+  const allGroupsPlayed = GROUPS.every((groupId) => isGroupFullyPlayedInPicks(groupId, picks));
+  if (!allGroupsPlayed) return null;
   const ranked = rankThirdPlaceTeams(picks);
   const topEight = ranked.slice(0, 8);
   if (topEight.length < 8) return null;
@@ -99,7 +102,13 @@ export function resolveThirdPlaceTeam(slot: ThirdPlaceSlot, picks: Record<string
   return entry?.teamId ?? null;
 }
 
+function isGroupFullyPlayedInPicks(group: string, picks: Record<string, Pick>): boolean {
+  const matches = groupMatches.filter((m) => m.group === group);
+  return matches.length > 0 && matches.every((m) => picks[m.id] !== undefined);
+}
+
 function resolvePos(group: string, position: 1 | 2, picks: Record<string, Pick>): string | null {
+  if (!isGroupFullyPlayedInPicks(group, picks)) return null;
   const standings = computeGroupStandings(group, picks);
   const idx = position - 1;
   return standings[idx]?.teamId ?? null;
