@@ -63,3 +63,35 @@ export interface LeaderboardEntry {
   exactGroupPositions: number;
   bonusHits: number;
 }
+
+export interface ComparisonPickView {
+  homeScore: number;
+  awayScore: number;
+  progressingTeamId?: string;
+}
+
+export interface ComparisonEntryView {
+  userId: string;
+  displayName: string;
+  isCurrentUser: boolean;
+  pick: ComparisonPickView | null;
+  hidden: boolean;
+}
+
+export interface MatchComparisonView {
+  match: {
+    id: string;
+    stage: string;
+    group?: string;
+    kickoff: string;
+    homeTeamId: string;
+    awayTeamId: string;
+  };
+  visibility: {
+    canViewOthers: boolean;
+    groupLocked: boolean;
+    matchLocked: boolean;
+    message: string;
+  };
+  entries: ComparisonEntryView[];
+}

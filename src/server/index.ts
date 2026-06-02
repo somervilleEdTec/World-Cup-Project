@@ -12,6 +12,7 @@ import {
 } from './services/predictions';
 import { computeLeaderboard } from './services/leaderboard';
 import { getSyncStatus, syncFootballData } from './services/sync';
+import { getMatchComparison, getNextMatchComparison } from './services/comparison';
 import { db } from './db';
 
 const app = express();
@@ -110,6 +111,29 @@ app.post('/api/predictions/commit', (req: Request, res: Response) => {
 app.post('/api/system/locks/run', (_req: Request, res: Response) => {
   runAutoLocks(new Date().toISOString());
   res.json({ ok: true });
+});
+
+
+app.get('/api/comparison/next', (req: Request, res: Response) => {
+  try {
+    const user = requireUser(authToken(req));
+    const data = getNextMatchComparison(user.id, new Date().toISOString());
+    if (!data) return res.status(404).json({ error: 'No upcoming matches' });
+    return res.json(data);
+  } catch (error) {
+    return res.status(401).json({ error: error instanceof Error ? error.message : 'Unauthorized' });
+  }
+});
+
+app.get('/api/comparison/:matchId', (req: Request, res: Response) => {
+  try {
+    const user = requireUser(authToken(req));
+    const data = getMatchComparison(String(req.params.matchId), user.id, new Date().toISOString());
+    if (!data) return res.status(404).json({ error: 'Match not found' });
+    return res.json(data);
+  } catch (error) {
+    return res.status(401).json({ error: error instanceof Error ? error.message : 'Unauthorized' });
+  }
 });
 
 app.get('/api/leaderboard', (_req: Request, res: Response) => {

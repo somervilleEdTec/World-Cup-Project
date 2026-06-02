@@ -191,3 +191,30 @@ td {
     margin-bottom: 1rem;
   }
 }
+
+.comparison-table-wrap {
+  overflow-x: auto;
+}
+
+.comparison-table {
+  display: table;
+  width: 100%;
+}
+
+.comparison-row-you {
+  background: #eef8f3;
+  font-weight: 600;
+}
+
+.fixture-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 0.6rem;
+}
+
+.fixture-list li {
+  border-bottom: 1px solid #d8e0ec;
+  padding-bottom: 0.5rem;
+}

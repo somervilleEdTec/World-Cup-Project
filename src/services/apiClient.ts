@@ -85,3 +85,11 @@ export async function manualOverride(payload: {
 export async function recomputeLeaderboard() {
   return request('/api/admin/leaderboard/recompute', { method: 'POST' });
 }
+
+export async function fetchNextMatchComparison() {
+  return request('/api/comparison/next');
+}
+
+export async function fetchMatchComparison(matchId: string) {
+  return request(`/api/comparison/${matchId}`);
+}
