@@ -1,82 +1,87 @@
 # Prompt for the next agent
 
-Copy everything below the line into a new Cursor Cloud Agent (or local agent) session. **The agent must ask the product owner for direction before writing code.**
+Copy everything below the line into a new Cursor agent session.
 
 ---
 
 ## Your role
 
-You are taking over **World Cup Boys** (“Welcome to the Shiva Bowl”) — a friends-and-family FIFA World Cup 2026 prediction web app.
+You are taking over **World Cup Boys** (“Welcome to the Shiva Bowl”) — a FIFA World Cup 2026 prediction app for friends/family.
 
-Repository: https://github.com/somervilleEdTec/World-Cup-Project  
-Branch with latest work: `cursor/world-cup-p0-complete-21eb`  
-Draft PR: https://github.com/somervilleEdTec/World-Cup-Project/pull/2
+**Repository:** https://github.com/somervilleEdTec/World-Cup-Project  
+**Branch:** `main` (all P0–P2 work merged; latest tag `v1.1.0`)  
+**Primary task:** **UI debugging and polish** — the product owner has found UI issues while testing locally.
 
 ## Mandatory first step — do not skip
 
-**Before changing any code**, read these files:
+Read these files in order:
 
-1. [docs/HANDOVER.md](./HANDOVER.md) — architecture, API, what is done vs open
-2. [docs/FINAL_PLAN.md](./FINAL_PLAN.md) — authoritative product rules
-3. [docs/TODO.md](./TODO.md) — task tracker
+1. [docs/UI_HANDOVER.md](./UI_HANDOVER.md) — **start here** for UI work
+2. [docs/HANDOVER.md](./HANDOVER.md) — architecture, API, features
+3. [docs/FINAL_PLAN.md](./FINAL_PLAN.md) — competition rules (do not change without owner)
+4. [docs/TODO.md](./TODO.md) — backlog
 
-Then **stop and prompt the product owner** with a short message like:
+Then **message the product owner**:
 
-> I’ve read the handover. P0 (bracket engine, scoring, football-data mapping, dynamic KO) and P1 (auth, accept/amend, comparison picker, rules page) are marked complete on branch `cursor/world-cup-p0-complete-21eb` / PR #2.
+> I’ve read the handover on `main`. I understand the next focus is **UI fixes** you found while testing.
 >
-> **What should we do next?** For example:
-> - **A)** Merge PR #2 to `main` and cut a release tag  
-> - **B)** P2 ops: Postgres + migrations  
-> - **C)** P2 ops: production deploy (single VPS or Vercel + hosted DB)  
-> - **D)** P2: API integration tests (Supertest)  
-> - **E)** P2: Import real 2026 kickoffs from football-data.org  
-> - **F)** Product tweaks (describe any rule or UX change)  
-> - **G)** Something else (you specify)
+> Please send your list of UI issues (page, what’s wrong, what you want instead). Screenshots are helpful.
 >
-> I won’t start implementation until you choose (or combine) options.
+> I won’t change the UI until you confirm the list (unless you say “start with mobile layout” etc.).
 
-Wait for their reply. Only then create a branch, implement, test (`npm test`, `npm run build`), commit, push, and open/update a PR.
+Wait for their reply. Then branch, fix, test, commit, push, open PR to `main`.
 
-## What was completed (context for you)
+## Local setup (owner uses Windows)
 
-- **Bracket engine** — `src/lib/bracketEngine.ts` + 495 third-place mappings (`src/data/thirdPlaceMappings.ts`)
-- **Dynamic fixtures** — `getMatches(picks, results)` in `src/lib/matchResolver.ts`
-- **Scoring** — fixed group-position bonus; tournament bonuses from `deriveFinalPlacings()`
-- **Sync** — `match_external_ids` + `src/server/services/matchMapping.ts`
-- **P1 UX** — protected routes, logout, group accept/amend, comparison fixture picker, `/rules` page
-- **Tests** — 11 unit tests passing
+**PowerShell** (repo root):
 
-## Local verification commands
-
-```bash
-npm install
-npm test
-npm run build
-npm run server    # :8787
-npm run dev       # :5173
+```powershell
+git pull origin main
+.\scripts\Test-LocalSite.ps1
+.\scripts\Test-LocalSite.ps1 -Mode Serve
 ```
 
-Admin: register in UI, then `sqlite3 data.db "UPDATE users SET is_admin = 1 WHERE email = '...';"`
+Browser: **http://localhost:8787/login**
 
-Optional: `FOOTBALL_DATA_TOKEN` for `npm run jobs` sync.
+**macOS/Linux:**
+
+```bash
+npm install && npm run migrate && npm test && npm run build
+npm run server    # :8787 — serves API + built SPA
+npm run dev       # :5173 — optional hot reload (needs API on :8787)
+```
+
+Admin: register in UI, then  
+`sqlite3 data.db "UPDATE users SET is_admin = 1 WHERE email = 'you@example.com';"`
+
+Optional: `FOOTBALL_DATA_TOKEN` in `.env` for sync/seed.
+
+## What is already done (do not redo)
+
+- P0/P1/P2: bracket engine, scoring, auth, Postgres/SQLite, migrations, deploy docs, integration tests, football-data sync/mapping
+- **72 committed group picks** gate; server-side locks ([COMPLIANCE.md](./COMPLIANCE.md))
+- **Group / Knockout tabs**; knockout only when official fixture confirmed
+- **SVG flags** (`CountryFlag`, `public/flags/4x3/`)
+- **Windows test script** `scripts/Test-LocalSite.ps1`
+- **30 tests** passing
 
 ## Conventions
 
-- Product rules: do not change [docs/FINAL_PLAN.md](./FINAL_PLAN.md) without owner approval
-- Cloud agent branches: `cursor/<descriptive-name>-21eb`
-- PR base: `main`
+- Do not edit [docs/FINAL_PLAN.md](./FINAL_PLAN.md) without owner approval
+- Cloud agent branches: `cursor/<descriptive-name>-21eb` (or owner preference)
+- PR base: **`main`**
+- Update [docs/UI_HANDOVER.md](./UI_HANDOVER.md) §5 when issues are fixed
 - Do not edit Cursor artifact plans under `/opt/cursor/artifacts/plans/`
 
-## If the owner says “merge first”
+## Quality gates before PR
 
-1. Ensure PR #2 CI/local tests pass  
-2. Merge to `main` (or help them review the diff)  
-3. Confirm `docs/` on `main` matches handover after merge  
+```bash
+npm test
+npm run build
+```
 
-## If the owner picks P2 work
-
-Follow priority order in [docs/TODO.md](./TODO.md) unless they reorder. Update HANDOVER.md and TODO.md when you finish a milestone.
+Manual: two users, My Picks group flow, commit, Comparison, League Table.
 
 ---
 
-*This prompt is maintained in-repo so every new session gets the same takeover ritual.*
+*End of agent prompt.*

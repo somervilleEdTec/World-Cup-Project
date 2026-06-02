@@ -2,10 +2,10 @@
 
 **Last updated:** 2026-06-02  
 **Repository:** https://github.com/somervilleEdTec/World-Cup-Project  
-**Active branch:** `main` (P0/P1 merged); P2 on `cursor/p2-operations-complete-21eb`  
-**Release:** `v1.0.0` — functional go-live build  
+**Active branch:** `main` — all P0–P2 + recent UX merges  
+**Release:** `v1.1.0` (functional + knockout gating + flags + Windows test script)  
 **Deploy guide:** [docs/DEPLOY.md](./DEPLOY.md) · **Go-live:** [docs/GO_LIVE.md](./GO_LIVE.md)  
-**Prior PR:** https://github.com/somervilleEdTec/World-Cup-Project/pull/1 (planning scaffold, superseded for implementation)
+**UI work:** [docs/UI_HANDOVER.md](./UI_HANDOVER.md) — **next agent starts here** for owner-reported UI fixes
 
 ---
 
@@ -67,6 +67,7 @@ If regulation is predicted as a draw in KO, user must pick **team to progress** 
 | [docs/HANDOVER.md](./HANDOVER.md) | This file — implementation status |
 | [docs/TODO.md](./TODO.md) | Task tracker (P0/P1 marked complete as of PR #2) |
 | [docs/AGENT_PROMPT.md](./AGENT_PROMPT.md) | Copy-paste prompt for the next agent session |
+| [docs/UI_HANDOVER.md](./UI_HANDOVER.md) | UI/UX debug handover (current priority) |
 
 ---
 
@@ -98,15 +99,18 @@ If regulation is predicted as a draw in KO, user must pick **team to progress** 
 - [x] Pages: Login, Welcome, My Picks, League Table, Comparison, **Rules**, Admin
 - [x] **Protected routes** + logout + display name (`ProtectedRoute`, `wcb_display_name` in localStorage)
 - [x] Group wizard with **Accept / Amend** before “Next Group”
+- [x] **My Picks:** Group stage / Knockout stage **tabs**; KO list only for **officially confirmed** fixtures
+- [x] **Team flags:** SVG via `CountryFlag` + `public/flags/4x3/` (not emoji)
 - [x] Comparison fixture dropdown + `?matchId=` + `GET /api/comparison/fixtures`
 - [x] Draft/commit flow, rolling KO locks, admin sync/override/recompute
-- [x] **19 tests** passing (unit + API integration); `npm run build` passes
+- [x] **30 tests** passing (unit + API integration); `npm run build` passes
 - [x] **Plan compliance** — server-side locks, group accept persistence, scoring guards ([COMPLIANCE.md](./COMPLIANCE.md))
+- [x] **Windows local test:** `scripts/Test-LocalSite.ps1` (verified on owner PC)
 
 ### Still manual / partial
 
 - [ ] **Admin role** — set `users.is_admin = 1` in SQLite after register
-- [ ] **Real fixture kickoffs** — group KO kickoffs are approximate ISO dates; import from football-data still P2
+- [ ] **UI polish** — owner testing surfaced layout/UX issues; see [UI_HANDOVER.md](./UI_HANDOVER.md)
 - [ ] **football-data live sync** — needs valid `FOOTBALL_DATA_TOKEN` and matching team names in API responses
 - [ ] **Zustand store** — legacy client-only path; prefer API
 - [ ] **Production** — use Postgres + [DEPLOY.md](./DEPLOY.md); SQLite remains default for local dev
@@ -169,7 +173,9 @@ Data:
 | `src/server/services/leaderboard.ts` | Points aggregation |
 | `src/server/services/predictions.ts` | Draft/commit/locks |
 | `src/server/services/comparison.ts` | Multi-user comparison |
-| `src/pages/MyPicksPage.tsx` | Group wizard + KO picks |
+| `src/pages/MyPicksPage.tsx` | Group / KO tabs, wizard, bonus, commit |
+| `src/lib/knockoutFixtureAvailability.ts` | Official KO fixture gating |
+| `src/components/CountryFlag.tsx` | SVG flag images |
 | `src/pages/RulesPage.tsx` | Scoring / lock rules (UI) |
 | `scripts/generate-third-place-map.mjs` | Regenerate Annex C mappings from Wikipedia |
 
@@ -204,21 +210,35 @@ Base URL: `http://localhost:8787` (override with `VITE_API_BASE_URL`)
 
 ## 8. Local development
 
+### Windows (owner-tested)
+
+```powershell
+cd C:\Users\tomso\World-Cup-Project   # or your clone path
+git pull origin main
+.\scripts\Test-LocalSite.ps1                    # install, migrate, test, build, smoke API
+.\scripts\Test-LocalSite.ps1 -Mode Serve        # http://localhost:8787/login
+```
+
+First-time: `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`
+
+### macOS / Linux
+
 ```bash
 npm install
+npm run migrate
 
-# Terminal 1 — API
+# Terminal 1 — API (+ built SPA when dist/ exists)
 npm run server
 
 # Terminal 2 — schedulers (locks + sync)
 export FOOTBALL_DATA_TOKEN=your_token_here   # optional
 npm run jobs
 
-# Terminal 3 — frontend
+# Terminal 3 — frontend dev (optional)
 npm run dev
 ```
 
-Open http://localhost:5173 — unauthenticated users redirect to `/login`.
+Open http://localhost:5173 (dev) or http://localhost:8787 (server with `dist/`) — unauthenticated users redirect to `/login`.
 
 **Create admin user:** register via UI, then:
 
@@ -229,7 +249,7 @@ sqlite3 data.db "UPDATE users SET is_admin = 1 WHERE email = 'you@example.com';"
 **Quality gates:**
 
 ```bash
-npm test              # 15 tests (11 unit + 4 API integration)
+npm test              # 30 tests (unit + API integration)
 npm run test:unit
 npm run test:integration
 npm run build
@@ -252,20 +272,15 @@ npm run migrate       # apply schema (SQLite or Postgres)
 
 ## 10. Prioritized TODO for next agent
 
-**P0 and P1 are complete** as of PR #2. See [docs/TODO.md](./TODO.md).
+**P0–P2 are complete** on `main`. See [docs/TODO.md](./TODO.md).
 
-### P2 — Operations (recommended next)
+### Current priority — UI / UX
 
-1. **Postgres + migrations** — replace SQLite for production
-2. **Deploy docs** — single host (API serves `dist/`) or split Vercel + DB
-3. **Integration tests** — Supertest with temp DB
-4. **Import script** — `scripts/seed-from-football-data.ts` for real kickoffs and provider IDs
+The product owner is smoke-testing on **Windows** and has **UI issues** to fix. Start with [docs/UI_HANDOVER.md](./UI_HANDOVER.md) and [docs/AGENT_PROMPT.md](./AGENT_PROMPT.md). Get a numbered issue list before coding.
 
 ### P3 — Later
 
 OAuth, PWA manifest, notifications, PDF export (see [docs/PROJECT_PLAN.md](./PROJECT_PLAN.md)).
-
-**Before starting:** read [docs/AGENT_PROMPT.md](./AGENT_PROMPT.md) and confirm priorities with the product owner.
 
 ---
 
@@ -295,11 +310,11 @@ OAuth, PWA manifest, notifications, PDF export (see [docs/PROJECT_PLAN.md](./PRO
 
 ## 13. Suggested first session for a new agent
 
-1. Read [docs/AGENT_PROMPT.md](./AGENT_PROMPT.md) and **ask the owner what to do next** (do not assume).
-2. Read [docs/FINAL_PLAN.md](./FINAL_PLAN.md).
-3. `git checkout cursor/world-cup-p0-complete-21eb` (or `main` after merge).
-4. `npm install && npm test && npm run build`.
-5. Smoke-test: two users, group picks, accept groups, commit, check KO teams and Comparison.
+1. Read [docs/UI_HANDOVER.md](./UI_HANDOVER.md) and [docs/AGENT_PROMPT.md](./AGENT_PROMPT.md).
+2. **Ask the owner** for their UI issue list (do not assume).
+3. `git pull origin main` → `npm install` → `npm test` → `npm run build`.
+4. Reproduce on `-Mode Serve` or `-Mode Dev` (Windows: `.\scripts\Test-LocalSite.ps1`).
+5. Fix UI in focused PRs; re-run `npm test` and owner sign-off.
 
 ---
 

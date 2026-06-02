@@ -10,6 +10,15 @@ Use this before inviting your group (~10 friends).
 
 ## 2. Install and migrate
 
+**Windows (PowerShell):**
+
+```powershell
+git pull origin main
+.\scripts\Test-LocalSite.ps1
+```
+
+**macOS / Linux:**
+
 ```bash
 npm install
 npm run migrate
@@ -53,7 +62,7 @@ sqlite3 data.db "UPDATE users SET is_admin = 1 WHERE email = 'you@example.com';"
 - [ ] Accept all **12** groups
 - [ ] **Commit** group picks
 - [ ] Bonus picks unlock only after 72/72 committed
-- [ ] Knockout picks unlock only after 72/72 committed
+- [ ] Knockout picks unlock only after 72/72 committed **and** each fixture has both teams from official results (Knockout tab)
 - [ ] Comparison + leaderboard show committed picks only
 
 ## 6. During tournament
@@ -66,6 +75,8 @@ sqlite3 data.db "UPDATE users SET is_admin = 1 WHERE email = 'you@example.com';"
 
 **In scope (done):** rules engine, auth, picks, locks, scoring, comparison, admin sync, deploy docs.
 
-**Next phase (optional):** UI/layout polish, OAuth, PWA, PDF export.
+**Current phase:** UI/layout polish — owner-reported issues; see [UI_HANDOVER.md](./UI_HANDOVER.md).
+
+**Later:** OAuth, PWA, PDF export.
 
 See [COMPLIANCE.md](./COMPLIANCE.md) and [DEPLOY.md](./DEPLOY.md).

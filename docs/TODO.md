@@ -1,43 +1,58 @@
 # World Cup Boys — Agent TODO Tracker
 
-> Sync with [HANDOVER.md](./HANDOVER.md). **P0–P2 + compliance** complete ([COMPLIANCE.md](./COMPLIANCE.md), 2026-06-02).  
-> New agents: read [AGENT_PROMPT.md](./AGENT_PROMPT.md) and confirm next steps with the owner before coding.
+> Sync with [HANDOVER.md](./HANDOVER.md). **P0–P2 complete**; **UI polish / debug** is the current focus ([UI_HANDOVER.md](./UI_HANDOVER.md)).  
+> New agents: read [AGENT_PROMPT.md](./AGENT_PROMPT.md) and confirm issues with the owner before coding.
 
 ## Status legend
 
 - `[ ]` Not started
-- `[~]` Partial / scaffold only
+- `[~]` Partial / in progress
 - `[x]` Done (verify in app before marking)
+
+---
+
+## Current focus — UI / UX (owner-reported)
+
+Track details in [UI_HANDOVER.md](./UI_HANDOVER.md) §5.
+
+- [ ] Owner provides numbered UI issue list (+ screenshots)
+- [ ] Reproduce each issue on `main` (Windows: `.\scripts\Test-LocalSite.ps1 -Mode Serve`)
+- [ ] Fix and verify with owner
+- [ ] Mobile / small-screen pass (if in scope)
 
 ---
 
 ## P0 — Correctness
 
-- [x] **Bracket engine** — FIFA 2026 group → R32 (+ 8 third-place slots); replace knockout placeholders
-- [x] **football-data match ID mapping** — internal `match_id` ↔ provider ID before writing results
-- [x] **Scoring: group position bonus** — compare predicted vs official standings from results
-- [x] **Scoring: tournament bonus** — supply real champion/runner-up/3rd/4th from final results
-- [x] **Dynamic KO fixtures** — populate KO matches from real qualifiers
+- [x] Bracket engine + third-place mappings
+- [x] football-data match ID mapping
+- [x] Scoring (group position, tournament bonus)
+- [x] Dynamic KO fixtures from results
+- [x] Knockout only when fixture officially confirmed (UI + API)
 
 ## P1 — Product
 
-- [x] Group wizard **accept/amend** per group (preview exists; gate not strict)
+- [x] Group accept/amend
 - [x] Auth-protected routes + logout
-- [x] Comparison: pick any upcoming fixture in UI
-- [x] Public “How scoring works” page
+- [x] Comparison fixture picker
+- [x] Rules page
+- [x] Group / Knockout tab separation on My Picks
 
 ## P2 — Ops
 
 - [x] Postgres + migrations
-- [x] Production deploy docs
+- [x] Deploy docs ([DEPLOY.md](./DEPLOY.md), [GO_LIVE.md](./GO_LIVE.md))
 - [x] API integration tests
-- [x] Seed/import real fixtures from football-data.org
+- [x] football-data seed + sync
+- [x] Windows local test script (`scripts/Test-LocalSite.ps1`)
+- [x] SVG team flags (`flag-icons` → `public/flags/4x3/`)
 
 ## P3 — Later
 
 - [ ] OAuth
 - [ ] PWA / notifications
 - [ ] PDF / share card export
+- [ ] Visual regression tests (optional)
 
 ---
 
@@ -54,12 +69,8 @@
 
 ---
 
-## Completed (handover baseline)
+## Completed baseline
 
-- [x] React/Vite app shell + 6 pages
-- [x] SQLite + Express API
-- [x] Auth register/login
-- [x] Draft/commit prediction flow
-- [x] Admin sync/override/recompute
-- [x] Multi-user comparison API + UI
-- [x] Unit tests (7) + build passing
+- [x] React/Vite + Express API + SQLite/Postgres
+- [x] Leaderboard, comparison, admin sync
+- [x] 30 automated tests (`npm test`)
