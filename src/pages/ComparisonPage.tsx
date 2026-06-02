@@ -8,6 +8,8 @@ import {
   fetchNextMatchComparison
 } from '../services/apiClient';
 import { formatFixtureScore } from '../components/FixtureScoreSummary';
+import { formatKickoffBst } from '../lib/formatDateTime';
+import { classifyPickAccuracy } from '../lib/matchScoring';
 import { MatchComparisonView } from '../types';
 
 function formatPick(entry: MatchComparisonView['entries'][number]): string {
@@ -22,11 +24,29 @@ function formatPick(entry: MatchComparisonView['entries'][number]): string {
   return `${homeScore}-${awayScore}`;
 }
 
-function formatKickoff(iso: string): string {
-  return new Date(iso).toLocaleString(undefined, {
-    dateStyle: 'medium',
-    timeStyle: 'short'
-  });
+function pickCellClass(
+  entry: MatchComparisonView['entries'][number],
+  actual: MatchComparisonView['actualResult']
+): string | undefined {
+  if (entry.hidden || !entry.pick || !actual) return undefined;
+  const accuracy = classifyPickAccuracy(
+    {
+      matchId: 'compare',
+      homeScore: entry.pick.homeScore,
+      awayScore: entry.pick.awayScore,
+      progressingTeamId: entry.pick.progressingTeamId
+    },
+    {
+      matchId: 'compare',
+      homeScore: actual.homeScore,
+      awayScore: actual.awayScore,
+      progressingTeamId: actual.progressingTeamId
+    }
+  );
+  if (accuracy === 'exact') return 'comparison-pick-exact';
+  if (accuracy === 'result') return 'comparison-pick-result';
+  if (accuracy === 'miss') return 'comparison-pick-miss';
+  return undefined;
 }
 
 export function ComparisonPage() {
@@ -102,7 +122,7 @@ export function ComparisonPage() {
               const away = teams.find((t) => t.id === fixture.awayTeamId);
               return (
                 <option key={fixture.id} value={fixture.id}>
-                  {fixture.stage} — {home?.name ?? 'TBD'} vs {away?.name ?? 'TBD'} — {formatKickoff(fixture.kickoff)}
+                  {fixture.stage} — {home?.name ?? 'TBD'} vs {away?.name ?? 'TBD'} — {formatKickoffBst(fixture.kickoff)}
                 </option>
               );
             })}
@@ -114,7 +134,7 @@ export function ComparisonPage() {
           <strong>vs</strong>
           {awayTeam && awayTeam.id !== 'tbd' ? <TeamLabel team={awayTeam} /> : <span>TBD</span>}
         </div>
-        <p>Kickoff: {formatKickoff(data.match.kickoff)}</p>
+        <p>Kickoff: {formatKickoffBst(data.match.kickoff)}</p>
         {data.actualResult && (
           <p className="fixture-actual">
             <strong>Official result:</strong>{' '}
@@ -141,7 +161,7 @@ export function ComparisonPage() {
             {data.entries.map((entry) => (
               <tr key={entry.userId} className={entry.isCurrentUser ? 'comparison-row-you' : undefined}>
                 <td>{entry.displayName}{entry.isCurrentUser ? ' (you)' : ''}</td>
-                <td>{formatPick(entry)}</td>
+                <td className={pickCellClass(entry, data.actualResult)}>{formatPick(entry)}</td>
               </tr>
             ))}
           </tbody>

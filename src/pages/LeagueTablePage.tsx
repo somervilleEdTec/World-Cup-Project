@@ -33,11 +33,11 @@ export function LeagueTablePage() {
             <tr key={entry.userId}>
               <td>{index + 1}</td>
               <td>{entry.name}</td>
-              <td className="league-stat">{entry.exactScores}</td>
-              <td className="league-stat">{entry.correctResults}</td>
-              <td className="league-stat">{entry.exactGroupPositions}</td>
-              <td className="league-stat">{entry.bonusHits}</td>
-              <td className="league-stat league-total">{entry.points}</td>
+              <td>{entry.exactScores}</td>
+              <td>{entry.correctResults}</td>
+              <td>{entry.exactGroupPositions}</td>
+              <td>{entry.bonusHits}</td>
+              <td className="league-total">{entry.points}</td>
             </tr>
           ))}
         </tbody>

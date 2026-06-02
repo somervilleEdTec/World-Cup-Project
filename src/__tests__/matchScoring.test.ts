@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { computeMatchPoints } from '../lib/matchScoring';
+import { classifyPickAccuracy, computeMatchPoints } from '../lib/matchScoring';
 
 describe('computeMatchPoints', () => {
   it('returns null without pick or actual', () => {
@@ -32,5 +32,21 @@ describe('computeMatchPoints', () => {
         { matchId: 'g-a-1', homeScore: 2, awayScore: 0 }
       )
     ).toBe(0);
+  });
+});
+
+describe('classifyPickAccuracy', () => {
+  it('classifies exact, result-only, and miss', () => {
+    const actual = { matchId: 'g-a-1', homeScore: 2, awayScore: 1 };
+    expect(
+      classifyPickAccuracy({ matchId: 'g-a-1', homeScore: 2, awayScore: 1 }, actual)
+    ).toBe('exact');
+    expect(
+      classifyPickAccuracy({ matchId: 'g-a-1', homeScore: 3, awayScore: 0 }, actual)
+    ).toBe('result');
+    expect(
+      classifyPickAccuracy({ matchId: 'g-a-1', homeScore: 0, awayScore: 1 }, actual)
+    ).toBe('miss');
+    expect(classifyPickAccuracy(undefined, actual)).toBe('none');
   });
 });

@@ -1,4 +1,5 @@
 import { FormEvent, useState } from 'react';
+import { formatOptionalKickoffBst } from '../lib/formatDateTime';
 import {
   fetchMappingDiagnostics,
   fetchSyncStatus,
@@ -115,8 +116,8 @@ export function AdminPage() {
         </div>
         {status && (
           <ul>
-            <li>Last attempt: {status.last_attempt_at ?? 'n/a'}</li>
-            <li>Last success: {status.last_success_at ?? 'n/a'}</li>
+            <li>Last attempt: {formatOptionalKickoffBst(status.last_attempt_at)}</li>
+            <li>Last success: {formatOptionalKickoffBst(status.last_success_at)}</li>
             <li>Last error: {status.last_error ?? 'none'}</li>
           </ul>
         )}

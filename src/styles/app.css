@@ -324,18 +324,26 @@ td {
   font-weight: 600;
 }
 
+.comparison-pick-exact {
+  background: #d8f3dc;
+}
+
+.comparison-pick-result {
+  background: #fff0c2;
+}
+
+.comparison-pick-miss {
+  background: #fde2e2;
+}
+
 .league-table th,
 .league-table td {
   text-align: center;
 }
 
-.league-table-page .league-stat {
+.league-table-page .league-total {
   font-weight: 700;
   text-align: center;
-}
-
-.league-table-page .league-total {
-  font-weight: 800;
 }
 
 .league-table-page th:last-child,
