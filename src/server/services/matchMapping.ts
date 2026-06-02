@@ -30,7 +30,8 @@ const ALIASES: Record<string, string> = {
   scotland: 'scotland'
 };
 
-export function teamIdFromProviderName(name: string): string | null {
+export function teamIdFromProviderName(name: string | null | undefined): string | null {
+  if (!name) return null;
   const normalized = ALIASES[normalizeName(name)] ?? normalizeName(name);
   const team = teams.find((t) => normalizeName(t.name) === normalized);
   return team?.id ?? null;
@@ -63,8 +64,8 @@ export async function internalIdFromProvider(provider: string, providerId: strin
 export async function resolveInternalMatchId(
   provider: string,
   providerId: string,
-  homeName: string,
-  awayName: string
+  homeName: string | null | undefined,
+  awayName: string | null | undefined
 ): Promise<string | null> {
   const existing = await internalIdFromProvider(provider, providerId);
   if (existing) return existing;

@@ -6,8 +6,8 @@ const PROVIDER = 'football-data.org';
 
 interface FootballDataTeam {
   id: number;
-  name: string;
-  shortName?: string;
+  name: string | null;
+  shortName?: string | null;
 }
 
 interface FootballDataMatch {
@@ -28,8 +28,8 @@ interface FootballDataResponse {
 
 export interface FootballDataResultRow {
   providerId: string;
-  homeName: string;
-  awayName: string;
+  homeName: string | null;
+  awayName: string | null;
   homeScore: number;
   awayScore: number;
   progressingTeamId?: string;
@@ -67,8 +67,8 @@ export async function fetchLatestResults(apiToken: string): Promise<FootballData
 
 export interface FootballDataFixtureRow {
   providerId: string;
-  homeName: string;
-  awayName: string;
+  homeName: string | null;
+  awayName: string | null;
   kickoff: string;
   status: string;
 }
