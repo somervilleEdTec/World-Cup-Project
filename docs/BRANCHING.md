@@ -53,8 +53,10 @@ All docs under `docs/` are maintained on **both** branches:
 
 | Doc | Use |
 |-----|-----|
+| [LAUNCH_HANDOVER.md](./LAUNCH_HANDOVER.md) | **Live website launch** (registration) |
+| [AGENT_PROMPT_LAUNCH.md](./AGENT_PROMPT_LAUNCH.md) | Launch agent session prompt |
 | [HANDOVER.md](./HANDOVER.md) | Architecture, API, environment |
-| [AGENT_PROMPT.md](./AGENT_PROMPT.md) | Copy-paste agent session prompt |
+| [AGENT_PROMPT.md](./AGENT_PROMPT.md) | Dev agent session prompt |
 | [FINAL_PREDICTION_HANDOVER.md](./FINAL_PREDICTION_HANDOVER.md) | “One final prediction left” local seed |
 | [KO_ENVIRONMENT.md](./KO_ENVIRONMENT.md) | Local KO test seed |
 | [STRESS_TEST_HANDOVER.md](./STRESS_TEST_HANDOVER.md) | Stress-test playbook |

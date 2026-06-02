@@ -45,7 +45,7 @@ Without `DATABASE_URL`, the app uses **SQLite** at `./data.db` (fine for local d
 | Variable | Required | Description |
 |----------|----------|-------------|
 | `DATABASE_URL` | Production | PostgreSQL connection string |
-| `FOOTBALL_DATA_TOKEN` | Optional | football-data.org API token |
+| `FOOTBALL_DATA_TOKEN` | **Required** (production) | football-data.org API token (`X-Auth-Token` header) |
 | `PORT` | No | API port (default `8787`) |
 | `VITE_API_BASE_URL` | Build-time | Public API URL baked into frontend (e.g. `https://your-domain.com`) |
 

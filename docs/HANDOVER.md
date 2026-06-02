@@ -3,10 +3,12 @@
 **Last updated:** 2026-06-02  
 **Repository:** https://github.com/somervilleEdTec/World-Cup-Project  
 **Branches:** `main` (production) · `Debug` (development) — see [BRANCHING.md](./BRANCHING.md)  
-**Phase:** Go-live ready (UI polish + KO-environment + before-final seed)  
-**Deploy:** [docs/DEPLOY.md](./DEPLOY.md) · **Go-live:** [docs/GO_LIVE.md](./GO_LIVE.md) · **KO test seed:** [docs/KO_ENVIRONMENT.md](./KO_ENVIRONMENT.md) · **Final-prediction scenario:** [docs/FINAL_PREDICTION_HANDOVER.md](./FINAL_PREDICTION_HANDOVER.md)
+**Phase:** **Launch** — deploy live site for friend registration  
+**Launch:** [docs/LAUNCH_HANDOVER.md](./LAUNCH_HANDOVER.md) · Prompt: [docs/AGENT_PROMPT_LAUNCH.md](./AGENT_PROMPT_LAUNCH.md)  
+**Deploy:** [docs/DEPLOY.md](./DEPLOY.md) · **Go-live tests:** [docs/GO_LIVE.md](./GO_LIVE.md)  
+**Local debug:** [docs/KO_ENVIRONMENT.md](./KO_ENVIRONMENT.md) · [docs/FINAL_PREDICTION_HANDOVER.md](./FINAL_PREDICTION_HANDOVER.md)
 
-**Next agent starts here:** [docs/FINAL_PREDICTION_HANDOVER.md](./FINAL_PREDICTION_HANDOVER.md) (simulated end-of-tournament debug) · [docs/STRESS_TEST_HANDOVER.md](./STRESS_TEST_HANDOVER.md) · Prompt: [docs/AGENT_PROMPT.md](./AGENT_PROMPT.md)
+**Next agent starts here:** [docs/LAUNCH_HANDOVER.md](./LAUNCH_HANDOVER.md) (public website + registration) · General dev: [docs/AGENT_PROMPT.md](./AGENT_PROMPT.md)
 
 ---
 
@@ -68,6 +70,8 @@ Friends-and-family prediction app for **FIFA World Cup 2026** (48 teams, 12 grou
 | [AGENT_PROMPT.md](./AGENT_PROMPT.md) | Copy-paste session prompt |
 | [UI_HANDOVER.md](./UI_HANDOVER.md) | UI history + bug log table |
 | [HANDOVER.md](./HANDOVER.md) | This file |
+| [LAUNCH_HANDOVER.md](./LAUNCH_HANDOVER.md) | **Live site launch** (registration, deploy) |
+| [AGENT_PROMPT_LAUNCH.md](./AGENT_PROMPT_LAUNCH.md) | Copy-paste prompt for launch agent |
 | [BRANCHING.md](./BRANCHING.md) | Two-branch workflow (`main` + `Debug`) |
 | [FINAL_PLAN.md](./FINAL_PLAN.md) | Locked competition rules |
 | [TODO.md](./TODO.md) | Backlog |

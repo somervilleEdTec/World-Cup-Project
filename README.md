@@ -13,11 +13,17 @@ Friends-and-family prediction app for FIFA World Cup 2026 (48 teams, 12 groups, 
 
 See **[docs/BRANCHING.md](docs/BRANCHING.md)**.
 
-## New agent? (stress test & debug)
+## Launching the live site?
 
-1. **[docs/FINAL_PREDICTION_HANDOVER.md](docs/FINAL_PREDICTION_HANDOVER.md)** — **start here** for end-of-tournament local debug  
-2. **[docs/HANDOVER.md](docs/HANDOVER.md)** — architecture and API  
-3. **[docs/AGENT_PROMPT.md](docs/AGENT_PROMPT.md)** — copy-paste prompt for a new session  
+1. **[docs/LAUNCH_HANDOVER.md](docs/LAUNCH_HANDOVER.md)** — **start here** (deploy, registration, invite friends)  
+2. **[docs/AGENT_PROMPT_LAUNCH.md](docs/AGENT_PROMPT_LAUNCH.md)** — copy-paste prompt for a launch agent session  
+3. **[docs/DEPLOY.md](docs/DEPLOY.md)** · **[docs/GO_LIVE.md](docs/GO_LIVE.md)** — hosting and smoke tests  
+
+## New agent? (development & debug)
+
+1. **[docs/HANDOVER.md](docs/HANDOVER.md)** — architecture and API  
+2. **[docs/AGENT_PROMPT.md](docs/AGENT_PROMPT.md)** — copy-paste prompt for a dev session  
+3. **[docs/FINAL_PREDICTION_HANDOVER.md](docs/FINAL_PREDICTION_HANDOVER.md)** — end-of-tournament local debug  
 4. **[docs/KO_ENVIRONMENT.md](docs/KO_ENVIRONMENT.md)** · **[docs/STRESS_TEST_HANDOVER.md](docs/STRESS_TEST_HANDOVER.md)** — test seeds and playbook  
 5. **[docs/UI_HANDOVER.md](docs/UI_HANDOVER.md)** — completed UI work + bug log  
 6. **[docs/TODO.md](docs/TODO.md)** — task tracker  

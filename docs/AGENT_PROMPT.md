@@ -10,12 +10,12 @@ You are helping with **World Cup Boys** (“Welcome to the Shiva Bowl”) — FI
 
 **Repository:** https://github.com/somervilleEdTec/World-Cup-Project  
 **Branch:** `Debug` for changes · `main` for production ([BRANCHING.md](./BRANCHING.md))  
-**Phase:** **Go-live** and in-tournament operations.
+**Phase:** Development and in-tournament fixes. For **live launch**, use [docs/AGENT_PROMPT_LAUNCH.md](./AGENT_PROMPT_LAUNCH.md) instead.
 
 ## Mandatory first step — read in order
 
 1. [docs/HANDOVER.md](./HANDOVER.md) — architecture, API, environment
-2. [docs/GO_LIVE.md](./GO_LIVE.md) — launch checklist
+2. [docs/GO_LIVE.md](./GO_LIVE.md) — smoke-test checklist (post-deploy)
 3. [docs/FINAL_PLAN.md](./FINAL_PLAN.md) — competition rules (**do not change** without owner)
 4. [docs/KO_ENVIRONMENT.md](./KO_ENVIRONMENT.md) — optional local KO test seed only
 5. **[docs/FINAL_PREDICTION_HANDOVER.md](./FINAL_PREDICTION_HANDOVER.md)** — if debugging “one final prediction left” scenario
@@ -58,7 +58,7 @@ Read [docs/FINAL_PREDICTION_HANDOVER.md](./FINAL_PREDICTION_HANDOVER.md).
 ## Quality gates
 
 ```bash
-npm test        # 43 tests
+npm test
 npm run build
 ```
 

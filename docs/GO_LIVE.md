@@ -95,7 +95,7 @@ sqlite3 data.db "UPDATE users SET is_admin = 1 WHERE display_name = 'YourName';"
 - [ ] Kickoff times display in **BST**
 - [ ] Mobile bottom nav usable at ~375px width
 - [ ] Rules visible on **Welcome** (no Rules tab)
-- [ ] Optional local KO regression: `npm run seed:ko-environment` — see [KO_ENVIRONMENT.md](./KO_ENVIRONMENT.md)
+- [ ] Optional local KO regression on **Debug** only: `ALLOW_KO_SEED=1 npm run seed:ko-environment` — see [KO_ENVIRONMENT.md](./KO_ENVIRONMENT.md)
 
 ## 6. During tournament
 
