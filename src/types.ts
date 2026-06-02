@@ -1,0 +1,65 @@
+export type Stage = 'GROUP' | 'R32' | 'R16' | 'QF' | 'SF' | 'THIRD_PLACE' | 'FINAL';
+
+export interface Team {
+  id: string;
+  name: string;
+  flag: string;
+  group: string;
+}
+
+export interface Match {
+  id: string;
+  stage: Stage;
+  group?: string;
+  kickoff: string;
+  homeTeamId: string;
+  awayTeamId: string;
+  locked?: boolean;
+}
+
+export interface Pick {
+  matchId: string;
+  homeScore: number;
+  awayScore: number;
+  progressingTeamId?: string;
+  reviewed?: boolean;
+}
+
+export interface TournamentBonusPick {
+  winnerTeamId: string;
+  runnerUpTeamId: string;
+  thirdTeamId: string;
+  fourthTeamId: string;
+}
+
+export interface CommitState {
+  version: number;
+  committedAt: string;
+  groupLocked: boolean;
+}
+
+export interface PlayerPredictionState {
+  committedPicks: Record<string, Pick>;
+  draftPicks: Record<string, Pick>;
+  affectedMatches: string[];
+  bonusDraft?: TournamentBonusPick;
+  bonusCommitted?: TournamentBonusPick;
+  commitState: CommitState;
+}
+
+export interface ActualResult {
+  matchId: string;
+  homeScore: number;
+  awayScore: number;
+  progressingTeamId?: string;
+}
+
+export interface LeaderboardEntry {
+  userId: string;
+  name: string;
+  points: number;
+  exactScores: number;
+  correctResults: number;
+  exactGroupPositions: number;
+  bonusHits: number;
+}
