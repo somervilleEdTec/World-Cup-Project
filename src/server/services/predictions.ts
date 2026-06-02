@@ -152,17 +152,6 @@ export async function setBonusDraft(userId: string, bonus: TournamentBonusPick, 
   const groupLocked = (meta?.group_locked ?? 0) === 1;
   assertBonusEditable(groupLocked, nowIso);
 
-  const state = await getUserPredictionState(userId);
-  assertAllGroupPicksCommitted(state.committedPicks, groupLocked, nowIso);
-
-  const mergedPicks = { ...state.committedPicks, ...state.draftPicks };
-  if (!allGroupsComplete(mergedPicks)) {
-    throw new Error('Complete all group match scorelines before saving tournament bonus picks.');
-  }
-  if (!allGroupsAccepted(state.acceptedGroups)) {
-    throw new Error('Accept all 12 group tables before saving tournament bonus picks.');
-  }
-
   await db.run(`UPDATE prediction_meta SET bonus_draft = ? WHERE user_id = ?`, [JSON.stringify(bonus), userId]);
 }
 

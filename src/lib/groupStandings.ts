@@ -31,7 +31,7 @@ export function computeGroupStandings(groupId: string, picks: Record<string, Pic
 
   matchesInGroup.forEach((match) => {
     const pick = picks[match.id];
-    if (!pick) return;
+    if (!pick || pick.homeScore < 0 || pick.awayScore < 0) return;
     const home = rows.get(match.homeTeamId);
     const away = rows.get(match.awayTeamId);
     if (!home || !away) return;

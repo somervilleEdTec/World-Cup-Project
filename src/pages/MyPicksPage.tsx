@@ -1,4 +1,4 @@
-import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
+import { FormEvent, useCallback, useEffect, useMemo, useState, type WheelEvent } from 'react';
 import { groupMatches, teams } from '../data/tournament';
 import { TeamLabel } from '../components/TeamLabel';
 import {
@@ -57,6 +57,16 @@ const initialState: RemoteState = {
   commitState: { groupLocked: false }
 };
 
+function clampScore(value: number): number {
+  if (!Number.isFinite(value)) return 0;
+  return Math.max(0, Math.floor(value));
+}
+
+function parseScoreInput(raw: string): number {
+  if (raw.trim() === '') return 0;
+  return clampScore(Number(raw));
+}
+
 function MatchScoreInputs({
   match,
   pick,
@@ -70,38 +80,57 @@ function MatchScoreInputs({
   onSave: (pick: Pick) => Promise<void>;
   onScoresChange?: (pick: Pick) => void;
 }) {
+  const hasSavedPick = pick !== undefined;
   const [homeScore, setHomeScore] = useState(pick?.homeScore ?? 0);
   const [awayScore, setAwayScore] = useState(pick?.awayScore ?? 0);
   const [progressingTeamId, setProgressingTeamId] = useState(pick?.progressingTeamId ?? '');
+  const [edited, setEdited] = useState(false);
 
   useEffect(() => {
     setHomeScore(pick?.homeScore ?? 0);
     setAwayScore(pick?.awayScore ?? 0);
     setProgressingTeamId(pick?.progressingTeamId ?? '');
-  }, [pick?.homeScore, pick?.awayScore, pick?.progressingTeamId]);
+    setEdited(false);
+  }, [pick?.homeScore, pick?.awayScore, pick?.progressingTeamId, match.id]);
 
-  const buildPick = useCallback(
-    (): Pick => ({
+  const buildPick = useCallback((): Pick => {
+    const home = clampScore(homeScore);
+    const away = clampScore(awayScore);
+    return {
       matchId: match.id,
-      homeScore,
-      awayScore,
-      progressingTeamId: homeScore === awayScore ? progressingTeamId || undefined : undefined
-    }),
-    [awayScore, homeScore, match.id, progressingTeamId]
+      homeScore: home,
+      awayScore: away,
+      progressingTeamId: home === away ? progressingTeamId || undefined : undefined
+    };
+  }, [awayScore, homeScore, match.id, progressingTeamId]);
+
+  const notifyChange = useCallback(
+    (nextHome: number, nextAway: number) => {
+      if (!onScoresChange) return;
+      const home = clampScore(nextHome);
+      const away = clampScore(nextAway);
+      onScoresChange({
+        matchId: match.id,
+        homeScore: home,
+        awayScore: away,
+        progressingTeamId: home === away ? progressingTeamId || undefined : undefined
+      });
+    },
+    [match.id, onScoresChange, progressingTeamId]
   );
 
-  useEffect(() => {
-    onScoresChange?.(buildPick());
-  }, [buildPick, onScoresChange]);
-
   const persist = useCallback(async () => {
-    if (disabled) return;
+    if (disabled || !edited) return;
     await onSave(buildPick());
-  }, [buildPick, disabled, onSave]);
+  }, [buildPick, disabled, edited, onSave]);
 
   const homeTeam = teams.find((team) => team.id === match.homeTeamId);
   const awayTeam = teams.find((team) => team.id === match.awayTeamId);
-  const isDraw = homeScore === awayScore;
+  const isDraw = clampScore(homeScore) === clampScore(awayScore);
+
+  const handleScoreWheel = (event: WheelEvent<HTMLInputElement>) => {
+    event.currentTarget.blur();
+  };
 
   return (
     <>
@@ -109,17 +138,35 @@ function MatchScoreInputs({
         <input
           type="number"
           min="0"
-          value={homeScore}
+          step="1"
+          inputMode="numeric"
+          value={hasSavedPick || edited ? homeScore : ''}
+          placeholder="0"
           disabled={disabled}
-          onChange={(event) => setHomeScore(Number(event.target.value))}
+          onWheel={handleScoreWheel}
+          onChange={(event) => {
+            const next = parseScoreInput(event.target.value);
+            setEdited(true);
+            setHomeScore(next);
+            notifyChange(next, awayScore);
+          }}
           onBlur={() => void persist()}
         />
         <input
           type="number"
           min="0"
-          value={awayScore}
+          step="1"
+          inputMode="numeric"
+          value={hasSavedPick || edited ? awayScore : ''}
+          placeholder="0"
           disabled={disabled}
-          onChange={(event) => setAwayScore(Number(event.target.value))}
+          onWheel={handleScoreWheel}
+          onChange={(event) => {
+            const next = parseScoreInput(event.target.value);
+            setEdited(true);
+            setAwayScore(next);
+            notifyChange(homeScore, next);
+          }}
           onBlur={() => void persist()}
         />
       </div>
@@ -148,6 +195,7 @@ export function MyPicksPage() {
   const [groupIndex, setGroupIndex] = useState(0);
   const [phase, setPhase] = useState<PicksPhase>('group');
   const [message, setMessage] = useState<string>('');
+  const [bonusMessage, setBonusMessage] = useState<string>('');
   const [state, setState] = useState<RemoteState>(initialState);
   const [pendingGroupPicks, setPendingGroupPicks] = useState<Record<string, Pick>>({});
 
@@ -174,16 +222,16 @@ export function MyPicksPage() {
   const activeGroupMatches = groupMatches.filter((match) => match.group === activeGroup);
   const groupLocked = state.commitState.groupLocked || shouldLockGroup(nowIso);
 
-  const mergedPicks = { ...state.committedPicks, ...state.draftPicks, ...pendingGroupPicks };
+  const savedPicks = { ...state.committedPicks, ...state.draftPicks };
+  const mergedPicks = { ...savedPicks, ...pendingGroupPicks };
   const confirmedKnockoutFixtures = state.confirmedKnockoutFixtures ?? [];
   const groupStandings = useMemo(
-    () => computeGroupStandings(activeGroup, mergedPicks),
-    [activeGroup, mergedPicks]
+    () => computeGroupStandings(activeGroup, { ...savedPicks, ...pendingGroupPicks }),
+    [activeGroup, pendingGroupPicks, savedPicks]
   );
 
   const groupComplete = activeGroupMatches.every((match) => mergedPicks[match.id] !== undefined);
   const groupAccepted = state.acceptedGroups.includes(activeGroup);
-  const allGroupsAccepted = groupSequence.every((g) => state.acceptedGroups.includes(g));
   const groupPicksRequired = state.groupPicksRequired ?? GROUP_MATCH_COUNT;
   const groupPicksCommittedCount = state.groupPicksCommittedCount ?? 0;
   const allGroupPicksCommitted =
@@ -230,10 +278,13 @@ export function MyPicksPage() {
 
     try {
       await saveBonusDraft(payload);
-      setMessage('Bonus picks saved to draft. Commit to lock them.');
+      setBonusMessage('Bonus picks saved. Use “Commit changes” below when you are ready to lock them in.');
+      setMessage('Bonus picks saved to draft.');
       await refresh();
     } catch (err) {
-      setMessage(err instanceof Error ? err.message : 'Could not save bonus picks');
+      const text = err instanceof Error ? err.message : 'Could not save bonus picks';
+      setBonusMessage(text);
+      setMessage(text);
     }
   };
 
@@ -394,16 +445,15 @@ export function MyPicksPage() {
         <article className="card">
           <h3>Tournament bonus picks</h3>
           <p>Select winner, runner-up, third, and fourth from all teams (repeats allowed).</p>
-          {!allGroupPicksCommitted && !groupLocked && (
-            <p className="warning">Commit all {groupPicksRequired} group-stage picks before saving bonus picks.</p>
-          )}
-          {!allGroupsAccepted && (
-            <p className="warning">Complete and accept all 12 groups before saving tournament bonus picks.</p>
-          )}
-          <form onSubmit={submitBonus} className="form-grid">
+          {groupLocked && <p className="warning">Tournament bonus picks are locked.</p>}
+          <form
+            key={JSON.stringify(state.bonusDraft ?? state.bonusCommitted ?? bonus)}
+            onSubmit={submitBonus}
+            className="form-grid"
+          >
             <label>
               Winner
-              <select name="winnerTeamId" defaultValue={bonus.winnerTeamId}>
+              <select name="winnerTeamId" defaultValue={bonus.winnerTeamId} disabled={groupLocked}>
                 {teams.map((team) => (
                   <option key={`winner-${team.id}`} value={team.id}>
                     {team.name}
@@ -413,7 +463,7 @@ export function MyPicksPage() {
             </label>
             <label>
               Runner-up
-              <select name="runnerUpTeamId" defaultValue={bonus.runnerUpTeamId}>
+              <select name="runnerUpTeamId" defaultValue={bonus.runnerUpTeamId} disabled={groupLocked}>
                 {teams.map((team) => (
                   <option key={`runner-${team.id}`} value={team.id}>
                     {team.name}
@@ -423,7 +473,7 @@ export function MyPicksPage() {
             </label>
             <label>
               Third
-              <select name="thirdTeamId" defaultValue={bonus.thirdTeamId}>
+              <select name="thirdTeamId" defaultValue={bonus.thirdTeamId} disabled={groupLocked}>
                 {teams.map((team) => (
                   <option key={`third-${team.id}`} value={team.id}>
                     {team.name}
@@ -433,7 +483,7 @@ export function MyPicksPage() {
             </label>
             <label>
               Fourth
-              <select name="fourthTeamId" defaultValue={bonus.fourthTeamId}>
+              <select name="fourthTeamId" defaultValue={bonus.fourthTeamId} disabled={groupLocked}>
                 {teams.map((team) => (
                   <option key={`fourth-${team.id}`} value={team.id}>
                     {team.name}
@@ -441,9 +491,18 @@ export function MyPicksPage() {
                 ))}
               </select>
             </label>
-            <button type="submit" disabled={groupLocked || !allGroupsAccepted || !allGroupPicksCommitted}>
+            <button type="submit" disabled={groupLocked}>
               Save bonus picks
             </button>
+            {bonusMessage && (
+              <p className={bonusMessage.includes('saved') ? 'success' : 'warning'}>{bonusMessage}</p>
+            )}
+            {state.bonusDraft && !state.bonusCommitted && (
+              <p className="warning">Bonus picks saved as draft — commit when ready.</p>
+            )}
+            {state.bonusCommitted && !state.bonusDraft && (
+              <p className="success">Bonus picks committed.</p>
+            )}
           </form>
         </article>
       )}
