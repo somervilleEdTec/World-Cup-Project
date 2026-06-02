@@ -12,7 +12,7 @@ This guide covers running the app in production with **PostgreSQL**, optional **
 
 **SQLite is fine.** Use the default setup (`data.db`, no `DATABASE_URL`), run `npm run migrate`, and back up `data.db` occasionally. Postgres is optional until you need concurrent write scale or hosted HA.
 
-Set `FOOTBALL_DATA_TOKEN` in `.env` so the API and jobs processes import real kickoffs and poll live results automatically (see §3).
+Set `FOOTBALL_DATA_TOKEN` in `.env` (your football-data.org personal token; sent as **`X-Auth-Token`**). The API and jobs processes import real kickoffs and poll live results automatically (see §3). Never commit `.env`.
 
 ---
 

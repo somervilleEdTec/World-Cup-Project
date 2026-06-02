@@ -5,7 +5,7 @@ Use before inviting your group (~10 friends). After June 2026 UX work, run **str
 ## 1. Environment
 
 - [ ] Copy `.env.example` → `.env`
-- [ ] Set **`FOOTBALL_DATA_TOKEN`** (required) — live kickoffs and results from [football-data.org](https://www.football-data.org/)
+- [ ] Set **`FOOTBALL_DATA_TOKEN`** in `.env` (required) — your personal token from [football-data.org](https://www.football-data.org/). The app sends it as the **`X-Auth-Token`** HTTP header on every API request (do not commit `.env`).
 - [ ] Use **`main`** branch; database must be **empty** (no `seed:ko-environment` on production)
 - [ ] Optional: `JOIN_PASSWORD` if not using default `MadSlags1`
 - [ ] Set `VITE_API_BASE_URL` when building for a public domain
