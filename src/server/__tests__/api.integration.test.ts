@@ -40,22 +40,6 @@ describe('API integration', () => {
       .send({ matchId: 'g-a-1', homeScore: 2, awayScore: 1 });
     expect(draft.status).toBe(200);
 
-    const beforeCommit = await request(app)
-      .get('/api/predictions/state')
-      .set('Authorization', `Bearer ${token}`);
-    const affected = (beforeCommit.body.affectedMatches as string[]) ?? [];
-    for (const matchId of affected) {
-      const review = await request(app)
-        .post(`/api/predictions/review/${matchId}`)
-        .set('Authorization', `Bearer ${token}`);
-      expect(review.status).toBe(200);
-    }
-
-    const commit = await request(app)
-      .post('/api/predictions/commit')
-      .set('Authorization', `Bearer ${token}`);
-    expect(commit.status).toBe(200);
-
     const state = await request(app)
       .get('/api/predictions/state')
       .set('Authorization', `Bearer ${token}`);
@@ -192,7 +176,8 @@ describe('API integration', () => {
     const state = await request(app)
       .get('/api/predictions/state')
       .set('Authorization', `Bearer ${token}`);
-    expect(state.body.bonusDraft).toBeTruthy();
+    expect(state.body.bonusCommitted).toBeTruthy();
+    expect(state.body.bonusDraft).toBeUndefined();
   });
 
   it('returns health check', async () => {

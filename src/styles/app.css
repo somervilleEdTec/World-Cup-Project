@@ -235,6 +235,78 @@ td {
   text-align: left;
 }
 
+.team-select-field {
+  display: grid;
+  gap: 0.35rem;
+  position: relative;
+}
+
+.team-select-label {
+  font-weight: 600;
+}
+
+.team-select-trigger {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  min-height: 44px;
+  padding: 0.45rem 0.65rem;
+  background: #fff;
+  color: #10213a;
+  border: 1px solid #cfd8e3;
+  border-radius: 0.5rem;
+  font-weight: 500;
+  text-align: left;
+}
+
+.team-select-trigger:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.team-select-chevron {
+  color: #5a718d;
+  flex-shrink: 0;
+}
+
+.team-select-menu {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 0.25rem);
+  left: 0;
+  right: 0;
+  max-height: 240px;
+  overflow-y: auto;
+  margin: 0;
+  padding: 0.35rem;
+  list-style: none;
+  background: #fff;
+  border: 1px solid #cfd8e3;
+  border-radius: 0.5rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+}
+
+.team-select-option {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  padding: 0.45rem 0.55rem;
+  background: transparent;
+  color: #10213a;
+  border: 0;
+  border-radius: 0.4rem;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+}
+
+.team-select-option:hover,
+.team-select-option.active {
+  background: #eef4fb;
+}
+
 .fixture-list {
   list-style: none;
   padding: 0;
