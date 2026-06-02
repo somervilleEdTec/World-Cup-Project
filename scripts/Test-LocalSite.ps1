@@ -60,10 +60,16 @@ function Assert-Command([string] $Name) {
 function Invoke-Npm {
   param([Parameter(Mandatory)][string[]] $Command)
 
-  $npm = (Get-Command npm -CommandType Application -ErrorAction Stop).Source
-  & $npm @Command
-  if ($LASTEXITCODE -ne 0) {
-    throw "npm $($Command -join ' ') failed with exit code $LASTEXITCODE"
+  Write-Host "  npm $($Command -join ' ')" -ForegroundColor DarkGray
+  $proc = Start-Process `
+    -FilePath 'npm' `
+    -ArgumentList $Command `
+    -WorkingDirectory $RepoRoot `
+    -Wait `
+    -PassThru `
+    -NoNewWindow
+  if ($proc.ExitCode -ne 0) {
+    throw "npm $($Command -join ' ') failed with exit code $($proc.ExitCode)"
   }
 }
 
