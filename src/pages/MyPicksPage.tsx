@@ -1,7 +1,9 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { groupMatches, teams } from '../data/tournament';
 import { FixturePickCard } from '../components/FixturePickCard';
+import { GroupStandingsTable } from '../components/GroupStandingsTable';
 import { TeamLabel } from '../components/TeamLabel';
+import { picksFromActuals } from '../lib/pickUtils';
 import { fetchPredictionState, lockGroup, saveBonusDraft, saveDraftPick } from '../services/apiClient';
 import { TeamSelect } from '../components/TeamSelect';
 import { ALL_GROUP_IDS } from '../lib/pickLocks';
@@ -112,6 +114,20 @@ export function MyPicksPage() {
     () => computeGroupStandings(activeGroup, { ...savedPicks, ...pendingGroupPicks }),
     [activeGroup, pendingGroupPicks, savedPicks]
   );
+
+  const actualPicksForGroup = useMemo(() => {
+    const fromActuals = picksFromActuals(officialResults);
+    return Object.fromEntries(
+      activeGroupMatches.filter((match) => fromActuals[match.id]).map((match) => [match.id, fromActuals[match.id]])
+    );
+  }, [activeGroupMatches, officialResults]);
+
+  const actualGroupStandings = useMemo(
+    () => computeGroupStandings(activeGroup, actualPicksForGroup),
+    [activeGroup, actualPicksForGroup]
+  );
+
+  const hasActualGroupResults = activeGroupMatches.some((match) => officialResults[match.id] !== undefined);
 
   const missingPicks = useMemo(
     () => computeMissingPicks(mergedPicks, state.bonusCommitted, confirmedKnockoutFixtures),
@@ -274,41 +290,18 @@ export function MyPicksPage() {
           ))}
 
           <h4>Projected table (Group {activeGroup})</h4>
-          <div className="comparison-table-wrap">
-            <table className="comparison-table league-table">
-              <thead>
-                <tr>
-                  <th>Pos</th>
-                  <th>Team</th>
-                  <th>GP</th>
-                  <th>W</th>
-                  <th>D</th>
-                  <th>L</th>
-                  <th>GF</th>
-                  <th>GA</th>
-                  <th>Pts</th>
-                </tr>
-              </thead>
-              <tbody>
-                {groupStandings.map((row, index) => {
-                  const team = teams.find((entry) => entry.id === row.teamId);
-                  return (
-                    <tr key={row.teamId}>
-                      <td>{index + 1}</td>
-                      <td>{team ? <TeamLabel team={team} /> : row.teamId}</td>
-                      <td>{row.gp}</td>
-                      <td>{row.w}</td>
-                      <td>{row.d}</td>
-                      <td>{row.l}</td>
-                      <td>{row.gf}</td>
-                      <td>{row.ga}</td>
-                      <td>{row.pts}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+          <p className="fixture-meta">Based on your score predictions for this group.</p>
+          <GroupStandingsTable standings={groupStandings} />
+
+          <h4>Actual table (Group {activeGroup})</h4>
+          {hasActualGroupResults ? (
+            <>
+              <p className="fixture-meta">Based on official match results.</p>
+              <GroupStandingsTable standings={actualGroupStandings} />
+            </>
+          ) : (
+            <p className="fixture-meta">Official results will appear here as matches finish.</p>
+          )}
 
           <div className="button-row">
             <button
