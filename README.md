@@ -21,6 +21,20 @@ npm run jobs      # locks + football-data sync (optional token)
 npm run dev       # frontend on :5173
 ```
 
+### Windows (PowerShell)
+
+From the repo root:
+
+```powershell
+.\scripts\Test-LocalSite.ps1
+```
+
+- **Default** — install, migrate, `npm test`, build, API smoke test, then exit  
+- **`-Mode Serve`** — build and run the app at http://localhost:8787  
+- **`-Mode Dev`** — API + Vite dev server (http://localhost:5173) until you press Enter  
+
+If scripts are blocked: `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`
+
 ```bash
 npm test          # 15 tests (unit + API integration)
 npm run build
