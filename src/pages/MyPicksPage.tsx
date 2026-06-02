@@ -1,16 +1,25 @@
-import { FormEvent, useCallback, useEffect, useMemo, useRef, useState, type WheelEvent } from 'react';
+import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { groupMatches, teams } from '../data/tournament';
+import { FixturePickCard } from '../components/FixturePickCard';
 import { TeamLabel } from '../components/TeamLabel';
-import { FixtureScoreSummary } from '../components/FixtureScoreSummary';
 import { fetchPredictionState, lockGroup, saveBonusDraft, saveDraftPick } from '../services/apiClient';
 import { TeamSelect } from '../components/TeamSelect';
 import { ALL_GROUP_IDS } from '../lib/pickLocks';
 import { computeMissingPicks } from '../lib/missingPicks';
 import { computeGroupStandings, shouldLockGroup } from '../lib/tournamentLogic';
-import { ActualResult, Match, Pick, TournamentBonusPick } from '../types';
+import { ActualResult, Match, Pick, Stage, TournamentBonusPick } from '../types';
 
 const groupSequence = ALL_GROUP_IDS;
-const AUTOSAVE_MS = 450;
+
+const KNOCKOUT_PHASES = [
+  { id: 'r32' as const, label: 'Round of 32', stages: ['R32'] as Stage[] },
+  { id: 'r16' as const, label: 'Round of 16', stages: ['R16'] as Stage[] },
+  { id: 'qf' as const, label: 'Quarter Final', stages: ['QF'] as Stage[] },
+  { id: 'sf' as const, label: 'Semi Final', stages: ['SF'] as Stage[] },
+  { id: 'finals' as const, label: 'Final / 3rd Place', stages: ['FINAL', 'THIRD_PLACE'] as Stage[] }
+];
+
+type PicksPhase = 'bonus' | 'group' | (typeof KNOCKOUT_PHASES)[number]['id'];
 
 function formatCountdown(targetIso: string, nowIso: string): string {
   const diff = new Date(targetIso).getTime() - new Date(nowIso).getTime();
@@ -18,6 +27,16 @@ function formatCountdown(targetIso: string, nowIso: string): string {
   const hours = Math.floor(diff / (1000 * 60 * 60));
   const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
   return `${hours}h ${minutes}m`;
+}
+
+function isKnockoutPhase(phase: PicksPhase): phase is (typeof KNOCKOUT_PHASES)[number]['id'] {
+  return KNOCKOUT_PHASES.some((entry) => entry.id === phase);
+}
+
+function knockoutFixturesForPhase(phase: PicksPhase, fixtures: Match[]): Match[] {
+  const config = KNOCKOUT_PHASES.find((entry) => entry.id === phase);
+  if (!config) return [];
+  return fixtures.filter((match) => config.stages.includes(match.stage));
 }
 
 function bonusValues(state: RemoteState): TournamentBonusPick {
@@ -45,8 +64,6 @@ interface RemoteState {
   officialResults?: Record<string, ActualResult>;
 }
 
-type PicksPhase = 'bonus' | 'group' | 'knockout';
-
 const initialState: RemoteState = {
   committedPicks: {},
   draftPicks: {},
@@ -54,172 +71,6 @@ const initialState: RemoteState = {
   acceptedGroups: [],
   commitState: { groupLocked: false }
 };
-
-function clampScore(value: number): number {
-  if (!Number.isFinite(value)) return 0;
-  return Math.max(0, Math.floor(value));
-}
-
-function parseScoreInput(raw: string): number {
-  if (raw.trim() === '') return 0;
-  return clampScore(Number(raw));
-}
-
-function MatchScoreInputs({
-  match,
-  pick,
-  disabled,
-  onSave,
-  onScoresChange
-}: {
-  match: Match;
-  pick?: Pick;
-  disabled: boolean;
-  onSave: (pick: Pick) => Promise<void>;
-  onScoresChange?: (pick: Pick) => void;
-}) {
-  const hasSavedPick = pick !== undefined;
-  const [homeScore, setHomeScore] = useState(pick?.homeScore ?? 0);
-  const [awayScore, setAwayScore] = useState(pick?.awayScore ?? 0);
-  const [progressingTeamId, setProgressingTeamId] = useState(pick?.progressingTeamId ?? '');
-  const [edited, setEdited] = useState(false);
-  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const editedRef = useRef(edited);
-  const disabledRef = useRef(disabled);
-  editedRef.current = edited;
-  disabledRef.current = disabled;
-
-  useEffect(() => {
-    setHomeScore(pick?.homeScore ?? 0);
-    setAwayScore(pick?.awayScore ?? 0);
-    setProgressingTeamId(pick?.progressingTeamId ?? '');
-    setEdited(false);
-  }, [pick?.homeScore, pick?.awayScore, pick?.progressingTeamId, match.id]);
-
-  const buildPick = useCallback((): Pick => {
-    const home = clampScore(homeScore);
-    const away = clampScore(awayScore);
-    return {
-      matchId: match.id,
-      homeScore: home,
-      awayScore: away,
-      progressingTeamId: home === away ? progressingTeamId || undefined : undefined
-    };
-  }, [awayScore, homeScore, match.id, progressingTeamId]);
-
-  const buildPickRef = useRef(buildPick);
-  const onSaveRef = useRef(onSave);
-  buildPickRef.current = buildPick;
-  onSaveRef.current = onSave;
-
-  const notifyChange = useCallback(
-    (nextHome: number, nextAway: number, nextProgressing = progressingTeamId) => {
-      if (!onScoresChange) return;
-      const home = clampScore(nextHome);
-      const away = clampScore(nextAway);
-      onScoresChange({
-        matchId: match.id,
-        homeScore: home,
-        awayScore: away,
-        progressingTeamId: home === away ? nextProgressing || undefined : undefined
-      });
-    },
-    [match.id, onScoresChange, progressingTeamId]
-  );
-
-  const scheduleSave = useCallback(() => {
-    if (disabled || !edited) return;
-    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
-    saveTimerRef.current = setTimeout(() => {
-      void onSave(buildPick());
-    }, AUTOSAVE_MS);
-  }, [buildPick, disabled, edited, onSave]);
-
-  useEffect(() => {
-    scheduleSave();
-    return () => {
-      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
-    };
-  }, [homeScore, awayScore, progressingTeamId, scheduleSave]);
-
-  useEffect(() => {
-    return () => {
-      if (saveTimerRef.current) {
-        clearTimeout(saveTimerRef.current);
-        saveTimerRef.current = null;
-      }
-      if (editedRef.current && !disabledRef.current) {
-        void onSaveRef.current(buildPickRef.current());
-      }
-    };
-  }, [match.id]);
-
-  const homeTeam = teams.find((team) => team.id === match.homeTeamId);
-  const awayTeam = teams.find((team) => team.id === match.awayTeamId);
-  const isDraw = clampScore(homeScore) === clampScore(awayScore);
-
-  const handleScoreWheel = (event: WheelEvent<HTMLInputElement>) => {
-    event.currentTarget.blur();
-  };
-
-  return (
-    <>
-      <div className="score-inputs">
-        <input
-          type="number"
-          min="0"
-          step="1"
-          inputMode="numeric"
-          value={hasSavedPick || edited ? homeScore : ''}
-          placeholder="0"
-          disabled={disabled}
-          onWheel={handleScoreWheel}
-          onChange={(event) => {
-            const next = parseScoreInput(event.target.value);
-            setEdited(true);
-            setHomeScore(next);
-            notifyChange(next, awayScore);
-          }}
-        />
-        <input
-          type="number"
-          min="0"
-          step="1"
-          inputMode="numeric"
-          value={hasSavedPick || edited ? awayScore : ''}
-          placeholder="0"
-          disabled={disabled}
-          onWheel={handleScoreWheel}
-          onChange={(event) => {
-            const next = parseScoreInput(event.target.value);
-            setEdited(true);
-            setAwayScore(next);
-            notifyChange(homeScore, next);
-          }}
-        />
-      </div>
-      {isDraw && match.stage !== 'GROUP' && (
-        <label>
-          Draw selected — choose the team that progresses.
-          <select
-            value={progressingTeamId}
-            disabled={disabled}
-            onChange={(event) => {
-              const next = event.target.value;
-              setEdited(true);
-              setProgressingTeamId(next);
-              notifyChange(homeScore, awayScore, next);
-            }}
-          >
-            <option value="">Select progressing team</option>
-            {homeTeam && <option value={homeTeam.id}>{homeTeam.name}</option>}
-            {awayTeam && <option value={awayTeam.id}>{awayTeam.name}</option>}
-          </select>
-        </label>
-      )}
-    </>
-  );
-}
 
 export function MyPicksPage() {
   const [groupIndex, setGroupIndex] = useState(0);
@@ -271,8 +122,20 @@ export function MyPicksPage() {
   const groupIsLocked = lockedGroups.includes(activeGroup) || tournamentLocked;
   const allGroupPicksCommitted = state.allGroupPicksCommitted ?? false;
   const koPicksAllowed = allGroupPicksCommitted || tournamentLocked;
-  const hasConfirmedKnockout = confirmedKnockoutFixtures.length > 0;
   const bonus = bonusValues(state);
+
+  const koCountByPhase = useMemo(() => {
+    const counts: Partial<Record<PicksPhase, number>> = {};
+    for (const entry of KNOCKOUT_PHASES) {
+      counts[entry.id] = knockoutFixturesForPhase(entry.id, confirmedKnockoutFixtures).length;
+    }
+    return counts;
+  }, [confirmedKnockoutFixtures]);
+
+  const activeKoPhase = isKnockoutPhase(phase) ? KNOCKOUT_PHASES.find((entry) => entry.id === phase) : undefined;
+  const activeKoFixtures = activeKoPhase
+    ? knockoutFixturesForPhase(activeKoPhase.id, confirmedKnockoutFixtures)
+    : [];
 
   const saveMatchPick = async (pick: Pick) => {
     try {
@@ -337,6 +200,13 @@ export function MyPicksPage() {
     }
   };
 
+  const bonusSlots: Array<{ key: keyof TournamentBonusPick; label: string }> = [
+    { key: 'winnerTeamId', label: 'Winner' },
+    { key: 'runnerUpTeamId', label: 'Runner-up' },
+    { key: 'thirdTeamId', label: 'Third' },
+    { key: 'fourthTeamId', label: 'Fourth' }
+  ];
+
   return (
     <section className="stack">
       <article className="card">
@@ -358,27 +228,28 @@ export function MyPicksPage() {
             </ul>
           )}
         </div>
-        <div className="button-row">
+        <div className="picks-phase-tabs">
           <button type="button" className={phase === 'bonus' ? 'active-tab' : ''} onClick={() => changePhase('bonus')}>
             Tournament Results
           </button>
           <button type="button" className={phase === 'group' ? 'active-tab' : ''} onClick={() => changePhase('group')}>
             Group Stage
           </button>
-          <button
-            type="button"
-            className={phase === 'knockout' ? 'active-tab' : ''}
-            onClick={() => changePhase('knockout')}
-          >
-            Knockout Stage
-            {hasConfirmedKnockout ? ` (${confirmedKnockoutFixtures.length})` : ''}
-          </button>
+          {KNOCKOUT_PHASES.map((entry) => {
+            const count = koCountByPhase[entry.id] ?? 0;
+            return (
+              <button
+                key={entry.id}
+                type="button"
+                className={phase === entry.id ? 'active-tab' : ''}
+                onClick={() => changePhase(entry.id)}
+              >
+                {entry.label}
+                {count > 0 ? ` (${count})` : ''}
+              </button>
+            );
+          })}
         </div>
-        {phase === 'knockout' && !hasConfirmedKnockout && (
-          <p className="warning">
-            Knockout picks appear here once official group results confirm each fixture (both teams known).
-          </p>
-        )}
       </article>
 
       {phase === 'group' && (
@@ -387,29 +258,20 @@ export function MyPicksPage() {
           {groupIsLocked && lockedGroups.includes(activeGroup) && (
             <p className="success">Group {activeGroup} is locked.</p>
           )}
-          {activeGroupMatches.map((match) => {
-            const homeTeam = teams.find((team) => team.id === match.homeTeamId);
-            const awayTeam = teams.find((team) => team.id === match.awayTeamId);
-            const pick = mergedPicks[match.id];
-            return (
-              <div key={match.id} className="fixture-card">
-                <div className="fixture-row">
-                  {homeTeam && <TeamLabel team={homeTeam} />} <strong>vs</strong>{' '}
-                  {awayTeam && <TeamLabel team={awayTeam} />}
-                </div>
-                <FixtureScoreSummary pick={pick} actual={officialResults[match.id]} />
-                <MatchScoreInputs
-                  match={match}
-                  pick={pick}
-                  disabled={groupIsLocked}
-                  onSave={saveMatchPick}
-                  onScoresChange={(updated) =>
-                    setPendingGroupPicks((current) => ({ ...current, [match.id]: updated }))
-                  }
-                />
-              </div>
-            );
-          })}
+          {activeGroupMatches.map((match) => (
+            <FixturePickCard
+              key={match.id}
+              match={match}
+              pick={mergedPicks[match.id]}
+              actual={officialResults[match.id]}
+              nowIso={nowIso}
+              inputsDisabled={groupIsLocked}
+              onSave={saveMatchPick}
+              onScoresChange={(updated) =>
+                setPendingGroupPicks((current) => ({ ...current, [match.id]: updated }))
+              }
+            />
+          ))}
 
           <h4>Projected table (Group {activeGroup})</h4>
           <div className="comparison-table-wrap">
@@ -488,72 +350,70 @@ export function MyPicksPage() {
           {state.bonusCommitted && !tournamentLocked && (
             <p className="success">Your tournament result picks are saved.</p>
           )}
-          <form onSubmit={submitBonus} className="form-grid">
-            <TeamSelect
-              label="Winner"
-              name="winnerTeamId"
-              value={bonus.winnerTeamId}
-              disabled={tournamentLocked}
-            />
-            <TeamSelect
-              label="Runner-up"
-              name="runnerUpTeamId"
-              value={bonus.runnerUpTeamId}
-              disabled={tournamentLocked}
-            />
-            <TeamSelect label="Third" name="thirdTeamId" value={bonus.thirdTeamId} disabled={tournamentLocked} />
-            <TeamSelect label="Fourth" name="fourthTeamId" value={bonus.fourthTeamId} disabled={tournamentLocked} />
-            <button type="submit" disabled={tournamentLocked}>
-              Save tournament picks
-            </button>
-            {bonusMessage && (
-              <p className={bonusMessage.includes('saved') ? 'success' : 'warning'}>{bonusMessage}</p>
-            )}
-          </form>
+          {tournamentLocked && state.bonusCommitted ? (
+            <div className="bonus-readonly fixture-scores-summary fixture-scores-locked">
+              {bonusSlots.map((slot) => {
+                const team = teams.find((entry) => entry.id === state.bonusCommitted?.[slot.key]);
+                return (
+                  <p key={slot.key}>
+                    <strong>{slot.label}:</strong> {team ? <TeamLabel team={team} /> : '—'}
+                  </p>
+                );
+              })}
+            </div>
+          ) : (
+            <form onSubmit={submitBonus} className="form-grid">
+              <TeamSelect
+                label="Winner"
+                name="winnerTeamId"
+                value={bonus.winnerTeamId}
+                disabled={tournamentLocked}
+              />
+              <TeamSelect
+                label="Runner-up"
+                name="runnerUpTeamId"
+                value={bonus.runnerUpTeamId}
+                disabled={tournamentLocked}
+              />
+              <TeamSelect label="Third" name="thirdTeamId" value={bonus.thirdTeamId} disabled={tournamentLocked} />
+              <TeamSelect label="Fourth" name="fourthTeamId" value={bonus.fourthTeamId} disabled={tournamentLocked} />
+              <button type="submit" disabled={tournamentLocked}>
+                Save tournament picks
+              </button>
+              {bonusMessage && (
+                <p className={bonusMessage.includes('saved') ? 'success' : 'warning'}>{bonusMessage}</p>
+              )}
+            </form>
+          )}
         </article>
       )}
 
-      {phase === 'knockout' && (
+      {activeKoPhase && (
         <article className="card">
-          <h3>Knockout fixture picks</h3>
+          <h3>{activeKoPhase.label}</h3>
           <p>Only officially confirmed fixtures are listed — not projected from your group picks.</p>
-          {hasConfirmedKnockout && !koPicksAllowed && (
+          {!koPicksAllowed && (
             <p className="warning">
               Complete and save all 72 group-stage match scores before knockout picks can be saved (
               {state.groupPicksCommittedCount ?? 0}/{state.groupPicksRequired ?? 72} saved).
             </p>
           )}
-          {!hasConfirmedKnockout && (
-            <p className="warning">
-              No knockout fixtures are confirmed yet. They unlock as group games finish and FIFA assigns teams.
-            </p>
+          {activeKoFixtures.length === 0 ? (
+            <p className="warning">No fixtures are confirmed for this round yet.</p>
+          ) : (
+            activeKoFixtures.map((match) => (
+              <FixturePickCard
+                key={match.id}
+                match={match}
+                pick={mergedPicks[match.id]}
+                actual={officialResults[match.id]}
+                nowIso={nowIso}
+                inputsDisabled={!koPicksAllowed}
+                onSave={saveMatchPick}
+                kickoffHint={`Locks in: ${formatCountdown(match.kickoff, nowIso)}`}
+              />
+            ))
           )}
-          {confirmedKnockoutFixtures.map((match) => {
-            const homeTeam = teams.find((team) => team.id === match.homeTeamId);
-            const awayTeam = teams.find((team) => team.id === match.awayTeamId);
-            const homeOk = homeTeam && homeTeam.id !== 'tbd';
-            const awayOk = awayTeam && awayTeam.id !== 'tbd';
-            const pick = mergedPicks[match.id];
-            const locked = new Date(nowIso).getTime() >= new Date(match.kickoff).getTime();
-
-            return (
-              <div key={match.id} className="fixture-card">
-                <p className="kicker">{match.stage}</p>
-                <div className="fixture-row">
-                  {homeOk ? <TeamLabel team={homeTeam!} /> : <span>TBD</span>} <strong>vs</strong>{' '}
-                  {awayOk ? <TeamLabel team={awayTeam!} /> : <span>TBD</span>}
-                </div>
-                <p>Locks in: {formatCountdown(match.kickoff, nowIso)}</p>
-                <FixtureScoreSummary pick={pick} actual={officialResults[match.id]} />
-                <MatchScoreInputs
-                  match={match}
-                  pick={pick}
-                  disabled={locked || !koPicksAllowed}
-                  onSave={saveMatchPick}
-                />
-              </div>
-            );
-          })}
         </article>
       )}
     </section>

@@ -179,6 +179,23 @@ select {
   margin-bottom: 0.8rem;
 }
 
+.picks-phase-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.picks-phase-tabs button {
+  font-size: 0.82rem;
+  padding: 0.55rem 0.7rem;
+  background: #1c4d7f;
+}
+
+.picks-phase-tabs button.active-tab {
+  background: #19a974;
+}
+
 .button-row {
   display: flex;
   flex-wrap: wrap;
@@ -212,6 +229,33 @@ select {
 .fixture-actual {
   color: #0f4c81;
   font-weight: 600;
+}
+
+.fixture-actual-preview {
+  margin-bottom: 0.5rem;
+  font-size: 0.95rem;
+}
+
+.fixture-points {
+  color: #0b7a35;
+  font-weight: 700;
+}
+
+.fixture-meta {
+  font-size: 0.85rem;
+  color: #4a6278;
+  margin: 0.15rem 0 0.5rem;
+}
+
+.fixture-scores-locked p {
+  margin: 0.35rem 0;
+}
+
+.bonus-readonly p {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-wrap: wrap;
 }
 
 .score-inputs {
