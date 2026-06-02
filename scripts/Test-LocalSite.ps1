@@ -57,10 +57,13 @@ function Assert-Command([string] $Name) {
   }
 }
 
-function Invoke-Npm([string[]] $Args) {
-  & npm @Args
+function Invoke-Npm {
+  param([Parameter(Mandatory)][string[]] $Command)
+
+  $npm = (Get-Command npm -CommandType Application -ErrorAction Stop).Source
+  & $npm @Command
   if ($LASTEXITCODE -ne 0) {
-    throw "npm $($Args -join ' ') failed with exit code $LASTEXITCODE"
+    throw "npm $($Command -join ' ') failed with exit code $LASTEXITCODE"
   }
 }
 
@@ -186,20 +189,20 @@ $apiBase = "http://localhost:$Port"
 
 if (-not $SkipInstall) {
   Write-Step 'npm install'
-  Invoke-Npm @('install')
+  Invoke-Npm -Command install
 } else {
   Write-Step 'Skipping npm install'
 }
 
 Write-Step 'Database migrate'
-Invoke-Npm @('run', 'migrate')
+Invoke-Npm -Command run, migrate
 
 if ($Mode -eq 'Automated') {
   Write-Step 'Unit and integration tests'
-  Invoke-Npm @('test')
+  Invoke-Npm -Command test
 
   Write-Step 'Production build'
-  Invoke-Npm @('run', 'build')
+  Invoke-Npm -Command run, build
 
   Write-Step "Starting API on $apiBase (temporary)"
   $serverProc = Start-NpmBackground -ScriptName 'server'
@@ -228,7 +231,7 @@ if ($Mode -eq 'Automated') {
 
 if ($Mode -eq 'Serve') {
   Write-Step 'Production build'
-  Invoke-Npm @('run', 'build')
+  Invoke-Npm -Command run, build
 
   Write-Step "Starting API + built UI on $apiBase"
   Write-Host 'Press Ctrl+C in this window to stop the server.' -ForegroundColor Yellow
@@ -242,7 +245,7 @@ if ($Mode -eq 'Serve') {
   }
 
   $env:PORT = [string] $Port
-  Invoke-Npm @('run', 'server')
+  Invoke-Npm -Command run, server
   exit $LASTEXITCODE
 }
 
