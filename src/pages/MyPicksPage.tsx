@@ -2,13 +2,12 @@ import { FormEvent, useCallback, useEffect, useMemo, useState, type WheelEvent }
 import { groupMatches, teams } from '../data/tournament';
 import { TeamLabel } from '../components/TeamLabel';
 import {
-  commitDraft,
   fetchPredictionState,
-  markReviewed,
   saveBonusDraft,
   saveDraftPick,
   setGroupAccepted
 } from '../services/apiClient';
+import { TeamSelect } from '../components/TeamSelect';
 import { ALL_GROUP_IDS, GROUP_MATCH_COUNT } from '../lib/pickLocks';
 import { computeGroupStandings, shouldLockGroup } from '../lib/tournamentLogic';
 import { Match, Pick, TournamentBonusPick } from '../types';
@@ -24,7 +23,7 @@ function formatCountdown(targetIso: string, nowIso: string): string {
 }
 
 function bonusValues(state: RemoteState): TournamentBonusPick {
-  const source = state.bonusDraft ?? state.bonusCommitted;
+  const source = state.bonusCommitted ?? state.bonusDraft;
   return {
     winnerTeamId: source?.winnerTeamId ?? teams[0].id,
     runnerUpTeamId: source?.runnerUpTeamId ?? teams[1].id,
@@ -193,8 +192,8 @@ function MatchScoreInputs({
 
 export function MyPicksPage() {
   const [groupIndex, setGroupIndex] = useState(0);
-  const [phase, setPhase] = useState<PicksPhase>('group');
-  const [message, setMessage] = useState<string>('');
+  const [phase, setPhase] = useState<PicksPhase>('bonus');
+  const [groupMessage, setGroupMessage] = useState<string>('');
   const [bonusMessage, setBonusMessage] = useState<string>('');
   const [state, setState] = useState<RemoteState>(initialState);
   const [pendingGroupPicks, setPendingGroupPicks] = useState<Record<string, Pick>>({});
@@ -210,7 +209,7 @@ export function MyPicksPage() {
         acceptedGroups: response.acceptedGroups ?? []
       });
     } catch (err) {
-      setMessage(err instanceof Error ? err.message : 'Failed to load prediction state');
+      setGroupMessage(err instanceof Error ? err.message : 'Failed to load prediction state');
     }
   };
 
@@ -250,7 +249,7 @@ export function MyPicksPage() {
       });
       await refresh();
     } catch (err) {
-      setMessage(err instanceof Error ? err.message : 'Could not save pick');
+      setGroupMessage(err instanceof Error ? err.message : 'Could not save pick');
     }
   };
 
@@ -278,13 +277,10 @@ export function MyPicksPage() {
 
     try {
       await saveBonusDraft(payload);
-      setBonusMessage('Bonus picks saved. Use “Commit changes” below when you are ready to lock them in.');
-      setMessage('Bonus picks saved to draft.');
+      setBonusMessage('Tournament result picks saved. They lock at the first match kickoff.');
       await refresh();
     } catch (err) {
-      const text = err instanceof Error ? err.message : 'Could not save bonus picks';
-      setBonusMessage(text);
-      setMessage(text);
+      setBonusMessage(err instanceof Error ? err.message : 'Could not save tournament picks');
     }
   };
 
@@ -292,19 +288,15 @@ export function MyPicksPage() {
     <section className="stack">
       <article className="card">
         <h2>My Picks</h2>
-        <p className={state.affectedMatches.length > 0 ? 'warning' : 'success'}>
-          {state.affectedMatches.length > 0 ? 'Uncommitted changes pending' : 'All changes committed'}
-        </p>
         <p>
           {groupLocked
-            ? 'Group-stage picks are now locked. Only previously committed predictions were locked.'
-            : 'Only committed group picks and bonus selections will lock at first kickoff.'}
+            ? 'Group-stage and tournament result picks are now locked.'
+            : 'Tournament result picks lock at the first match kickoff. Group and knockout picks have their own deadlines.'}
         </p>
-        <p className="warning">Uncommitted edits will not count. Last committed picks will be locked.</p>
         <p className={allGroupPicksCommitted ? 'success' : 'warning'}>
           Group picks committed: {groupPicksCommittedCount}/{groupPicksRequired}
           {!allGroupPicksCommitted && !groupLocked
-            ? ' — commit all group-stage picks before first kickoff to unlock bonus and knockout picks.'
+            ? ' — accept each group table to lock in group-stage results.'
             : ''}
         </p>
         <div className="button-row">
@@ -402,10 +394,10 @@ export function MyPicksPage() {
                 try {
                   await flushGroupPicks();
                   await setGroupAccepted(activeGroup, true);
-                  setMessage(`Group ${activeGroup} accepted and all match results locked in.`);
+                  setGroupMessage(`Group ${activeGroup} accepted and all match results locked in.`);
                   await refresh();
                 } catch (err) {
-                  setMessage(err instanceof Error ? err.message : 'Could not accept group');
+                  setGroupMessage(err instanceof Error ? err.message : 'Could not accept group');
                 }
               }}
             >
@@ -419,7 +411,7 @@ export function MyPicksPage() {
                   await setGroupAccepted(activeGroup, false);
                   await refresh();
                 } catch (err) {
-                  setMessage(err instanceof Error ? err.message : 'Could not amend group');
+                  setGroupMessage(err instanceof Error ? err.message : 'Could not amend group');
                 }
               }}
             >
@@ -438,70 +430,38 @@ export function MyPicksPage() {
           </div>
           {!groupAccepted && groupComplete && <p className="warning">Accept this group before moving on.</p>}
           {groupAccepted && <p className="success">Group {activeGroup} accepted.</p>}
+          {groupMessage && <p className={groupMessage.includes('accepted') ? 'success' : 'warning'}>{groupMessage}</p>}
         </article>
       )}
 
       {phase === 'bonus' && (
         <article className="card">
-          <h3>Tournament bonus picks</h3>
-          <p>Select winner, runner-up, third, and fourth from all teams (repeats allowed).</p>
-          {groupLocked && <p className="warning">Tournament bonus picks are locked.</p>}
-          <form
-            key={JSON.stringify(state.bonusDraft ?? state.bonusCommitted ?? bonus)}
-            onSubmit={submitBonus}
-            className="form-grid"
-          >
-            <label>
-              Winner
-              <select name="winnerTeamId" defaultValue={bonus.winnerTeamId} disabled={groupLocked}>
-                {teams.map((team) => (
-                  <option key={`winner-${team.id}`} value={team.id}>
-                    {team.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label>
-              Runner-up
-              <select name="runnerUpTeamId" defaultValue={bonus.runnerUpTeamId} disabled={groupLocked}>
-                {teams.map((team) => (
-                  <option key={`runner-${team.id}`} value={team.id}>
-                    {team.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label>
-              Third
-              <select name="thirdTeamId" defaultValue={bonus.thirdTeamId} disabled={groupLocked}>
-                {teams.map((team) => (
-                  <option key={`third-${team.id}`} value={team.id}>
-                    {team.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label>
-              Fourth
-              <select name="fourthTeamId" defaultValue={bonus.fourthTeamId} disabled={groupLocked}>
-                {teams.map((team) => (
-                  <option key={`fourth-${team.id}`} value={team.id}>
-                    {team.name}
-                  </option>
-                ))}
-              </select>
-            </label>
+          <h3>Tournament result picks</h3>
+          <p>Pick the top four teams. These lock at the first match kickoff — no group picks required.</p>
+          {groupLocked && <p className="warning">Tournament result picks are locked.</p>}
+          {state.bonusCommitted && !groupLocked && (
+            <p className="success">Your tournament result picks are saved.</p>
+          )}
+          <form onSubmit={submitBonus} className="form-grid">
+            <TeamSelect
+              label="Winner"
+              name="winnerTeamId"
+              value={bonus.winnerTeamId}
+              disabled={groupLocked}
+            />
+            <TeamSelect
+              label="Runner-up"
+              name="runnerUpTeamId"
+              value={bonus.runnerUpTeamId}
+              disabled={groupLocked}
+            />
+            <TeamSelect label="Third" name="thirdTeamId" value={bonus.thirdTeamId} disabled={groupLocked} />
+            <TeamSelect label="Fourth" name="fourthTeamId" value={bonus.fourthTeamId} disabled={groupLocked} />
             <button type="submit" disabled={groupLocked}>
-              Save bonus picks
+              Save tournament picks
             </button>
             {bonusMessage && (
               <p className={bonusMessage.includes('saved') ? 'success' : 'warning'}>{bonusMessage}</p>
-            )}
-            {state.bonusDraft && !state.bonusCommitted && (
-              <p className="warning">Bonus picks saved as draft — commit when ready.</p>
-            )}
-            {state.bonusCommitted && !state.bonusDraft && (
-              <p className="success">Bonus picks committed.</p>
             )}
           </form>
         </article>
@@ -541,47 +501,17 @@ export function MyPicksPage() {
                   {awayOk ? <TeamLabel team={awayTeam!} /> : <span>TBD</span>}
                 </div>
                 <p>Locks in: {formatCountdown(match.kickoff, nowIso)}</p>
-                <p className="warning">This match locks at kickoff. Commit your changes before deadline.</p>
                 <MatchScoreInputs
                   match={match}
                   pick={pick}
                   disabled={locked || !koPicksAllowed}
                   onSave={saveMatchPick}
                 />
-                {state.affectedMatches.includes(match.id) && (
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      await markReviewed(match.id);
-                      await refresh();
-                    }}
-                  >
-                    Mark reviewed
-                  </button>
-                )}
               </div>
             );
           })}
         </article>
       )}
-
-      <article className="card">
-        <button
-          type="button"
-          onClick={async () => {
-            try {
-              await commitDraft();
-              setMessage('Changes committed successfully.');
-              await refresh();
-            } catch (err) {
-              setMessage(err instanceof Error ? err.message : 'Commit failed');
-            }
-          }}
-        >
-          Review affected fixtures and Commit changes
-        </button>
-        <p>{message}</p>
-      </article>
     </section>
   );
 }

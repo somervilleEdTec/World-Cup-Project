@@ -1,10 +1,8 @@
 import { getDb } from '../database';
 import { groupMatches } from '../../data/tournament';
 import { getMatches } from '../../lib/matchResolver';
-import { affectedFutureMatches, validatePick } from '../../lib/tournamentLogic';
+import { validatePick } from '../../lib/tournamentLogic';
 import {
-  allGroupsAccepted,
-  allGroupsComplete,
   allGroupPicksCommitted,
   assertAllGroupPicksCommitted,
   assertBonusEditable,
@@ -124,25 +122,13 @@ export async function saveDraftPick(userId: string, pick: Pick, nowIso = new Dat
   const now = nowIso;
   await db.run(
     `INSERT INTO predictions (user_id, match_id, state, home_score, away_score, progressing_team_id, reviewed, updated_at)
-     VALUES (?, ?, 'draft', ?, ?, ?, 1, ?)
+     VALUES (?, ?, 'committed', ?, ?, ?, 1, ?)
      ON CONFLICT(user_id, match_id, state) DO UPDATE SET home_score=excluded.home_score, away_score=excluded.away_score, progressing_team_id=excluded.progressing_team_id, reviewed=1, updated_at=excluded.updated_at`,
     [userId, pick.matchId, pick.homeScore, pick.awayScore, pick.progressingTeamId ?? null, now]
   );
-
-  const impacted = affectedFutureMatches(pick.matchId);
-  for (const matchId of impacted) {
-    await db.run(
-      `UPDATE predictions SET reviewed = 0, updated_at = ? WHERE user_id = ? AND match_id = ? AND state = 'draft'`,
-      [now, userId, matchId]
-    );
-  }
-
-  const current = await getMeta(userId);
-  const existing = current ? (JSON.parse(current.affected_matches) as string[]) : [];
-  const affected = [...new Set([...existing, ...impacted])];
-  await db.run(`UPDATE prediction_meta SET affected_matches = ? WHERE user_id = ?`, [
-    JSON.stringify(affected),
-    userId
+  await db.run(`DELETE FROM predictions WHERE user_id = ? AND match_id = ? AND state = 'draft'`, [
+    userId,
+    pick.matchId
   ]);
 }
 
@@ -152,7 +138,10 @@ export async function setBonusDraft(userId: string, bonus: TournamentBonusPick, 
   const groupLocked = (meta?.group_locked ?? 0) === 1;
   assertBonusEditable(groupLocked, nowIso);
 
-  await db.run(`UPDATE prediction_meta SET bonus_draft = ? WHERE user_id = ?`, [JSON.stringify(bonus), userId]);
+  await db.run(
+    `UPDATE prediction_meta SET bonus_committed = ?, bonus_draft = NULL, committed_at = ? WHERE user_id = ?`,
+    [JSON.stringify(bonus), nowIso, userId]
+  );
 }
 
 export async function setGroupAccepted(
