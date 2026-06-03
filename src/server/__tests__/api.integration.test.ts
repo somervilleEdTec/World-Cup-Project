@@ -110,6 +110,45 @@ describe('API integration', () => {
     expect(String(koDraft.body.error)).toMatch(/72/);
   });
 
+  it('rejects edits in a voluntarily locked group before global lock', async () => {
+    await request(app).post('/api/auth/register').send(registerPayload('VoluntaryLock'));
+
+    const login = await request(app)
+      .post('/api/auth/login')
+      .send({ displayName: 'VoluntaryLock', password: 'abc' });
+    const token = login.body.token as string;
+
+    const { groupMatches } = await import('../../data/tournament');
+    const groupA = groupMatches.filter((m) => m.group === 'A');
+    for (const match of groupA) {
+      const draft = await request(app)
+        .post('/api/predictions/draft')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ matchId: match.id, homeScore: 1, awayScore: 0 });
+      expect(draft.status).toBe(200);
+    }
+
+    const lock = await request(app)
+      .post('/api/predictions/groups/A/lock')
+      .set('Authorization', `Bearer ${token}`);
+    expect(lock.status).toBe(200);
+
+    const blocked = await request(app)
+      .post('/api/predictions/draft')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ matchId: 'g-a-1', homeScore: 2, awayScore: 2 });
+    expect(blocked.status).toBe(400);
+    expect(String(blocked.body.error)).toMatch(/Group A is locked/i);
+
+    const groupB = groupMatches.find((m) => m.group === 'B');
+    expect(groupB).toBeTruthy();
+    const otherGroup = await request(app)
+      .post('/api/predictions/draft')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ matchId: groupB!.id, homeScore: 0, awayScore: 0 });
+    expect(otherGroup.status).toBe(200);
+  });
+
   it('rejects group draft saves after group lock time', async () => {
     await request(app).post('/api/auth/register').send(registerPayload('Locked'));
 
