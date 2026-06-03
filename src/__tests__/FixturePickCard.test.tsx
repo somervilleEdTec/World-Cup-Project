@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { FixturePickCard } from '../components/FixturePickCard';
 import type { ActualResult, Match, Pick } from '../types';
 
@@ -65,14 +65,32 @@ describe('FixturePickCard', () => {
         match={groupMatch}
         pick={{ matchId: 'g-a-1', homeScore: 2, awayScore: 1 }}
         nowIso="2026-06-01T00:00:00Z"
-        inputsDisabled
-        showLockedSummary
+        groupUserLocked
+        showLockedSummary={false}
+        inputsDisabled={false}
         onSave={vi.fn()}
       />
     );
     expect(screen.getByText('2–1')).toBeTruthy();
     expect(screen.queryByRole('spinbutton')).toBeNull();
     expect(screen.queryByText(/Your prediction:/)).toBeNull();
+  });
+
+  it('rejects decimal characters in score inputs', () => {
+    render(
+      <FixturePickCard
+        match={koMatch}
+        pick={pick}
+        nowIso="2026-06-28T18:00:00Z"
+        inputsDisabled={false}
+        showLockedSummary={false}
+        onSave={vi.fn()}
+      />
+    );
+    const inputs = screen.getAllByRole('spinbutton');
+    fireEvent.keyDown(inputs[0], { key: '.' });
+    fireEvent.change(inputs[0], { target: { value: '2.5' } });
+    expect((inputs[0] as HTMLInputElement).value).toBe('2');
   });
 
   it('shows editable inputs with spinners before kickoff when not locked', () => {

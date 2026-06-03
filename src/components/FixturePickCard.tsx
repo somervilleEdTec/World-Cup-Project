@@ -1,4 +1,11 @@
-import { useCallback, useEffect, useRef, useState, type WheelEvent } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type KeyboardEvent,
+  type WheelEvent
+} from 'react';
 import { teams } from '../data/tournament';
 import { knockoutStageHeading, knockoutStageMultiplierLabel } from '../lib/knockoutStageMultiplier';
 import { computeMatchPoints } from '../lib/matchScoring';
@@ -15,8 +22,20 @@ function clampScore(value: number): number {
 }
 
 function parseScoreInput(raw: string): number {
-  if (raw.trim() === '') return 0;
-  return clampScore(Number(raw));
+  const trimmed = raw.trim();
+  if (trimmed === '') return 0;
+  if (/[.,]/.test(trimmed)) {
+    const intPart = trimmed.split(/[.,]/)[0]?.replace(/\D/g, '') ?? '';
+    return clampScore(Number.parseInt(intPart || '0', 10));
+  }
+  const digitsOnly = trimmed.replace(/\D/g, '');
+  return clampScore(Number.parseInt(digitsOnly || '0', 10));
+}
+
+function blockNonIntegerScoreKeys(event: KeyboardEvent<HTMLInputElement>) {
+  if (['e', 'E', '+', '-', '.', ','].includes(event.key)) {
+    event.preventDefault();
+  }
 }
 
 function formatPickLine(pick: Pick | undefined, match: Match): string {
@@ -139,10 +158,12 @@ function EditableScoreInputs({
           min="0"
           step="1"
           inputMode="numeric"
+          pattern="[0-9]*"
           value={hasSavedPick || edited ? homeScore : ''}
           placeholder="0"
           disabled={disabled}
           onWheel={handleScoreWheel}
+          onKeyDown={blockNonIntegerScoreKeys}
           onChange={(event) => {
             const next = parseScoreInput(event.target.value);
             setEdited(true);
@@ -155,10 +176,12 @@ function EditableScoreInputs({
           min="0"
           step="1"
           inputMode="numeric"
+          pattern="[0-9]*"
           value={hasSavedPick || edited ? awayScore : ''}
           placeholder="0"
           disabled={disabled}
           onWheel={handleScoreWheel}
+          onKeyDown={blockNonIntegerScoreKeys}
           onChange={(event) => {
             const next = parseScoreInput(event.target.value);
             setEdited(true);
@@ -199,6 +222,8 @@ export interface FixturePickCardProps {
   inputsDisabled: boolean;
   /** When true, show prediction as text with official result and points (group-style locked view). */
   showLockedSummary: boolean;
+  /** User chose Lock group — show plain score text instead of inputs (Group stage only). */
+  groupUserLocked?: boolean;
   onSave: (pick: Pick) => Promise<void>;
   onScoresChange?: (pick: Pick) => void;
   kickoffHint?: string;
@@ -211,6 +236,7 @@ export function FixturePickCard({
   nowIso,
   inputsDisabled,
   showLockedSummary,
+  groupUserLocked = false,
   onSave,
   onScoresChange,
   kickoffHint
@@ -233,7 +259,9 @@ export function FixturePickCard({
       </div>
       {kickoffHint && <p className="fixture-meta">{kickoffHint}</p>}
 
-      {showLockedSummary ? (
+      {groupUserLocked && match.stage === 'GROUP' ? (
+        <p className="fixture-score-plain">{formatPickLine(pick, match)}</p>
+      ) : showLockedSummary ? (
         <div className="fixture-scores-summary fixture-scores-locked">
           {match.stage === 'GROUP' && !actual ? (
             <p className="fixture-score-plain">{formatPickLine(pick, match)}</p>

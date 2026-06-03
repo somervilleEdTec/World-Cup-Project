@@ -108,7 +108,8 @@ export function MyPicksPage() {
 
   const activeGroup = groupSequence[groupIndex];
   const activeGroupMatches = groupMatches.filter((match) => match.group === activeGroup);
-  const tournamentLocked = state.commitState.groupLocked || shouldLockGroup(nowIso);
+  const calendarGroupLocked = shouldLockGroup(nowIso);
+  const tournamentLocked = calendarGroupLocked;
   const lockedGroups = state.acceptedGroups;
 
   const savedPicks = { ...state.committedPicks, ...state.draftPicks };
@@ -141,7 +142,8 @@ export function MyPicksPage() {
 
   const groupComplete = activeGroupMatches.every((match) => mergedPicks[match.id] !== undefined);
   const userGroupLocked = lockedGroups.includes(activeGroup);
-  const groupIsLocked = userGroupLocked || tournamentLocked;
+  const groupKickoffStarted = activeGroupMatches.some((match) => kickoffReached(match.kickoff, nowIso));
+  const canToggleGroupLock = !calendarGroupLocked && !groupKickoffStarted;
   const allGroupPicksCommitted = state.allGroupPicksCommitted ?? false;
   const koPicksAllowed = allGroupPicksCommitted || tournamentLocked;
   const bonus = bonusValues(state);
@@ -284,8 +286,7 @@ export function MyPicksPage() {
             <p className="warning">Group {activeGroup} is locked (tournament lock is active; cannot unlock).</p>
           )}
           {activeGroupMatches.map((match) => {
-            const groupFixtureLocked =
-              userGroupLocked || tournamentLocked || kickoffReached(match.kickoff, nowIso);
+            const matchKickoffLocked = kickoffReached(match.kickoff, nowIso);
             return (
               <FixturePickCard
                 key={match.id}
@@ -293,8 +294,9 @@ export function MyPicksPage() {
                 pick={mergedPicks[match.id]}
                 actual={officialResults[match.id]}
                 nowIso={nowIso}
-                inputsDisabled={groupFixtureLocked}
-                showLockedSummary={groupFixtureLocked}
+                groupUserLocked={userGroupLocked}
+                inputsDisabled={calendarGroupLocked || matchKickoffLocked}
+                showLockedSummary={!userGroupLocked && (matchKickoffLocked || Boolean(officialResults[match.id]))}
                 onSave={saveMatchPick}
                 onScoresChange={(updated) =>
                   setPendingGroupPicks((current) => ({ ...current, [match.id]: updated }))
@@ -320,21 +322,24 @@ export function MyPicksPage() {
           <div className="button-row">
             <button
               type="button"
-              disabled={
-                tournamentLocked
-                  ? true
-                  : userGroupLocked
-                    ? false
-                    : !groupComplete
-              }
+              disabled={!canToggleGroupLock || (!userGroupLocked && !groupComplete)}
               onClick={async () => {
+                const unlocking = userGroupLocked;
                 try {
-                  if (userGroupLocked && !tournamentLocked) {
+                  if (unlocking) {
                     await unlockGroup(activeGroup);
+                    setState((prev) => ({
+                      ...prev,
+                      acceptedGroups: prev.acceptedGroups.filter((g) => g !== activeGroup)
+                    }));
                     setGroupMessage(`Group ${activeGroup} unlocked.`);
                   } else {
                     await flushPendingForGroup();
                     await lockGroup(activeGroup);
+                    setState((prev) => ({
+                      ...prev,
+                      acceptedGroups: [...new Set([...prev.acceptedGroups, activeGroup])]
+                    }));
                     setGroupMessage(`Group ${activeGroup} locked.`);
                   }
                   await refresh();
@@ -345,7 +350,7 @@ export function MyPicksPage() {
                 }
               }}
             >
-              {userGroupLocked && !tournamentLocked ? 'Unlock group' : 'Lock group'}
+              {userGroupLocked ? 'Unlock group' : 'Lock group'}
             </button>
             <button type="button" disabled={groupIndex === 0} onClick={() => changeGroupIndex(groupIndex - 1)}>
               Previous Group

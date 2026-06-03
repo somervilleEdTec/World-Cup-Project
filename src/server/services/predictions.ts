@@ -165,12 +165,11 @@ export async function setGroupAccepted(
     throw new Error('Use unlockGroup to remove a per-group lock.');
   }
 
-  const meta = await getMeta(userId);
-  const groupLocked = (meta?.group_locked ?? 0) === 1;
-  if (groupLocked || shouldLockGroup(nowIso)) {
+  if (shouldLockGroup(nowIso)) {
     throw new Error('Group-stage predictions are locked.');
   }
 
+  const meta = await getMeta(userId);
   const lockedGroups = parseAcceptedGroups(meta?.accepted_groups);
   if (lockedGroups.includes(groupId)) {
     throw new Error(`Group ${groupId} is already locked.`);
@@ -223,12 +222,11 @@ export async function unlockGroupAccepted(
 ): Promise<void> {
   if (!VALID_GROUPS.has(groupId)) throw new Error('Invalid group');
 
-  const meta = await getMeta(userId);
-  const groupLocked = (meta?.group_locked ?? 0) === 1;
-  if (groupLocked || shouldLockGroup(nowIso)) {
+  if (shouldLockGroup(nowIso)) {
     throw new Error('Group-stage predictions are locked.');
   }
 
+  const meta = await getMeta(userId);
   const lockedGroups = parseAcceptedGroups(meta?.accepted_groups);
   if (!lockedGroups.includes(groupId)) {
     throw new Error(`Group ${groupId} is not locked.`);
