@@ -37,7 +37,7 @@ Friends-and-family prediction app for **FIFA World Cup 2026** (48 teams, 12 grou
 |------|--------|
 | Correct W/D/L (any stage) | +1 |
 | Exact score bonus | +5 (6 total if exact) |
-| Exact group finishing position (per team) | +2 |
+| Exact group finishing position (per team) | +1 |
 | Preselected champion | +10 |
 | Preselected runner-up | +8 |
 | Preselected third place | +6 |

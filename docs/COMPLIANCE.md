@@ -9,7 +9,7 @@ Verified against [FINAL_PLAN.md](./FINAL_PLAN.md). **Last reviewed:** 2026-06-02
 | Group + tournament lock at first kickoff | Done | `pickLocks.ts`, `runAutoLocks`, server rejects writes |
 | Each KO fixture locks at its kickoff | Done | `assertMatchEditable` per fixture kickoff |
 | Committed picks count at lock | Done | Scoring/leaderboard use `state = 'committed'`; UI saves committed directly |
-| +2 exact group-position scoring | Done | `computeScore`; only when all 6 group results exist |
+| +1 exact group-position scoring | Done | `computeScore`; only when all 6 group results exist |
 | Tournament bonus scoring | Done | `bonus_committed` in `computeScore` |
 | Comparison / leaderboard use committed only | Done | SQL `state = 'committed'` |
 | Required pages | Done | Login, Welcome, My Picks, League, Comparison, Admin |

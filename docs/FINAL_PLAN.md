@@ -57,7 +57,7 @@ Rules:
 
 ### Group standing bonus
 
-- **+2 points per team** in the exact correct final position within its group (1st–4th).
+- **+1 point per team** in the exact correct final position within its group (1st–4th).
 
 ### Knockout match points
 
@@ -134,7 +134,7 @@ Two states:
 - Group + bonus picks lock at first kickoff and never change.
 - Each KO fixture locks at its own kickoff.
 - Uncommitted edits never count at lock time.
-- +2 exact group-position scoring works correctly.
+- +1 exact group-position scoring works correctly.
 - Preselected bonus picks scored as configured.
 - Comparison and League Table use **committed** predictions only.
 - Mobile-friendly UI with flag + team name everywhere.

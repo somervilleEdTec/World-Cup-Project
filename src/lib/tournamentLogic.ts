@@ -88,7 +88,7 @@ export function computeScore(
     predictedPositions.forEach((teamId, idx) => {
       if (actualPositions[idx] === teamId) {
         exactGroupPositions += 1;
-        points += 2;
+        points += 1;
       }
     });
   });
