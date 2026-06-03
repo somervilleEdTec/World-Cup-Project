@@ -8,7 +8,8 @@ Copy everything below the line into a new Cursor agent session.
 
 **Final preparation** before the owner invites ~10 friends. The site is **already deployed** and shows the **login/register** screen.
 
-**Live URL:** https://worldcup.dosums.uk  
+**Live URL:** https://worldcup.dosums.uk (friends)  
+**Testing URL:** https://world-cup-project.pages.dev (Pages — keep; not for invites)  
 **Stack:** Oracle Always Free VM (`/opt/world-cup-boys`) + Cloudflare Tunnel `worldcup_boys` + domain **dosums.uk**
 
 **Repository:** https://github.com/somervilleEdTec/World-Cup-Project  

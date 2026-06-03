@@ -15,7 +15,8 @@ See **[docs/BRANCHING.md](docs/BRANCHING.md)**.
 
 ## Live site (production)
 
-**URL:** https://worldcup.dosums.uk  
+**Production URL:** https://worldcup.dosums.uk  
+**Testing URL:** https://world-cup-project.pages.dev (Cloudflare Pages — keep for deploy/UI tests; set `VITE_API_BASE_URL=https://worldcup.dosums.uk` on Pages)
 
 **Next agent (before inviting friends):**
 

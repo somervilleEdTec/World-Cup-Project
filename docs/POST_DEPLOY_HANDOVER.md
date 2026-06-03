@@ -20,10 +20,24 @@
 | **Published route** | `worldcup.dosums.uk` → `http://localhost:8787` |
 | **Processes** | `systemd`: `worldcup-server`, `worldcup-jobs`, `cloudflared` |
 | **Database** | SQLite `data.db` (no `DATABASE_URL`) |
-| **Pages (optional)** | https://worldcup-project.pages.dev — not required if using tunnel URL only |
+| **Pages (testing)** | https://world-cup-project.pages.dev — **keep** for UI/deploy tests; not for friend invites |
 | **UI** | Owner reached **Log in / Register** at https://worldcup.dosums.uk |
 
 **Runbook used:** [DEPLOY_ORACLE_CLOUDFLARE.md](./DEPLOY_ORACLE_CLOUDFLARE.md)
+
+### Production vs testing URLs (owner decision)
+
+| URL | Role |
+|-----|------|
+| **https://worldcup.dosums.uk** | **Production** — share with friends |
+| **https://world-cup-project.pages.dev** | **Testing** — Cloudflare Pages (GitHub → `main` deploys) |
+
+For Pages to talk to the live API, set **Pages → Settings → Environment variables** (Production):
+
+- `VITE_API_BASE_URL` = `https://worldcup.dosums.uk`
+- `NODE_VERSION` = `20`
+
+Then **Retry deployment**. Without that, Pages may load but login/API will fail.
 
 ---
 
@@ -62,7 +76,7 @@ Find public IP in Oracle console if it changed.
 
 ### Owner shares with ~10 friends
 
-- **URL:** https://worldcup.dosums.uk  
+- **URL:** https://worldcup.dosums.uk only (not `world-cup-project.pages.dev`)  
 - **Join password:** value of `JOIN_PASSWORD` in server `.env` (not their personal login password)  
 - Short instructions: Register → Tournament Results → Group Stage → save picks before first kickoff  
 

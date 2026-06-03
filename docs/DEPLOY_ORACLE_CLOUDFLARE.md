@@ -17,7 +17,17 @@ Friends → https://worldcup.dosums.uk (Cloudflare DNS + TLS)
 Background: npm run jobs (locks + football-data.org sync)
 ```
 
-Optional: **Cloudflare Pages** at `world-cup-project.pages.dev` — not required when the tunnel serves the full app from the VM.
+### Cloudflare Pages (testing only)
+
+Keep **https://world-cup-project.pages.dev** for frontend/deploy experiments. **Do not** give this URL to friends for the tournament.
+
+| | Production | Testing |
+|---|------------|---------|
+| **URL** | https://worldcup.dosums.uk | https://world-cup-project.pages.dev |
+| **Serves** | Full app via tunnel + VM | Static SPA from GitHub `main` builds |
+| **API** | Same host (`localhost:8787` on VM) | Must set Pages `VITE_API_BASE_URL=https://worldcup.dosums.uk` and redeploy |
+
+Production does not depend on Pages when the tunnel serves the built SPA from `/opt/world-cup-boys/dist`.
 
 ---
 
