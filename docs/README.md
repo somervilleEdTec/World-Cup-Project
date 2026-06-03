@@ -17,6 +17,8 @@
 
 ### `Debug` — development (default)
 
+**Windows:** run all commands from `cd C:\Users\tomso\World-Cup-Project` (see [DEBUG.md](./DEBUG.md)).
+
 | Doc | Description |
 |-----|-------------|
 | [DEBUG.md](./DEBUG.md) | **Start here** — local-only, Test1–20/guest, no live API |

@@ -24,9 +24,11 @@
   API port (default 8787). Set PORT in .env to match.
 
 .EXAMPLE
+  cd C:\Users\tomso\World-Cup-Project
   .\scripts\Test-LocalSite.ps1
 
 .EXAMPLE
+  cd C:\Users\tomso\World-Cup-Project
   .\scripts\Test-LocalSite.ps1 -Mode Serve
 
 .EXAMPLE

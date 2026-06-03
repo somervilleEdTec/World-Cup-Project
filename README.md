@@ -24,12 +24,15 @@
 ### Windows (PowerShell)
 
 ```powershell
+cd C:\Users\tomso\World-Cup-Project
 git checkout Debug
 git pull origin Debug
-cp .env.debug.example .env
+Copy-Item .env.debug.example .env
 npm run seed:debug                          # Test1–Test20 / guest, random results
 .\scripts\Test-LocalSite.ps1 -Mode Serve    # http://localhost:8787/login
 ```
+
+Run all commands **inside the repo** (not from Desktop). If the clone is elsewhere, `cd` to that folder instead.
 
 Sign-up gate: **`MadSlags1`**. Test logins: **Test1** … **Test20** / **`guest`**.
 

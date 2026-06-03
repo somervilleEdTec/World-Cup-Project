@@ -12,6 +12,7 @@
 | Default branch | Check out **`Debug`** before any edit |
 | Commits / push | Push to **`origin/Debug` only** |
 | **`main`** | **Never** push, merge to `main`, or open PRs to `main` unless the user **explicitly requests and confirms** a production release |
+| Project folder | Run **all** `git` / `npm` commands inside the clone (not Desktop or another folder) |
 | Hosting | **Local only** (`localhost` / `127.0.0.1`) — not the Oracle VM |
 | Results | **No** football-data.org on Debug — use **random seeded results** or **no results** (see below) |
 | Test users | **`Test1` … `Test20`**, password **`guest`**, unless a task says otherwise |
@@ -20,25 +21,55 @@ See also [BRANCHING.md](./BRANCHING.md) · [CONTRIBUTING.md](../CONTRIBUTING.md)
 
 ---
 
-## Local hosting
+## Local hosting (Windows — owner PC)
 
-1. Copy debug environment:
+**Important:** Open PowerShell, then **`cd` into the repo** before `git`, `Copy-Item`, or `npm`.  
+If you run commands from `C:\Users\tomso\Desktop` (or anywhere without `.git`), they will fail.
 
-   ```bash
-   cp .env.debug.example .env
-   ```
+**Owner clone path:**
 
-2. Run locally (never point `VITE_API_BASE_URL` at production):
+```powershell
+cd C:\Users\tomso\World-Cup-Project
+```
 
-   ```env
-   DEBUG_LOCAL=1
-   RESULTS_MODE=none
-   VITE_API_BASE_URL=http://localhost:8787
-   ```
+If you cloned elsewhere, use that folder instead — it must contain `package.json` and `.git`.
 
-3. Windows: `.\scripts\Test-LocalSite.ps1 -Mode Serve` → http://localhost:8787
+### First-time clone
 
-`DEBUG_LOCAL=1` blocks football-data.org sync in `npm run server` and `npm run jobs`, even if `FOOTBALL_DATA_TOKEN` is present in `.env`.
+```powershell
+cd C:\Users\tomso
+git clone https://github.com/somervilleEdTec/World-Cup-Project.git
+cd C:\Users\tomso\World-Cup-Project
+```
+
+### Every session
+
+```powershell
+cd C:\Users\tomso\World-Cup-Project
+git fetch origin
+git checkout Debug
+git pull origin Debug
+Copy-Item .env.debug.example .env
+npm install
+npm run seed:debug
+.\scripts\Test-LocalSite.ps1 -Mode Serve
+```
+
+Browser: http://localhost:8787 — log in **Test1** / **guest** (sign-up password **MadSlags1** if needed).
+
+Never point `VITE_API_BASE_URL` at production. `DEBUG_LOCAL=1` in `.env` blocks football-data.org sync.
+
+### macOS / Linux
+
+```bash
+cd /path/to/World-Cup-Project
+git checkout Debug
+git pull origin Debug
+cp .env.debug.example .env
+npm install
+npm run seed:debug
+npm run server
+```
 
 ---
 
@@ -52,7 +83,10 @@ See also [BRANCHING.md](./BRANCHING.md) · [CONTRIBUTING.md](../CONTRIBUTING.md)
 
 ### Standard seed (20 users + random results)
 
-```bash
+From the project folder:
+
+```powershell
+cd C:\Users\tomso\World-Cup-Project
 npm run seed:debug
 ```
 
@@ -69,7 +103,8 @@ Variants:
 
 Override count or names only when a task says so:
 
-```bash
+```powershell
+cd C:\Users\tomso\World-Cup-Project
 npm run seed:ko-environment -- --user-count 5 --user-prefix Test --password guest
 ```
 
@@ -94,11 +129,13 @@ Use **[`.env.debug.example`](../.env.debug.example)** on **`Debug`**. Do not cop
 
 Only after explicit confirmation:
 
-```bash
+```powershell
+cd C:\Users\tomso\World-Cup-Project
 git checkout main
 git pull origin main
 git merge Debug
-npm test && npm run build
+npm test
+npm run build
 git push origin main
 ```
 

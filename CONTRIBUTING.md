@@ -15,13 +15,17 @@ See **[docs/DEBUG.md](docs/DEBUG.md)** and **[docs/BRANCHING.md](docs/BRANCHING.
 
 ## Debug local setup
 
-```bash
+```powershell
+cd C:\Users\tomso\World-Cup-Project
 git checkout Debug
-cp .env.debug.example .env
+git pull origin Debug
+Copy-Item .env.debug.example .env
 npm install
-npm run seed:debug          # Test1–Test20 / guest, random results
-.\scripts\Test-LocalSite.ps1 -Mode Serve   # Windows → http://localhost:8787
+npm run seed:debug
+.\scripts\Test-LocalSite.ps1 -Mode Serve
 ```
+
+Use your actual clone path if not `C:\Users\tomso\World-Cup-Project`. **Do not** run `git`/`npm` from Desktop.
 
 - **`DEBUG_LOCAL=1`** — no football-data.org sync  
 - **`RESULTS_MODE=none`** — no results until seeded; use **`npm run seed:debug`** for random results  

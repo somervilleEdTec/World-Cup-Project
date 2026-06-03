@@ -25,6 +25,7 @@ This repository uses **two branches only**. All other remote branches should be 
 ### Daily workflow (PC)
 
 ```powershell
+cd C:\Users\tomso\World-Cup-Project
 git checkout Debug
 git pull origin Debug
 # edit…
@@ -34,12 +35,15 @@ npm run build
 git push origin Debug                       # does NOT change the live site
 ```
 
+All commands run **inside the repo** — not from `C:\Users\tomso\Desktop`.
+
 Local environment (**Debug** only):
 
 ```powershell
-cp .env.debug.example .env
-npm run seed:debug              # Test1–Test20 / guest, random results
-npm run seed:debug -- --no-results   # users + picks only
+cd C:\Users\tomso\World-Cup-Project
+Copy-Item .env.debug.example .env
+npm run seed:debug
+npm run seed:debug -- --no-results
 ```
 
 See **[DEBUG.md](./DEBUG.md)** · [KO_ENVIRONMENT.md](./KO_ENVIRONMENT.md). Use `npm run db:purge` to reset locally.
@@ -72,13 +76,14 @@ A green **Deploy main (production)** run updates https://worldcup.dosums.uk. See
 
 ## Fresh clone
 
-```bash
+```powershell
+cd C:\Users\tomso
 git clone https://github.com/somervilleEdTec/World-Cup-Project.git
-cd World-Cup-Project
-git checkout Debug    # daily development
-# or
-git checkout main     # production server clone
+cd C:\Users\tomso\World-Cup-Project
+git checkout Debug
 ```
+
+Or `git checkout main` for a production-server clone.
 
 ---
 

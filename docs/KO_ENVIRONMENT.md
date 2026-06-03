@@ -15,14 +15,16 @@
 | Admin | **Test1** |
 | Official results | Random 0–3 per team (group stage); see scenarios below |
 
-```bash
-cp .env.debug.example .env
+```powershell
+cd C:\Users\tomso\World-Cup-Project
+Copy-Item .env.debug.example .env
 npm run seed:debug
 ```
 
 No results (picks only):
 
-```bash
+```powershell
+cd C:\Users\tomso\World-Cup-Project
 npm run seed:debug -- --no-results
 ```
 

@@ -35,13 +35,16 @@ Full policy: **[DEBUG.md](./DEBUG.md)**
 ## Local setup
 
 ```powershell
+cd C:\Users\tomso\World-Cup-Project
 git checkout Debug
 git pull origin Debug
-cp .env.debug.example .env
+Copy-Item .env.debug.example .env
 npm install
 npm run seed:debug
 .\scripts\Test-LocalSite.ps1 -Mode Serve
 ```
+
+Always `cd` into the repo first (must contain `.git` and `package.json`).
 
 Sign-up password: **`MadSlags1`** (from `.env`). Test logins: **Test1** / **guest** (through **Test20**).
 
