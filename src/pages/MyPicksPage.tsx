@@ -1,10 +1,18 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { groupMatches, teams } from '../data/tournament';
 import { FixturePickCard } from '../components/FixturePickCard';
 import { GroupStandingsTable } from '../components/GroupStandingsTable';
 import { TeamLabel } from '../components/TeamLabel';
 import { picksFromActuals } from '../lib/pickUtils';
-import { fetchPredictionState, lockGroup, saveBonusDraft, saveDraftPick, unlockGroup } from '../services/apiClient';
+import {
+  fetchPredictionState,
+  isAuthErrorMessage,
+  lockGroup,
+  saveBonusDraft,
+  saveDraftPick,
+  unlockGroup
+} from '../services/apiClient';
 import { TeamSelect } from '../components/TeamSelect';
 import { ALL_GROUP_IDS } from '../lib/pickLocks';
 import { computeMissingPicks } from '../lib/missingPicks';
@@ -80,25 +88,40 @@ const initialState: RemoteState = {
 };
 
 export function MyPicksPage() {
+  const navigate = useNavigate();
   const [groupIndex, setGroupIndex] = useState(0);
   const [phase, setPhase] = useState<PicksPhase>('bonus');
   const [groupMessage, setGroupMessage] = useState<string>('');
   const [bonusMessage, setBonusMessage] = useState<string>('');
   const [state, setState] = useState<RemoteState>(initialState);
   const [pendingGroupPicks, setPendingGroupPicks] = useState<Record<string, Pick>>({});
+  /** Per-group voluntary lock (UI + server); each group is independent. */
+  const [acceptedGroupsLocal, setAcceptedGroupsLocal] = useState<string[]>([]);
 
   const nowIso = new Date().toISOString();
+
+  const handleAuthFailure = () => {
+    setGroupMessage('');
+    navigate('/login', { replace: true });
+  };
 
   const refresh = async () => {
     try {
       const response = (await fetchPredictionState()) as RemoteState;
+      const accepted = response.acceptedGroups ?? [];
       setState({
         ...initialState,
         ...response,
-        acceptedGroups: response.acceptedGroups ?? []
+        acceptedGroups: accepted
       });
+      setAcceptedGroupsLocal(accepted);
     } catch (err) {
-      setGroupMessage(err instanceof Error ? err.message : 'Failed to load prediction state');
+      const message = err instanceof Error ? err.message : 'Failed to load prediction state';
+      if (isAuthErrorMessage(message)) {
+        handleAuthFailure();
+        return;
+      }
+      setGroupMessage(message);
     }
   };
 
@@ -110,7 +133,12 @@ export function MyPicksPage() {
   const activeGroupMatches = groupMatches.filter((match) => match.group === activeGroup);
   const calendarGroupLocked = shouldLockGroup(nowIso);
   const tournamentLocked = calendarGroupLocked;
-  const lockedGroups = state.acceptedGroups;
+
+  useEffect(() => {
+    setAcceptedGroupsLocal(state.acceptedGroups ?? []);
+  }, [state.acceptedGroups]);
+
+  const userGroupLocked = acceptedGroupsLocal.includes(activeGroup);
 
   const savedPicks = { ...state.committedPicks, ...state.draftPicks };
   const mergedPicks = { ...savedPicks, ...pendingGroupPicks };
@@ -141,9 +169,7 @@ export function MyPicksPage() {
   );
 
   const groupComplete = activeGroupMatches.every((match) => mergedPicks[match.id] !== undefined);
-  const userGroupLocked = lockedGroups.includes(activeGroup);
-  const groupKickoffStarted = activeGroupMatches.some((match) => kickoffReached(match.kickoff, nowIso));
-  const canToggleGroupLock = !calendarGroupLocked && !groupKickoffStarted;
+  const canToggleGroupLock = !calendarGroupLocked;
   const allGroupPicksCommitted = state.allGroupPicksCommitted ?? false;
   const koPicksAllowed = allGroupPicksCommitted || tournamentLocked;
   const bonus = bonusValues(state);
@@ -171,7 +197,12 @@ export function MyPicksPage() {
       });
       await refresh();
     } catch (err) {
-      setGroupMessage(err instanceof Error ? err.message : 'Could not save prediction');
+      const message = err instanceof Error ? err.message : 'Could not save prediction';
+      if (isAuthErrorMessage(message)) {
+        handleAuthFailure();
+        return;
+      }
+      setGroupMessage(message);
     }
   };
 
@@ -296,7 +327,7 @@ export function MyPicksPage() {
                 nowIso={nowIso}
                 groupUserLocked={userGroupLocked}
                 inputsDisabled={calendarGroupLocked || matchKickoffLocked}
-                showLockedSummary={!userGroupLocked && (matchKickoffLocked || Boolean(officialResults[match.id]))}
+                showLockedSummary={!userGroupLocked && matchKickoffLocked}
                 onSave={saveMatchPick}
                 onScoresChange={(updated) =>
                   setPendingGroupPicks((current) => ({ ...current, [match.id]: updated }))
@@ -325,28 +356,31 @@ export function MyPicksPage() {
               disabled={!canToggleGroupLock || (!userGroupLocked && !groupComplete)}
               onClick={async () => {
                 const unlocking = userGroupLocked;
+                const previousAccepted = acceptedGroupsLocal;
+                if (unlocking) {
+                  setAcceptedGroupsLocal((groups) => groups.filter((g) => g !== activeGroup));
+                } else {
+                  setAcceptedGroupsLocal((groups) => [...new Set([...groups, activeGroup])]);
+                }
                 try {
                   if (unlocking) {
                     await unlockGroup(activeGroup);
-                    setState((prev) => ({
-                      ...prev,
-                      acceptedGroups: prev.acceptedGroups.filter((g) => g !== activeGroup)
-                    }));
                     setGroupMessage(`Group ${activeGroup} unlocked.`);
                   } else {
                     await flushPendingForGroup();
                     await lockGroup(activeGroup);
-                    setState((prev) => ({
-                      ...prev,
-                      acceptedGroups: [...new Set([...prev.acceptedGroups, activeGroup])]
-                    }));
                     setGroupMessage(`Group ${activeGroup} locked.`);
                   }
                   await refresh();
                 } catch (err) {
-                  setGroupMessage(
-                    err instanceof Error ? err.message : 'Could not update group lock'
-                  );
+                  setAcceptedGroupsLocal(previousAccepted);
+                  const message =
+                    err instanceof Error ? err.message : 'Could not update group lock';
+                  if (isAuthErrorMessage(message)) {
+                    handleAuthFailure();
+                    return;
+                  }
+                  setGroupMessage(message);
                 }
               }}
             >
@@ -363,7 +397,9 @@ export function MyPicksPage() {
               Next Group
             </button>
           </div>
-          {groupMessage && <p className={groupMessage.includes('locked') ? 'success' : 'warning'}>{groupMessage}</p>}
+          {groupMessage && !isAuthErrorMessage(groupMessage) && (
+            <p className={groupMessage.includes('locked') ? 'success' : 'warning'}>{groupMessage}</p>
+          )}
         </article>
       )}
 

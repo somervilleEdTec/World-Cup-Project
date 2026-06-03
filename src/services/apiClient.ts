@@ -11,6 +11,14 @@ export function setToken(token: string) {
   localStorage.setItem(TOKEN_KEY, token);
 }
 
+export function clearToken() {
+  localStorage.removeItem(TOKEN_KEY);
+}
+
+export function isAuthErrorMessage(message: string): boolean {
+  return /unauthor/i.test(message);
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const token = getToken();
   const headers = new Headers(init?.headers);
