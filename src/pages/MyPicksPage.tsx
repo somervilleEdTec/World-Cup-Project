@@ -4,7 +4,7 @@ import { FixturePickCard } from '../components/FixturePickCard';
 import { GroupStandingsTable } from '../components/GroupStandingsTable';
 import { TeamLabel } from '../components/TeamLabel';
 import { picksFromActuals } from '../lib/pickUtils';
-import { fetchPredictionState, lockGroup, saveBonusDraft, saveDraftPick } from '../services/apiClient';
+import { fetchPredictionState, lockGroup, saveBonusDraft, saveDraftPick, unlockGroup } from '../services/apiClient';
 import { TeamSelect } from '../components/TeamSelect';
 import { ALL_GROUP_IDS } from '../lib/pickLocks';
 import { computeMissingPicks } from '../lib/missingPicks';
@@ -140,7 +140,8 @@ export function MyPicksPage() {
   );
 
   const groupComplete = activeGroupMatches.every((match) => mergedPicks[match.id] !== undefined);
-  const groupIsLocked = lockedGroups.includes(activeGroup) || tournamentLocked;
+  const userGroupLocked = lockedGroups.includes(activeGroup);
+  const groupIsLocked = userGroupLocked || tournamentLocked;
   const allGroupPicksCommitted = state.allGroupPicksCommitted ?? false;
   const koPicksAllowed = allGroupPicksCommitted || tournamentLocked;
   const bonus = bonusValues(state);
@@ -276,11 +277,15 @@ export function MyPicksPage() {
       {phase === 'group' && (
         <article className="card">
           <h3>Group {activeGroup} predictions</h3>
-          {groupIsLocked && lockedGroups.includes(activeGroup) && (
-            <p className="success">Group {activeGroup} is locked.</p>
+          {userGroupLocked && !tournamentLocked && (
+            <p className="success">Group {activeGroup} is locked — use Unlock group to edit again.</p>
+          )}
+          {tournamentLocked && userGroupLocked && (
+            <p className="warning">Group {activeGroup} is locked (tournament lock is active; cannot unlock).</p>
           )}
           {activeGroupMatches.map((match) => {
-            const groupFixtureLocked = groupIsLocked || kickoffReached(match.kickoff, nowIso);
+            const groupFixtureLocked =
+              userGroupLocked || tournamentLocked || kickoffReached(match.kickoff, nowIso);
             return (
               <FixturePickCard
                 key={match.id}
@@ -288,7 +293,7 @@ export function MyPicksPage() {
                 pick={mergedPicks[match.id]}
                 actual={officialResults[match.id]}
                 nowIso={nowIso}
-                inputsDisabled={groupIsLocked}
+                inputsDisabled={groupFixtureLocked}
                 showLockedSummary={groupFixtureLocked}
                 onSave={saveMatchPick}
                 onScoresChange={(updated) =>
@@ -313,22 +318,39 @@ export function MyPicksPage() {
           )}
 
           <div className="button-row">
-            <button
-              type="button"
-              disabled={!groupComplete || groupIsLocked || lockedGroups.includes(activeGroup)}
-              onClick={async () => {
-                try {
-                  await flushPendingForGroup();
-                  await lockGroup(activeGroup);
-                  setGroupMessage(`Group ${activeGroup} locked.`);
-                  await refresh();
-                } catch (err) {
-                  setGroupMessage(err instanceof Error ? err.message : 'Could not lock group');
-                }
-              }}
-            >
-              Lock group
-            </button>
+            {userGroupLocked && !tournamentLocked ? (
+              <button
+                type="button"
+                onClick={async () => {
+                  try {
+                    await unlockGroup(activeGroup);
+                    setGroupMessage(`Group ${activeGroup} unlocked.`);
+                    await refresh();
+                  } catch (err) {
+                    setGroupMessage(err instanceof Error ? err.message : 'Could not unlock group');
+                  }
+                }}
+              >
+                Unlock group
+              </button>
+            ) : (
+              <button
+                type="button"
+                disabled={!groupComplete || groupIsLocked}
+                onClick={async () => {
+                  try {
+                    await flushPendingForGroup();
+                    await lockGroup(activeGroup);
+                    setGroupMessage(`Group ${activeGroup} locked.`);
+                    await refresh();
+                  } catch (err) {
+                    setGroupMessage(err instanceof Error ? err.message : 'Could not lock group');
+                  }
+                }}
+              >
+                Lock group
+              </button>
+            )}
             <button type="button" disabled={groupIndex === 0} onClick={() => changeGroupIndex(groupIndex - 1)}>
               Previous Group
             </button>

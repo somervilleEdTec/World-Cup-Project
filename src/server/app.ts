@@ -9,7 +9,8 @@ import {
   runAutoLocks,
   saveDraftPick,
   setBonusDraft,
-  setGroupAccepted
+  setGroupAccepted,
+  unlockGroupAccepted
 } from './services/predictions';
 import { computeLeaderboard } from './services/leaderboard';
 import { buildMappingDiagnostics } from './services/mappingDiagnostics';
@@ -100,6 +101,16 @@ export function createApp(): Express {
       res.json({ ok: true });
     } catch (error) {
       res.status(400).json({ error: error instanceof Error ? error.message : 'Group lock failed' });
+    }
+  });
+
+  app.post('/api/predictions/groups/:groupId/unlock', async (req: Request, res: Response) => {
+    try {
+      const user = await requireUser(authToken(req));
+      await unlockGroupAccepted(user.id, String(req.params.groupId).toUpperCase());
+      res.json({ ok: true });
+    } catch (error) {
+      res.status(400).json({ error: error instanceof Error ? error.message : 'Group unlock failed' });
     }
   });
 

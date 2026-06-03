@@ -161,7 +161,9 @@ export async function setGroupAccepted(
   nowIso = new Date().toISOString()
 ) {
   if (!VALID_GROUPS.has(groupId)) throw new Error('Invalid group');
-  if (!accepted) throw new Error('Groups cannot be unlocked once locked.');
+  if (!accepted) {
+    throw new Error('Use unlockGroup to remove a per-group lock.');
+  }
 
   const meta = await getMeta(userId);
   const groupLocked = (meta?.group_locked ?? 0) === 1;
@@ -212,6 +214,32 @@ export async function setGroupAccepted(
       userId
     ]);
   });
+}
+
+export async function unlockGroupAccepted(
+  userId: string,
+  groupId: string,
+  nowIso = new Date().toISOString()
+): Promise<void> {
+  if (!VALID_GROUPS.has(groupId)) throw new Error('Invalid group');
+
+  const meta = await getMeta(userId);
+  const groupLocked = (meta?.group_locked ?? 0) === 1;
+  if (groupLocked || shouldLockGroup(nowIso)) {
+    throw new Error('Group-stage predictions are locked.');
+  }
+
+  const lockedGroups = parseAcceptedGroups(meta?.accepted_groups);
+  if (!lockedGroups.includes(groupId)) {
+    throw new Error(`Group ${groupId} is not locked.`);
+  }
+
+  const next = lockedGroups.filter((id) => id !== groupId);
+  const db = getDb();
+  await db.run(`UPDATE prediction_meta SET accepted_groups = ? WHERE user_id = ?`, [
+    JSON.stringify(next),
+    userId
+  ]);
 }
 
 export async function markReviewed(userId: string, matchId: string) {

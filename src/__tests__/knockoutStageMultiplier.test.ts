@@ -1,12 +1,21 @@
 import { describe, expect, it } from 'vitest';
 import { computeMatchPoints } from '../lib/matchScoring';
-import { knockoutStagePointsMultiplier, scaledMatchPointsForStage } from '../lib/knockoutStageMultiplier';
+import {
+  knockoutStageHeading,
+  knockoutStagePointsMultiplier,
+  scaledMatchPointsForStage
+} from '../lib/knockoutStageMultiplier';
 
 describe('knockoutStagePointsMultiplier', () => {
   it('returns 1× for early rounds and group', () => {
     expect(knockoutStagePointsMultiplier('GROUP')).toBe(1);
     expect(knockoutStagePointsMultiplier('R32')).toBe(1);
     expect(knockoutStagePointsMultiplier('R16')).toBe(1);
+  });
+
+  it('formats stage heading with multiplier', () => {
+    expect(knockoutStageHeading('QF')).toBe('Quarter-final (1.5× match points)');
+    expect(knockoutStageHeading('R32')).toBe('R32');
   });
 
   it('returns late-round multipliers', () => {

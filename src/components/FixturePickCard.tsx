@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type WheelEvent } from 'react';
 import { teams } from '../data/tournament';
+import { knockoutStageHeading, knockoutStageMultiplierLabel } from '../lib/knockoutStageMultiplier';
 import { computeMatchPoints } from '../lib/matchScoring';
 import { isKnockout, kickoffReached } from '../lib/tournamentLogic';
 import { ActualResult, Match, Pick } from '../types';
@@ -221,10 +222,11 @@ export function FixturePickCard({
   const kickoffLocked = kickoffReached(match.kickoff, nowIso);
   const inputsSaveDisabled = inputsDisabled || kickoffLocked;
   const points = computeMatchPoints(pick, actual, match.stage);
+  const multiplierLabel = knockoutStageMultiplierLabel(match.stage);
 
   return (
     <div className="fixture-card">
-      {match.stage !== 'GROUP' && <p className="kicker">{match.stage}</p>}
+      {match.stage !== 'GROUP' && <p className="kicker">{knockoutStageHeading(match.stage)}</p>}
       <div className="fixture-row">
         {homeOk ? <TeamLabel team={homeTeam!} /> : <span>TBD</span>} <strong>vs</strong>{' '}
         {awayOk ? <TeamLabel team={awayTeam!} /> : <span>TBD</span>}
@@ -244,6 +246,7 @@ export function FixturePickCard({
           {actual && (
             <p className="fixture-points">
               <strong>Points scored:</strong> {points ?? 0}
+              {multiplierLabel ? ` (${multiplierLabel} round)` : ''}
             </p>
           )}
         </div>

@@ -1,5 +1,19 @@
 import type { Stage } from '../types';
 
+const STAGE_LABELS: Partial<Record<Stage, string>> = {
+  QF: 'Quarter-final',
+  SF: 'Semi-final',
+  FINAL: 'Final',
+  THIRD_PLACE: 'Third-place play-off'
+};
+
+export function knockoutStageHeading(stage: Stage): string {
+  if (stage === 'GROUP') return 'Group';
+  const label = STAGE_LABELS[stage] ?? stage;
+  const mult = knockoutStageMultiplierLabel(stage);
+  return mult ? `${label} (${mult} match points)` : label;
+}
+
 export const BASE_RESULT_POINTS = 2;
 export const BASE_EXACT_BONUS_POINTS = 4;
 
@@ -16,6 +30,13 @@ export function knockoutStagePointsMultiplier(stage: Stage): number {
     default:
       return 1;
   }
+}
+
+/** User-facing label for knockout round scoring (empty for 1× stages). */
+export function knockoutStageMultiplierLabel(stage: Stage): string | null {
+  const mult = knockoutStagePointsMultiplier(stage);
+  if (mult === 1) return null;
+  return `${mult}×`;
 }
 
 export function scaledMatchPointsForStage(

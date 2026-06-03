@@ -60,6 +60,10 @@ export async function lockGroup(groupId: string) {
   return request(`/api/predictions/groups/${groupId}/lock`, { method: 'POST' });
 }
 
+export async function unlockGroup(groupId: string) {
+  return request(`/api/predictions/groups/${groupId}/unlock`, { method: 'POST' });
+}
+
 export async function commitDraft() {
   return request('/api/predictions/commit', { method: 'POST' });
 }

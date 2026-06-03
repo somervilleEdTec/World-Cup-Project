@@ -19,6 +19,20 @@ describe('FixturePickCard', () => {
     cleanup();
   });
 
+  it('shows quarter-final multiplier in kicker', () => {
+    render(
+      <FixturePickCard
+        match={{ ...koMatch, stage: 'QF', id: 'qf-1' }}
+        pick={pick}
+        nowIso="2026-07-09T18:00:00Z"
+        inputsDisabled={false}
+        showLockedSummary={false}
+        onSave={vi.fn()}
+      />
+    );
+    expect(screen.getByText(/1\.5× match points/)).toBeTruthy();
+  });
+
   it('shows locked summary for knockout after kickoff', () => {
     render(
       <FixturePickCard
