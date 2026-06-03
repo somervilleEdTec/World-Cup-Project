@@ -5,6 +5,8 @@ import {
   assertMatchEditable,
   countCommittedGroupPicks,
   GROUP_MATCH_COUNT,
+  assertGroupUnlockAllowed,
+  groupHasOfficialResults,
   isKnockoutFixtureLocked,
   isMatchEditable
 } from '../lib/pickLocks';
@@ -44,6 +46,15 @@ describe('pick locks', () => {
     expect(() => assertMatchEditable(koMatch, false, '2026-06-01T00:00:00Z', actual)).toThrow(/locked/i);
     expect(isKnockoutFixtureLocked(koMatch, '2026-06-01T00:00:00Z', actual)).toBe(true);
     expect(isKnockoutFixtureLocked(koMatch, '2026-06-01T00:00:00Z')).toBe(false);
+  });
+
+  it('blocks group picks and unlock when an official result exists', () => {
+    const actual = { matchId: 'g-a-1', homeScore: 2, awayScore: 1 };
+    expect(() => assertMatchEditable(groupMatch, false, '2026-06-01T00:00:00Z', actual)).toThrow(
+      /official result/i
+    );
+    expect(groupHasOfficialResults('A', { 'g-a-1': actual })).toBe(true);
+    expect(() => assertGroupUnlockAllowed('A', { 'g-a-1': actual })).toThrow(/cannot be unlocked/i);
   });
 
   it('requires all group picks committed before first kickoff', () => {

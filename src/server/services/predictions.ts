@@ -6,6 +6,7 @@ import {
   allGroupPicksCommitted,
   assertAllGroupPicksCommitted,
   assertBonusEditable,
+  assertGroupUnlockAllowed,
   assertMatchEditable,
   countCommittedGroupPicks,
   GROUP_MATCH_COUNT,
@@ -225,6 +226,9 @@ export async function unlockGroupAccepted(
   if (shouldLockGroup(nowIso)) {
     throw new Error('Group-stage predictions are locked.');
   }
+
+  const results = await getResultsMap();
+  assertGroupUnlockAllowed(groupId, results);
 
   const meta = await getMeta(userId);
   const lockedGroups = parseAcceptedGroups(meta?.accepted_groups);

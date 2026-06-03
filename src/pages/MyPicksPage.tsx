@@ -19,7 +19,8 @@ import { TeamSelect } from '../components/TeamSelect';
 import {
   ALL_GROUP_IDS,
   allGroupPicksCommitted as computeAllGroupPicksCommitted,
-  countCommittedGroupPicks
+  countCommittedGroupPicks,
+  groupHasOfficialResults
 } from '../lib/pickLocks';
 import { computeMissingPicks } from '../lib/missingPicks';
 import {
@@ -171,6 +172,7 @@ export function MyPicksPage() {
   );
 
   const hasActualGroupResults = activeGroupMatches.some((match) => officialResults[match.id] !== undefined);
+  const groupResultsLocked = groupHasOfficialResults(activeGroup, officialResults);
 
   const missingPicks = useMemo(
     () => computeMissingPicks(mergedPicks, state.bonusCommitted, confirmedKnockoutFixtures),
@@ -340,14 +342,20 @@ export function MyPicksPage() {
       {phase === 'group' && (
         <article className="card">
           <h3>Group {activeGroup} predictions</h3>
-          {userGroupLocked && !tournamentLocked && (
+          {userGroupLocked && !tournamentLocked && !groupResultsLocked && (
             <p className="success">Group {activeGroup} is locked. Scores are shown as text until you unlock.</p>
           )}
-          {tournamentLocked && userGroupLocked && (
+          {userGroupLocked && groupResultsLocked && (
+            <p className="warning">
+              Group {activeGroup} is locked. Official results are in — predictions cannot be changed or unlocked.
+            </p>
+          )}
+          {tournamentLocked && userGroupLocked && !groupResultsLocked && (
             <p className="warning">Group {activeGroup} is locked (tournament lock is active; cannot unlock).</p>
           )}
           {activeGroupMatches.map((match) => {
             const matchKickoffLocked = kickoffReached(match.kickoff, nowIso);
+            const matchHasResult = officialResults[match.id] !== undefined;
             return (
               <FixturePickCard
                 key={match.id}
@@ -355,9 +363,9 @@ export function MyPicksPage() {
                 pick={mergedPicks[match.id]}
                 actual={officialResults[match.id]}
                 nowIso={nowIso}
-                groupUserLocked={userGroupLocked}
-                inputsDisabled={calendarGroupLocked || matchKickoffLocked}
-                showLockedSummary={!userGroupLocked && matchKickoffLocked}
+                groupUserLocked={userGroupLocked && !matchHasResult}
+                inputsDisabled={calendarGroupLocked || matchKickoffLocked || matchHasResult}
+                showLockedSummary={!userGroupLocked && (matchKickoffLocked || matchHasResult)}
                 onSave={saveMatchPick}
                 onScoresChange={(updated) => handleGroupScoreChange(match.id, updated)}
               />
@@ -381,7 +389,11 @@ export function MyPicksPage() {
           <div className="button-row">
             <button
               type="button"
-              disabled={!canToggleGroupLock || (!userGroupLocked && !groupComplete)}
+              disabled={
+                userGroupLocked
+                  ? !canToggleGroupLock || groupResultsLocked
+                  : !canToggleGroupLock || !groupComplete
+              }
               onClick={async () => {
                 const unlocking = userGroupLocked;
                 const previousAccepted = acceptedGroupsLocal;

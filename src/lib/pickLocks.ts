@@ -29,6 +29,30 @@ export function isKnockoutFixtureLocked(
   return kickoffReached(match.kickoff, nowIso) || actual !== undefined;
 }
 
+/** Group fixture is locked after kickoff or once an official result is recorded. */
+export function isGroupFixtureLocked(
+  match: Match,
+  metaGroupLocked: boolean,
+  nowIso = new Date().toISOString(),
+  actual?: ActualResult
+): boolean {
+  if (!isGroupStage(match)) return false;
+  return isGroupLocked(metaGroupLocked, nowIso) || kickoffReached(match.kickoff, nowIso) || actual !== undefined;
+}
+
+export function groupHasOfficialResults(
+  groupId: string,
+  results: Record<string, ActualResult>
+): boolean {
+  return groupMatches.filter((m) => m.group === groupId).some((m) => results[m.id] !== undefined);
+}
+
+export function assertGroupUnlockAllowed(groupId: string, results: Record<string, ActualResult>): void {
+  if (groupHasOfficialResults(groupId, results)) {
+    throw new Error(`Group ${groupId} cannot be unlocked — official results are in.`);
+  }
+}
+
 export function shouldLockGroup(nowIso = new Date().toISOString()): boolean {
   return kickoffReached(getFirstMatchKickoff(), nowIso);
 }
@@ -43,6 +67,9 @@ export function assertMatchEditable(
   nowIso = new Date().toISOString(),
   actual?: ActualResult
 ): void {
+  if (isGroupStage(match) && actual !== undefined) {
+    throw new Error('This match has an official result; predictions cannot be changed.');
+  }
   if (isGroupStage(match) && isGroupLocked(metaGroupLocked, nowIso)) {
     throw new Error('Group-stage predictions are locked.');
   }

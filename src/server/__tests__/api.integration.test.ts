@@ -157,6 +157,50 @@ describe('API integration', () => {
     expect(state.body.committedPicks['g-a-1']).toMatchObject({ homeScore: 3, awayScore: 0 });
   });
 
+  it('rejects group unlock and edits when official results exist', async () => {
+    await request(app).post('/api/auth/register').send(registerPayload('ResultLock'));
+
+    const login = await request(app)
+      .post('/api/auth/login')
+      .send({ displayName: 'ResultLock', password: 'abc' });
+    const token = login.body.token as string;
+
+    const { groupMatches } = await import('../../data/tournament');
+    const groupAMatches = groupMatches.filter((m) => m.group === 'A');
+    for (const match of groupAMatches) {
+      const draft = await request(app)
+        .post('/api/predictions/draft')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ matchId: match.id, homeScore: 1, awayScore: 0 });
+      expect(draft.status).toBe(200);
+    }
+
+    const lock = await request(app)
+      .post('/api/predictions/groups/A/lock')
+      .set('Authorization', `Bearer ${token}`);
+    expect(lock.status).toBe(200);
+
+    const { getDb } = await import('../database');
+    await getDb().run(
+      `INSERT INTO results (match_id, home_score, away_score, progressing_team_id, status, source, updated_at)
+       VALUES (?, ?, ?, NULL, 'FINISHED', 'test', ?)`,
+      ['g-a-1', 2, 1, new Date().toISOString()]
+    );
+
+    const unlock = await request(app)
+      .post('/api/predictions/groups/A/unlock')
+      .set('Authorization', `Bearer ${token}`);
+    expect(unlock.status).toBe(400);
+    expect(String(unlock.body.error)).toMatch(/cannot be unlocked/i);
+
+    const blocked = await request(app)
+      .post('/api/predictions/draft')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ matchId: 'g-a-1', homeScore: 3, awayScore: 0 });
+    expect(blocked.status).toBe(400);
+    expect(String(blocked.body.error)).toMatch(/official result/i);
+  });
+
   it('rejects group draft saves after group lock time', async () => {
     await request(app).post('/api/auth/register').send(registerPayload('Locked'));
 
