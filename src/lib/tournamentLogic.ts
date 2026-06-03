@@ -52,8 +52,20 @@ export function computeScore(
   actuals: Record<string, ActualResult>,
   bonusPicks: TournamentBonusPick | undefined,
   finalPlacings: TournamentBonusPick | undefined
-): { points: number; exactScores: number; correctResults: number; exactGroupPositions: number; bonusHits: number } {
+): {
+  points: number;
+  correctResultPoints: number;
+  exactScorePoints: number;
+  groupPositionPoints: number;
+  bonusPoints: number;
+  exactScores: number;
+  correctResults: number;
+  exactGroupPositions: number;
+  bonusHits: number;
+} {
   let points = 0;
+  let correctResultPoints = 0;
+  let exactScorePoints = 0;
   let exactScores = 0;
   let correctResults = 0;
 
@@ -65,16 +77,19 @@ export function computeScore(
 
     const correctResult = resultKey(pick.homeScore, pick.awayScore) === resultKey(actual.homeScore, actual.awayScore);
     if (correctResult) {
+      correctResultPoints += 2;
       points += 2;
       correctResults += 1;
     }
 
     if (pick.homeScore === actual.homeScore && pick.awayScore === actual.awayScore) {
+      exactScorePoints += 4;
       points += 4;
       exactScores += 1;
     }
   });
 
+  let groupPositionPoints = 0;
   let exactGroupPositions = 0;
   const groups = [...new Set(teams.map((team) => team.group))];
   const actualPicks = picksFromActuals(actuals);
@@ -88,30 +103,46 @@ export function computeScore(
     predictedPositions.forEach((teamId, idx) => {
       if (actualPositions[idx] === teamId) {
         exactGroupPositions += 1;
+        groupPositionPoints += 1;
         points += 1;
       }
     });
   });
 
+  let bonusPoints = 0;
   let bonusHits = 0;
   if (bonusPicks && finalPlacings) {
     if (bonusPicks.winnerTeamId === finalPlacings.winnerTeamId) {
+      bonusPoints += 6;
       points += 6;
       bonusHits += 1;
     }
     if (bonusPicks.runnerUpTeamId === finalPlacings.runnerUpTeamId) {
+      bonusPoints += 5;
       points += 5;
       bonusHits += 1;
     }
     if (bonusPicks.thirdTeamId === finalPlacings.thirdTeamId) {
+      bonusPoints += 4;
       points += 4;
       bonusHits += 1;
     }
     if (bonusPicks.fourthTeamId === finalPlacings.fourthTeamId) {
+      bonusPoints += 3;
       points += 3;
       bonusHits += 1;
     }
   }
 
-  return { points, exactScores, correctResults, exactGroupPositions, bonusHits };
+  return {
+    points,
+    correctResultPoints,
+    exactScorePoints,
+    groupPositionPoints,
+    bonusPoints,
+    exactScores,
+    correctResults,
+    exactGroupPositions,
+    bonusHits
+  };
 }

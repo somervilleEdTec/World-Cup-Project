@@ -57,7 +57,14 @@ describe('tournament logic', () => {
     const summary = computeScore(picks, actuals, bonus, bonus);
     expect(summary.points).toBeGreaterThanOrEqual(40);
     expect(summary.bonusHits).toBe(4);
+    expect(summary.bonusPoints).toBe(18);
     expect(summary.exactScores).toBeGreaterThanOrEqual(5);
+    expect(
+      summary.correctResultPoints +
+        summary.exactScorePoints +
+        summary.groupPositionPoints +
+        summary.bonusPoints
+    ).toBe(summary.points);
   });
 
   it('does not award group-position points until all six group results exist', () => {

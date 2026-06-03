@@ -21,9 +21,9 @@ export function LeagueTablePage() {
           <tr>
             <th>Rank</th>
             <th>Player</th>
-            <th>Exact Scores</th>
             <th>Correct Results</th>
-            <th>Exact Group Positions</th>
+            <th>Exact Scores</th>
+            <th>Group Position</th>
             <th>Bonus Points</th>
             <th>Points</th>
           </tr>
@@ -33,10 +33,10 @@ export function LeagueTablePage() {
             <tr key={entry.userId}>
               <td>{index + 1}</td>
               <td>{entry.name}</td>
-              <td>{entry.exactScores}</td>
-              <td>{entry.correctResults}</td>
-              <td>{entry.exactGroupPositions}</td>
-              <td>{entry.bonusHits}</td>
+              <td>{entry.correctResultPoints}</td>
+              <td>{entry.exactScorePoints}</td>
+              <td>{entry.groupPositionPoints}</td>
+              <td>{entry.bonusPoints}</td>
               <td className="league-total">{entry.points}</td>
             </tr>
           ))}

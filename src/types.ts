@@ -59,10 +59,10 @@ export interface LeaderboardEntry {
   userId: string;
   name: string;
   points: number;
-  exactScores: number;
-  correctResults: number;
-  exactGroupPositions: number;
-  bonusHits: number;
+  correctResultPoints: number;
+  exactScorePoints: number;
+  groupPositionPoints: number;
+  bonusPoints: number;
 }
 
 export interface ComparisonPickView {

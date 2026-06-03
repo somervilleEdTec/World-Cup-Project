@@ -74,18 +74,30 @@ export async function computeLeaderboard() {
         userId: user.id,
         name: user.display_name,
         committedAt: meta?.committed_at ?? '',
-        ...summary
+        points: summary.points,
+        correctResultPoints: summary.correctResultPoints,
+        exactScorePoints: summary.exactScorePoints,
+        groupPositionPoints: summary.groupPositionPoints,
+        bonusPoints: summary.bonusPoints,
+        tieBreak: {
+          exactScores: summary.exactScores,
+          correctResults: summary.correctResults,
+          exactGroupPositions: summary.exactGroupPositions,
+          bonusHits: summary.bonusHits
+        }
       };
     })
   );
 
-  return entries.sort(
-    (a, b) =>
-      b.points - a.points ||
-      b.exactScores - a.exactScores ||
-      b.correctResults - a.correctResults ||
-      b.exactGroupPositions - a.exactGroupPositions ||
-      b.bonusHits - a.bonusHits ||
-      a.committedAt.localeCompare(b.committedAt)
-  );
+  return entries
+    .sort(
+      (a, b) =>
+        b.points - a.points ||
+        b.tieBreak.exactScores - a.tieBreak.exactScores ||
+        b.tieBreak.correctResults - a.tieBreak.correctResults ||
+        b.tieBreak.exactGroupPositions - a.tieBreak.exactGroupPositions ||
+        b.tieBreak.bonusHits - a.tieBreak.bonusHits ||
+        a.committedAt.localeCompare(b.committedAt)
+    )
+    .map(({ tieBreak: _tieBreak, committedAt: _committedAt, ...entry }) => entry);
 }
