@@ -93,7 +93,7 @@ See [DEPLOY.md](./DEPLOY.md) for nginx, systemd, and Postgres details.
 
 ### 1. Code
 
-**Ongoing updates:** After one-time setup in [DEPLOY_AUTOMATION.md](./DEPLOY_AUTOMATION.md), every push to **`main`** deploys automatically via GitHub Actions.
+**Ongoing updates:** After one-time setup in [DEPLOY_AUTOMATION.md](./DEPLOY_AUTOMATION.md), every push to **`main`** deploys automatically via **deploy-main.yml**. Pushes to **`Debug` never touch production** ([DEBUG_BRANCH.md](./DEBUG_BRANCH.md)).
 
 **First install on the server:**
 

@@ -8,10 +8,10 @@ Friends-and-family prediction app for FIFA World Cup 2026 (48 teams, 12 groups, 
 
 | Branch | Purpose |
 |--------|---------|
-| **`main`** | Production-ready release |
-| **`Debug`** | Active development (merge to `main` when stable) |
+| **`main`** | Production — **only branch that updates the live website** (GitHub Actions deploy) |
+| **`Debug`** | Development on your PC — **never deploys live**; merge to `main` when ready |
 
-See **[docs/BRANCHING.md](docs/BRANCHING.md)**.
+See **[docs/BRANCHING.md](docs/BRANCHING.md)** and **[docs/DEBUG_BRANCH.md](docs/DEBUG_BRANCH.md)**.
 
 ## Launching the live site?
 

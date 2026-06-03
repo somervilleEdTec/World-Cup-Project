@@ -6,7 +6,7 @@ Copy everything below the line into a new Cursor agent session.
 
 ## Your role
 
-Run a **thorough end-to-end QA** of **World Cup Boys** after the **2026-06-03** merge to `main` / `Debug`: locking, scoring, league table, comparison, admin sync, and mobile layout. Fix bugs on **`Debug`**, merge to **`main`**, deploy, and log findings.
+Run a **thorough end-to-end QA** of **World Cup Boys** after the **2026-06-03** merge to `main` / `Debug`: locking, scoring, league table, comparison, admin sync, and mobile layout. Fix bugs on **`Debug`** (local PC only), merge to **`main`** to update live (auto-deploy), and log findings. **Never** deploy from `Debug` — [DEBUG_BRANCH.md](./DEBUG_BRANCH.md).
 
 **Repository:** https://github.com/somervilleEdTec/World-Cup-Project  
 **Branches:** **`main`** and **`Debug`** only — they should match after your session starts.

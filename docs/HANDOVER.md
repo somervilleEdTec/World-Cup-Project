@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-06-03  
 **Repository:** https://github.com/somervilleEdTec/World-Cup-Project  
-**Branches:** `main` (production) · `Debug` (development) — see [BRANCHING.md](./BRANCHING.md)  
+**Branches:** `main` (production, **live deploy**) · `Debug` (PC-only dev, **no live deploy**) — [BRANCHING.md](./BRANCHING.md) · [DEBUG_BRANCH.md](./DEBUG_BRANCH.md)  
 **Phase:** **Launch** — deploy live site for friend registration  
 **Launch:** [docs/LAUNCH_HANDOVER.md](./LAUNCH_HANDOVER.md) · Prompt: [docs/AGENT_PROMPT_LAUNCH.md](./AGENT_PROMPT_LAUNCH.md)  
 **Deploy:** [docs/DEPLOY.md](./DEPLOY.md) · **Go-live tests:** [docs/GO_LIVE.md](./GO_LIVE.md)  
@@ -78,6 +78,8 @@ Friends-and-family prediction app for **FIFA World Cup 2026** (48 teams, 12 grou
 | [LAUNCH_HANDOVER.md](./LAUNCH_HANDOVER.md) | **Live site launch** (registration, deploy) |
 | [AGENT_PROMPT_LAUNCH.md](./AGENT_PROMPT_LAUNCH.md) | Copy-paste prompt for launch agent |
 | [BRANCHING.md](./BRANCHING.md) | Two-branch workflow (`main` + `Debug`) |
+| [DEBUG_BRANCH.md](./DEBUG_BRANCH.md) | Debug = local PC only; never live deploy |
+| [DEPLOY_AUTOMATION.md](./DEPLOY_AUTOMATION.md) | Auto-deploy on **`main`** only |
 | [FINAL_PLAN.md](./FINAL_PLAN.md) | Locked competition rules |
 | [TODO.md](./TODO.md) | Backlog |
 | [DEPLOY.md](./DEPLOY.md) | Production |

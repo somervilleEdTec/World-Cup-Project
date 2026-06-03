@@ -1,7 +1,7 @@
-# Deploy to production when main is updated (after CI passes).
-# One-time setup: docs/DEPLOY_AUTOMATION.md
+# LIVE SITE ONLY — runs on push to `main` (never on `Debug`).
+# Setup: docs/DEPLOY_AUTOMATION.md
 
-name: Deploy
+name: Deploy main (production)
 
 on:
   push:
@@ -28,15 +28,23 @@ jobs:
       - run: npm test
       - run: npm run build
         env:
-          # Placeholder for CI; production build uses VITE_API_BASE_URL on the server.
           VITE_API_BASE_URL: https://ci-placeholder.local
 
   deploy:
     name: Deploy to production host
     needs: ci
     runs-on: ubuntu-latest
+    # Hard gate: never deploy from Debug or other branches (including manual dispatch).
     if: github.ref == 'refs/heads/main'
+    environment: production
     steps:
+      - name: Verify branch is main
+        run: |
+          if [ "${GITHUB_REF}" != "refs/heads/main" ]; then
+            echo "Deploy blocked: GITHUB_REF=${GITHUB_REF} (main only)"
+            exit 1
+          fi
+
       - name: Deploy over SSH
         uses: appleboy/ssh-action@v1.2.2
         env:

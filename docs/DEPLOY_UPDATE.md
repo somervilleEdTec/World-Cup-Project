@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-06-03
 
-> **Automated:** If GitHub Actions secrets are configured, every push to **`main`** deploys automatically. See **[DEPLOY_AUTOMATION.md](./DEPLOY_AUTOMATION.md)**.
+> **Automated (`main` only):** Every push to **`main`** can deploy via **deploy-main.yml**. Pushes to **`Debug` never deploy.** See **[DEPLOY_AUTOMATION.md](./DEPLOY_AUTOMATION.md)** and **[DEBUG_BRANCH.md](./DEBUG_BRANCH.md)**.
 
 Manual steps below (same as `scripts/deploy-production.sh` on the server).
 

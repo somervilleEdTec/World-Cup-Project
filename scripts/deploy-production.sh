@@ -1,9 +1,17 @@
 #!/usr/bin/env bash
-# Run on the production host after git pull (manual or via GitHub Actions SSH).
+# LIVE SITE ONLY — run on the production host from the `main` branch.
+# Never run from `Debug`. GitHub Actions calls this only after push to `main`.
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
 APP_ROOT="$(pwd)"
+
+current_branch="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo unknown)"
+if [[ "${current_branch}" != "main" ]]; then
+  echo "ERROR: deploy-production.sh refuses to run on branch '${current_branch}'."
+  echo "       Live deploys use main only. Merge Debug → main, then deploy."
+  exit 1
+fi
 
 if [[ ! -f .env ]]; then
   echo "Missing .env in ${APP_ROOT} — copy .env.example and set FOOTBALL_DATA_TOKEN, VITE_API_BASE_URL."

@@ -1,8 +1,15 @@
-# Automated deploy on push to `main`
+# Automated deploy on push to `main` (live site only)
 
-When you merge or push to **`main`**, GitHub Actions runs tests, then SSHs to your production server and runs `scripts/deploy-production.sh` (pull, build, migrate, restart).
+| Branch | GitHub Actions | Live website |
+|--------|----------------|--------------|
+| **`main`** | **deploy-main.yml** — test + SSH deploy | **Updated** on each push (when secrets configured) |
+| **`Debug`** | **None** | **Never** updated — test on your PC only |
 
-**Manual deploy still works:** SSH to the host and run `bash scripts/deploy-production.sh`.
+When you push to **`main`**, GitHub Actions runs tests, then SSHs to your production server and runs `scripts/deploy-production.sh` (must be on `main` branch on the server).
+
+**Manual deploy:** SSH to the host, `cd` to app dir, ensure `git checkout main`, then `bash scripts/deploy-production.sh`.
+
+**Debug:** See [DEBUG_BRANCH.md](./DEBUG_BRANCH.md) — do not deploy from Debug.
 
 ---
 
@@ -99,16 +106,18 @@ SYSTEMD_JOBS_SERVICE=worldcup-jobs
 
 ## What runs on each push to `main`
 
+Workflow file: `.github/workflows/deploy-main.yml` (not used for `Debug`).
+
 1. **CI job** — `npm ci`, `npm test`, `npm run build` (smoke build on GitHub).
-2. **Deploy job** — SSH → `scripts/deploy-production.sh`:
+2. **Deploy job** — only if `github.ref == refs/heads/main` — SSH → `scripts/deploy-production.sh`:
    - `git pull origin main`
    - `npm ci`, `npm run migrate`, `npm run build` (with server `.env`)
    - `sudo systemctl restart worldcup-jobs worldcup` (if units exist)
    - `curl` health check on `http://127.0.0.1:8787/api/health`
 
-View runs: GitHub → **Actions** → **Deploy**.
+View runs: GitHub → **Actions** → **Deploy main (production)**.
 
-**Manual deploy:** Actions → **Deploy** → **Run workflow**.
+**Manual deploy:** Actions → **Deploy main (production)** → **Run workflow** (must run on **`main`** branch).
 
 ---
 

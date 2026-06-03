@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-06-03  
 **Repository:** https://github.com/somervilleEdTec/World-Cup-Project  
-**Branches:** `main` (production) · `Debug` (development) — [BRANCHING.md](./BRANCHING.md)  
+**Branches:** `main` (live deploy) · `Debug` (local PC only, no live deploy) — [BRANCHING.md](./BRANCHING.md) · [DEBUG_BRANCH.md](./DEBUG_BRANCH.md)  
 **Phase:** **2026-06-03 debug merge** — scoring, lock/unlock, API fixes on `main`/`Debug`. **Next session:** full stress & environment QA.
 
 **Start here:** [AGENT_PROMPT_STRESS_TEST.md](./AGENT_PROMPT_STRESS_TEST.md) · Reference: [LOCKING.md](./LOCKING.md) · General: [AGENT_PROMPT.md](./AGENT_PROMPT.md)
@@ -13,7 +13,7 @@
 
 1. **Stress-test** the app like a real group of friends on **Windows** (primary) and optionally macOS/Linux.
 2. **Find bugs** — race conditions, wrong missing-picks messages, lock edge cases, mobile layout, API errors.
-3. **Fix** with small PRs to `main`; run `npm test` + `npm run build` every time.
+3. **Fix** on **`Debug`**, test locally, then merge to **`main`** to update live; run `npm test` + `npm run build` every time.
 4. **Log findings** in [UI_HANDOVER.md](./UI_HANDOVER.md) §7 (stress-test log table).
 
 **Do not change** [FINAL_PLAN.md](./FINAL_PLAN.md) competition rules without owner approval.

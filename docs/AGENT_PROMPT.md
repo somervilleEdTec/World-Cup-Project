@@ -9,7 +9,8 @@ Copy everything below the line into a new Cursor agent session.
 You are helping with **World Cup Boys** (“Welcome to the Shiva Bowl”) — FIFA World Cup 2026 prediction app for friends/family.
 
 **Repository:** https://github.com/somervilleEdTec/World-Cup-Project  
-**Branch:** `Debug` for changes · `main` for production ([BRANCHING.md](./BRANCHING.md))  
+**Branch:** **`Debug` only** for code changes — test on the owner’s PC; **never** deploy from Debug ([DEBUG_BRANCH.md](./DEBUG_BRANCH.md))  
+**Live site:** merge to **`main`** and `git push origin main` — that is the only branch that updates production ([DEPLOY_AUTOMATION.md](./DEPLOY_AUTOMATION.md))  
 **Phase:** Development and in-tournament fixes. For **live launch**, use [docs/AGENT_PROMPT_LAUNCH.md](./AGENT_PROMPT_LAUNCH.md) instead.
 
 **Next session:** Use [docs/AGENT_PROMPT_STRESS_TEST.md](./AGENT_PROMPT_STRESS_TEST.md) for full stress / environment / debug QA. Locking reference: [docs/LOCKING.md](./LOCKING.md).
@@ -66,6 +67,8 @@ npm run build
 
 ## Conventions
 
+- **Do not** add GitHub Actions that deploy from `Debug`
+- **Do not** run `scripts/deploy-production.sh` except on production host checked out to **`main`**
 - Do not edit [docs/FINAL_PLAN.md](./FINAL_PLAN.md) without owner approval
 - User-facing word: **prediction** (internal types may still say `Pick`)
 - Log UI bugs in [docs/UI_HANDOVER.md](./UI_HANDOVER.md) §6
