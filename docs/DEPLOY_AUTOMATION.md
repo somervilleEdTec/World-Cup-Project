@@ -69,17 +69,19 @@ Test:
 ssh -i ~/.ssh/worldcup-deploy deploy@YOUR_SERVER_HOST 'cd /opt/world-cup-boys && bash scripts/deploy-production.sh'
 ```
 
-### 4. GitHub repository secrets
+### 4. GitHub repository secrets (required for deploy to run)
 
 In GitHub: **Settings → Secrets and variables → Actions → New repository secret**
 
+If any required secret is missing, the workflow fails at **Check deploy secrets** with a clear list (not `missing server host`).
+
 | Secret | Example | Required |
 |--------|---------|----------|
-| `DEPLOY_HOST` | `203.0.113.10` or `worldcup.example.com` | Yes |
-| `DEPLOY_USER` | `deploy` | Yes |
-| `DEPLOY_SSH_KEY` | Full private key file contents (`worldcup-deploy`) | Yes |
-| `DEPLOY_PATH` | `/opt/world-cup-boys` | Yes |
-| `DEPLOY_PORT` | `22` | No (defaults to 22) |
+| `DEPLOY_HOST` | `203.0.113.10` or `worldcup.example.com` | **Yes** — empty causes deploy failure |
+| `DEPLOY_USER` | `deploy` or `ubuntu` | **Yes** |
+| `DEPLOY_SSH_KEY` | Full private key file contents (`worldcup-deploy`) | **Yes** |
+| `DEPLOY_PATH` | `/opt/world-cup-boys` | **Yes** |
+| `DEPLOY_PORT` | `22` | No — omit to use SSH default port 22 |
 
 Do **not** put `FOOTBALL_DATA_TOKEN` in GitHub secrets unless you prefer CI to inject it — keep secrets in the server `.env` only.
 
@@ -125,7 +127,8 @@ View runs: GitHub → **Actions** → **Deploy main (production)**.
 
 | Symptom | Check |
 |---------|--------|
-| Deploy job skipped / fails immediately | All four secrets set? |
+| Deploy job skipped / fails immediately | Run **Check deploy secrets** step — set all four required secrets |
+| `missing server host` (old runs) | `DEPLOY_HOST` secret empty or not created |
 | Permission denied (publickey) | `DEPLOY_SSH_KEY` is the **private** key; public key in `~/.ssh/authorized_keys` on server |
 | `sudo: a password is required` | sudoers snippet for `systemctl restart` |
 | Health check fails | `systemctl status worldcup`; nginx proxy to `127.0.0.1:8787` |
