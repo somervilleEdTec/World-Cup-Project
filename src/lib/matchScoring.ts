@@ -1,4 +1,5 @@
-import { ActualResult, Pick } from '../types';
+import { scaledMatchPointsForStage } from './knockoutStageMultiplier';
+import { ActualResult, Pick, Stage } from '../types';
 
 const resultKey = (home: number, away: number): 'H' | 'A' | 'D' =>
   home > away ? 'H' : home < away ? 'A' : 'D';
@@ -20,19 +21,18 @@ export function classifyPickAccuracy(
   return 'miss';
 }
 
-/** Match-level points only (+2 result, +4 exact). Group position bonus is not per fixture. */
+/** Match-level points (+2/+4 base; QF 1.5×, SF 2×, final/third-place 3×). */
 export function computeMatchPoints(
   pick: Pick | undefined,
-  actual: ActualResult | undefined
+  actual: ActualResult | undefined,
+  stage: Stage = 'GROUP'
 ): number | null {
   if (!pick || !actual) return null;
 
-  let points = 0;
-  if (resultKey(pick.homeScore, pick.awayScore) === resultKey(actual.homeScore, actual.awayScore)) {
-    points += 2;
-  }
-  if (pick.homeScore === actual.homeScore && pick.awayScore === actual.awayScore) {
-    points += 4;
-  }
-  return points;
+  const correctResult =
+    resultKey(pick.homeScore, pick.awayScore) === resultKey(actual.homeScore, actual.awayScore);
+  const exactScore = pick.homeScore === actual.homeScore && pick.awayScore === actual.awayScore;
+  if (!correctResult && !exactScore) return 0;
+
+  return scaledMatchPointsForStage(stage, { correctResult, exactScore }).total;
 }

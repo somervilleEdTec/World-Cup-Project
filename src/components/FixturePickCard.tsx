@@ -220,7 +220,7 @@ export function FixturePickCard({
   const awayOk = awayTeam && awayTeam.id !== 'tbd';
   const kickoffLocked = kickoffReached(match.kickoff, nowIso);
   const inputsSaveDisabled = inputsDisabled || kickoffLocked;
-  const points = computeMatchPoints(pick, actual);
+  const points = computeMatchPoints(pick, actual, match.stage);
 
   return (
     <div className="fixture-card">

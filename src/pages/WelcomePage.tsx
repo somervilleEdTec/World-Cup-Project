@@ -20,6 +20,9 @@ export function WelcomePage() {
         <ul>
           <li>Correct win/draw/loss: +2 points</li>
           <li>Exact score bonus: +4 additional points (6 total when exact)</li>
+          <li>Quarter-finals: 1.5× match points</li>
+          <li>Semi-finals: 2× match points</li>
+          <li>Final and third-place play-off: 3× match points</li>
         </ul>
       </article>
 
