@@ -58,7 +58,7 @@ Styling: **`src/styles/app.css` only** (no Tailwind).
 1. **Knockout tab** — only fixtures with **both teams** from official `results` ([knockoutFixtureAvailability.ts](../src/lib/knockoutFixtureAvailability.ts)).
 2. **72 group picks** — server gate for knockout **saves** ([pickLocks.ts](../src/lib/pickLocks.ts)); tournament picks are **not** gated.
 3. **SVG flags** — not emoji; custom `TeamSelect` (not native `<option>` images).
-4. **Lock group** — one-way; `accepted_groups` in DB = locked groups.
+4. **Lock / Unlock group** — `accepted_groups` in DB; unlock disabled when group has official results ([LOCKING.md](./LOCKING.md)).
 5. **Match picks** — POST `/api/predictions/draft` writes **committed** rows (no UI commit step).
 
 ---
@@ -96,6 +96,8 @@ http://localhost:8787/login
 | 6 | KO gate (API) | Save KO pick with 0 group picks | Blocked with 72 message | Works | Verified |
 | 7 | Locks (API) | `POST /api/system/locks/run` after kickoff | Global lock | `{"ok":true}` | Verified |
 | 8 | Leaderboard | Two users registered | Both listed | 2 users on `/api/leaderboard` | Verified |
+| 9 | Group unlock (API) | Lock group A, insert result for g-a-1, unlock | 400 — cannot unlock | Works | Verified (2026-06-03) |
+| 10 | Results lock (API) | Edit g-a-1 after official result | 400 — official result | Works | Verified (2026-06-03) |
 
 ---
 

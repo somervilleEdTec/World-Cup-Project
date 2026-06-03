@@ -77,7 +77,7 @@ sqlite3 data.db "UPDATE users SET is_admin = 1 WHERE display_name = 'YourName';"
 ### Group Stage (sample groups)
 
 - [ ] Enter scores — auto-save; projected table updates; actual table when results exist
-- [ ] **Lock group** — cannot edit after lock
+- [ ] **Lock group** — cannot edit after lock; unlock only before official results in group
 - [ ] Complete all 12 groups for full pool (or accept partial for limited test)
 - [ ] After global lock: scores show as text with points when results in
 

@@ -12,6 +12,8 @@ You are helping with **World Cup Boys** (“Welcome to the Shiva Bowl”) — FI
 **Branch:** `Debug` for changes · `main` for production ([BRANCHING.md](./BRANCHING.md))  
 **Phase:** Development and in-tournament fixes. For **live launch**, use [docs/AGENT_PROMPT_LAUNCH.md](./AGENT_PROMPT_LAUNCH.md) instead.
 
+**Priority task (locking):** Use [docs/AGENT_PROMPT_LOCKING.md](./AGENT_PROMPT_LOCKING.md) instead of this file when auditing prediction lock timing.
+
 ## Mandatory first step — read in order
 
 1. [docs/HANDOVER.md](./HANDOVER.md) — architecture, API, environment
@@ -48,7 +50,7 @@ Read [docs/FINAL_PREDICTION_HANDOVER.md](./FINAL_PREDICTION_HANDOVER.md).
 ## Current UX summary
 
 - **My Predictions** (`/my-picks`) — Tournament Results · Group Stage · R32 · R16 · QF · SF · Final / 3rd Place
-- **Group** — projected + actual tables; auto-save; lock group
+- **Group** — projected + actual tables; auto-save; lock / unlock group (unlock blocked after official results in group)
 - **Knockout** — confirmed fixtures only; 72 group predictions required to save
 - **Locked fixtures** — prediction / official result / points as text (no spinners)
 - **Comparison** — group predictions after lock; **KO after fixture kickoff**; colour when results in

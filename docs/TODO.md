@@ -11,7 +11,13 @@
 
 ---
 
-## Current focus — go-live
+## Current focus
+
+- [ ] **Prediction locking audit** — [AGENT_PROMPT_LOCKING.md](./AGENT_PROMPT_LOCKING.md) · [LOCKING.md](./LOCKING.md) — when picks lock for all players vs per-user vs per-fixture
+- [x] Per-group lock/unlock + results-based edit lock (Debug, 2026-06-03)
+- [x] API same-origin / autosave performance (Debug, 2026-06-03)
+
+## Go-live
 
 - [x] Stress test playbook ([STRESS_TEST_HANDOVER.md](./STRESS_TEST_HANDOVER.md))
 - [x] KO-environment UX merged to `main` (predictions UI, comparison, seed script)
@@ -52,7 +58,7 @@
 
 - [x] Postgres + migrations
 - [x] Deploy docs ([DEPLOY.md](./DEPLOY.md), [GO_LIVE.md](./GO_LIVE.md))
-- [x] API integration tests (43 tests)
+- [x] API integration tests (66 tests)
 - [x] football-data seed + sync
 - [x] Windows `scripts/Test-LocalSite.ps1`
 - [x] SVG team flags

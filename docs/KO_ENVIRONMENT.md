@@ -1,6 +1,9 @@
 # KO Environment — local knockout testing
 
+**Last updated:** 2026-06-03  
 **Debug branch only** (or `ALLOW_KO_SEED=1`). Do **not** run these seeds on production **`main`** — use an empty database and [football-data.org](https://www.football-data.org/) via `FOOTBALL_DATA_TOKEN` instead.
+
+**Locking reference:** [LOCKING.md](./LOCKING.md) · **Next agent (locking audit):** [AGENT_PROMPT_LOCKING.md](./AGENT_PROMPT_LOCKING.md)
 
 Use this to evaluate **league rankings** and **knockout prediction entry** with ten seeded users, random group/tournament predictions, and **official results** injected via the database (no `FOOTBALL_DATA_TOKEN` required).
 
@@ -84,7 +87,8 @@ npm run seed:ko-environment -- --no-purge
 
 | Symptom | Cause | Fix |
 |---------|--------|-----|
-| Can edit tournament / group picks after “results are in” | Lock is by **first kickoff time**, not by results. Old seed did not set `group_locked`. | Seed now runs `runAutoLocks`. **Before 11 Jun 2026** on a fresh `main` DB, picks are still editable by design. |
+| Can edit / unlock after official results | Old behaviour used kickoff only. | **Fixed (2026-06-03):** fixtures with `results` rows cannot be edited; groups with any official result cannot be **unlocked**. Global lock still applies at first kickoff. |
+| Can edit tournament / group picks before kickoff on `main` | Lock is by **first kickoff time** on empty DB. | Expected on production until first match; use `runAutoLocks` or `npm run jobs` in tests. |
 | All 32 KO fixtures in My Picks | Seed inserted results for every KO round (`--full-bracket` behaviour). | Default seed is **group results only** → **16 R32** fixtures. |
 | Comparison hides other players’ group picks | Visibility used calendar only, ignored DB `group_locked`. | **Product fix:** comparison respects `group_locked` + seed applies lock. |
 | Comparison fixture list empty / missing played games | Picker only listed **future** kickoffs. | **Product fix:** all fixtures with known teams. |

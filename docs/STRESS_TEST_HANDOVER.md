@@ -1,11 +1,11 @@
 # Stress test & debug handover — next agent
 
-**Last updated:** 2026-06-02  
+**Last updated:** 2026-06-03  
 **Repository:** https://github.com/somervilleEdTec/World-Cup-Project  
 **Branches:** `main` (production) · `Debug` (development) — [BRANCHING.md](./BRANCHING.md)  
-**Phase:** Owner UI polish **complete** (PRs #7–#11). Your job is **stress testing, regression hunting, and bug fixes** — not greenfield features.
+**Phase:** UI polish complete; **next priority:** prediction locking audit — [AGENT_PROMPT_LOCKING.md](./AGENT_PROMPT_LOCKING.md) · [LOCKING.md](./LOCKING.md)
 
-**Start here:** [AGENT_PROMPT.md](./AGENT_PROMPT.md) (copy-paste for a new Cursor session)
+**Start here:** [AGENT_PROMPT_LOCKING.md](./AGENT_PROMPT_LOCKING.md) (locking) · [AGENT_PROMPT.md](./AGENT_PROMPT.md) (general)
 
 ---
 
@@ -14,7 +14,7 @@
 1. **Stress-test** the app like a real group of friends on **Windows** (primary) and optionally macOS/Linux.
 2. **Find bugs** — race conditions, wrong missing-picks messages, lock edge cases, mobile layout, API errors.
 3. **Fix** with small PRs to `main`; run `npm test` + `npm run build` every time.
-4. **Log findings** in [UI_HANDOVER.md](./UI_HANDOVER.md) §6 (stress-test log table).
+4. **Log findings** in [UI_HANDOVER.md](./UI_HANDOVER.md) §7 (stress-test log table).
 
 **Do not change** [FINAL_PLAN.md](./FINAL_PLAN.md) competition rules without owner approval.
 
@@ -46,7 +46,7 @@ sqlite3 data.db "UPDATE users SET is_admin = 1 WHERE display_name = 'YourName';"
 **Quality gates:**
 
 ```bash
-npm test        # 43 tests (12 files)
+npm test        # 66 tests (16 files)
 npm run seed:ko-environment   # optional — see KO_ENVIRONMENT.md
 npm run build
 npm run lint    # optional
@@ -96,7 +96,7 @@ npm run lint    # optional
 - Scores **auto-save** (~450 ms debounce) → stored as **committed** picks.
 - **No** per-match Save / Commit buttons.
 - **Projected table** + **Actual table** (from official results when available).
-- **Lock group** (one-way) — prevents accidental edits; stored in `accepted_groups`.
+- **Lock / Unlock group** — stored in `accepted_groups`; unlock blocked once any official result exists in that group ([LOCKING.md](./LOCKING.md)).
 - **Previous / Next group** — flushes pending auto-save before navigating.
 
 ### My Predictions — Knockout (per-round tabs)
@@ -163,6 +163,8 @@ Use **2+ browser profiles** or incognito + normal (different users).
 - [ ] Enter scores — table updates only after input (not empty placeholders as 0-0)
 - [ ] Scroll mouse wheel on score box — must not go negative or scramble table
 - [ ] **Lock group** — inputs disabled; API rejects further edits
+- [ ] **Unlock group** — works only before official results in that group
+- [ ] After official result for one fixture — cannot edit that fixture or unlock group
 - [ ] Navigate away and back — locked state persists
 - [ ] Lock without all 6 scores (expect error)
 - [ ] All 12 groups — missing list shows no `Group X` lines
@@ -229,7 +231,8 @@ Use **2+ browser profiles** or incognito + normal (different users).
 | GET | `/api/predictions/state` | Bearer — full state |
 | POST | `/api/predictions/draft` | `{ matchId, homeScore, awayScore, progressingTeamId? }` — saves **committed** |
 | POST | `/api/predictions/bonus` | `{ winnerTeamId, runnerUpTeamId, thirdTeamId, fourthTeamId }` — saves **bonus_committed** |
-| POST | `/api/predictions/groups/:groupId/lock` | Locks group (one-way) |
+| POST | `/api/predictions/groups/:groupId/lock` | Locks group |
+| POST | `/api/predictions/groups/:groupId/unlock` | Unlocks group (if no official results in group) |
 | POST | `/api/predictions/commit` | Legacy — UI does not call |
 | GET | `/api/leaderboard` | Public |
 | POST | `/api/system/locks/run` | Manual lock job |

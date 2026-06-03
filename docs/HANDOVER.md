@@ -1,6 +1,6 @@
 # Agent Handover — World Cup Boys
 
-**Last updated:** 2026-06-02  
+**Last updated:** 2026-06-03  
 **Repository:** https://github.com/somervilleEdTec/World-Cup-Project  
 **Branches:** `main` (production) · `Debug` (development) — see [BRANCHING.md](./BRANCHING.md)  
 **Phase:** **Launch** — deploy live site for friend registration  
@@ -8,7 +8,8 @@
 **Deploy:** [docs/DEPLOY.md](./DEPLOY.md) · **Go-live tests:** [docs/GO_LIVE.md](./GO_LIVE.md)  
 **Local debug:** [docs/KO_ENVIRONMENT.md](./KO_ENVIRONMENT.md) · [docs/FINAL_PREDICTION_HANDOVER.md](./FINAL_PREDICTION_HANDOVER.md)
 
-**Next agent starts here:** [docs/LAUNCH_HANDOVER.md](./LAUNCH_HANDOVER.md) (public website + registration) · General dev: [docs/AGENT_PROMPT.md](./AGENT_PROMPT.md)
+**Next agent starts here:** **[docs/AGENT_PROMPT_LOCKING.md](./AGENT_PROMPT_LOCKING.md)** — audit when predictions lock for all players · Reference: [docs/LOCKING.md](./LOCKING.md)  
+Also: [docs/LAUNCH_HANDOVER.md](./LAUNCH_HANDOVER.md) (launch) · General dev: [docs/AGENT_PROMPT.md](./AGENT_PROMPT.md)
 
 ---
 
@@ -43,14 +44,18 @@ Friends-and-family prediction app for **FIFA World Cup 2026** (48 teams, 12 grou
 | Preselected third place | +4 |
 | Preselected fourth place | +3 |
 
-### Locking (implemented)
+### Locking (implemented — see [LOCKING.md](./LOCKING.md))
 
-| What | When |
-|------|------|
-| Tournament result picks | First match kickoff |
-| Group-stage picks (global) | First match kickoff |
-| Per-group **Lock group** (user) | One-way; blocks edits until global lock |
-| Each knockout fixture | That fixture’s kickoff |
+| What | When | Notes |
+|------|------|--------|
+| Tournament result picks | First match kickoff | `group_locked` / `shouldLockGroup` |
+| Group-stage picks (global) | First match kickoff | Same |
+| Per-group **Lock / Unlock** (user) | User toggles `accepted_groups` | Unlock blocked if **any** official result in that group |
+| Group fixture with official result | When `results` row exists | That fixture cannot be edited |
+| Each knockout fixture | Kickoff **or** official result | `isKnockoutFixtureLocked` |
+| KO saves | Before global lock | Requires 72 committed group picks |
+
+**Next work:** Full audit — [AGENT_PROMPT_LOCKING.md](./AGENT_PROMPT_LOCKING.md).
 
 ### Picks storage (June 2026 UX)
 
@@ -77,7 +82,9 @@ Friends-and-family prediction app for **FIFA World Cup 2026** (48 teams, 12 grou
 | [TODO.md](./TODO.md) | Backlog |
 | [DEPLOY.md](./DEPLOY.md) | Production |
 | [GO_LIVE.md](./GO_LIVE.md) | Pre-launch checklist |
-| [COMPLIANCE.md](./COMPLIANCE.md) | Plan compliance (partially lags UX) |
+| [COMPLIANCE.md](./COMPLIANCE.md) | Plan compliance |
+| [LOCKING.md](./LOCKING.md) | Prediction lock layers (implemented) |
+| [AGENT_PROMPT_LOCKING.md](./AGENT_PROMPT_LOCKING.md) | **Next agent** — locking audit prompt |
 
 ---
 
@@ -91,6 +98,7 @@ Friends-and-family prediction app for **FIFA World Cup 2026** (48 teams, 12 grou
 | #10 | Rules on Welcome, mobile nav, remove Rules route |
 | #11 | Lock group, missing picks list, debounced auto-save |
 | KO-Environment → main | KO phase tabs, actual tables, comparison rules, BST, prediction copy |
+| Debug 2026-06-03 | Per-group lock/unlock; results-based lock; API same-origin + autosave perf fix |
 
 **Stack:** React 19, Vite 8, TypeScript, Express 5, better-sqlite3 / Postgres. Legacy Zustand: `src/lib/store.ts` (unused in production path).
 
@@ -117,7 +125,7 @@ Friends-and-family prediction app for **FIFA World Cup 2026** (48 teams, 12 grou
 - [x] All kickoff times shown in **BST** (`src/lib/formatDateTime.ts`)
 - [x] `TeamSelect` — flags + alphabetical teams
 - [x] SVG flags (`CountryFlag`, `public/flags/4x3/`)
-- [x] **43 tests**; `npm run build`; Windows `scripts/Test-LocalSite.ps1`; `npm run seed:ko-environment`
+- [x] **66 tests**; `npm run build`; Windows `scripts/Test-LocalSite.ps1`; `npm run seed:ko-environment`; `npm run seed:complete-teams`
 
 ### Ops / partial
 
@@ -179,7 +187,8 @@ Base: `http://localhost:8787` · Auth: `Authorization: Bearer <token>`
 | GET | `/api/predictions/state` | Bearer — includes `officialResults`, `confirmedKnockoutFixtures` |
 | POST | `/api/predictions/draft` | Saves **committed** match pick |
 | POST | `/api/predictions/bonus` | Saves **bonus_committed** |
-| POST | `/api/predictions/groups/:groupId/lock` | One-way group lock |
+| POST | `/api/predictions/groups/:groupId/lock` | Per-group lock (`accepted_groups`) |
+| POST | `/api/predictions/groups/:groupId/unlock` | Unlock group (blocked if official results in group) |
 | POST | `/api/predictions/groups/:groupId/accept` | Legacy alias → lock |
 | POST | `/api/predictions/commit` | Legacy; UI unused |
 | GET | `/api/leaderboard` | Public |
@@ -220,8 +229,9 @@ sqlite3 data.db "UPDATE users SET is_admin = 1 WHERE display_name = 'YourName';"
 ### Quality gates
 
 ```bash
-npm test              # 43 tests
+npm test              # 66 tests
 npm run seed:ko-environment   # optional local KO test DB (see KO_ENVIRONMENT.md)
+ALLOW_KO_SEED=1 npm run seed:complete-teams   # Team1–10 / bender, full tournament (Debug)
 npm run build
 npm run db:purge      # reset local SQLite data
 ```
@@ -236,18 +246,19 @@ npm run db:purge      # reset local SQLite data
 | `SQLITE_PATH` | SQLite file (default `data.db`) |
 | `JOIN_PASSWORD` | Sign-up gate (default `MadSlags1`) |
 | `FOOTBALL_DATA_TOKEN` | football-data.org |
-| `VITE_API_BASE_URL` | API base (default `http://localhost:8787`) |
+| `VITE_API_BASE_URL` | API base (default **same-origin** `/api`; Vite proxies to :8787 in dev) |
 | `PORT` | API port (default `8787`) |
 
 ---
 
 ## 10. Next agent priorities
 
-1. Owner go-live on production ([GO_LIVE.md](./GO_LIVE.md)).
-2. Keep `npm run jobs` + football-data sync during tournament.
-3. On **`main`**: empty DB + `FOOTBALL_DATA_TOKEN` only — never run KO seed scripts in production.
-4. On **`Debug`**: `ALLOW_KO_SEED=1 npm run seed:ko-environment` for local KO/regression testing.
-5. Log new issues in [UI_HANDOVER.md](./UI_HANDOVER.md) §6.
+1. **Prediction locking audit** — [AGENT_PROMPT_LOCKING.md](./AGENT_PROMPT_LOCKING.md) + [LOCKING.md](./LOCKING.md): define at what stage picks lock **for all players**; align code, comparison visibility, and [FINAL_PLAN.md](./FINAL_PLAN.md).
+2. Owner go-live on production ([GO_LIVE.md](./GO_LIVE.md)).
+3. Keep `npm run jobs` + football-data sync during tournament.
+4. On **`main`**: empty DB + `FOOTBALL_DATA_TOKEN` only — never run KO seed scripts in production.
+5. On **`Debug`**: `ALLOW_KO_SEED=1 npm run seed:complete-teams` or `seed:ko-environment` for local testing.
+6. Log new issues in [UI_HANDOVER.md](./UI_HANDOVER.md) §7.
 
 ---
 

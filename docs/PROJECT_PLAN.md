@@ -1,6 +1,6 @@
 # World Cup 2026 Prediction App — Project Plan
 
-> **Status (2026-06-02):** Original exploration brief. **Rules:** [FINAL_PLAN.md](./FINAL_PLAN.md). **Implementation:** [HANDOVER.md](./HANDOVER.md). **Next agent:** [STRESS_TEST_HANDOVER.md](./STRESS_TEST_HANDOVER.md).
+> **Status (2026-06-03):** Original exploration brief. **Rules:** [FINAL_PLAN.md](./FINAL_PLAN.md). **Implementation:** [HANDOVER.md](./HANDOVER.md). **Locking:** [LOCKING.md](./LOCKING.md). **Next agent:** [AGENT_PROMPT_LOCKING.md](./AGENT_PROMPT_LOCKING.md).
 
 ## 1. Vision
 

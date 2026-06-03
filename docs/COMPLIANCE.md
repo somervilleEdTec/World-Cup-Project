@@ -1,6 +1,6 @@
 # FINAL_PLAN compliance checklist
 
-Verified against [FINAL_PLAN.md](./FINAL_PLAN.md). **Last reviewed:** 2026-06-02 (KO-environment merge to `main`).
+Verified against [FINAL_PLAN.md](./FINAL_PLAN.md). **Last reviewed:** 2026-06-03 (Debug — per-group lock, results lock). See [LOCKING.md](./LOCKING.md).
 
 > **Note:** UI no longer uses a draft/commit panel. Match picks are written **committed** on save; tournament picks use **bonus_committed**. See [STRESS_TEST_HANDOVER.md](./STRESS_TEST_HANDOVER.md) for current behaviour.
 
@@ -13,7 +13,8 @@ Verified against [FINAL_PLAN.md](./FINAL_PLAN.md). **Last reviewed:** 2026-06-02
 | Tournament bonus scoring | Done | `bonus_committed` in `computeScore` |
 | Comparison / leaderboard use committed only | Done | SQL `state = 'committed'` |
 | Required pages | Done | Login, Welcome, My Picks, League, Comparison, Admin |
-| Group lock (user) | Done | `POST .../groups/:id/lock` → `accepted_groups` |
+| Group lock / unlock (user) | Done | `POST .../groups/:id/lock` · `.../unlock` → `accepted_groups`; unlock blocked if group has official results |
+| Group / fixture lock on official result | Done | `assertMatchEditable` + `assertGroupUnlockAllowed` in `pickLocks.ts` |
 | All 72 group picks before KO saves | Done | `assertAllGroupPicksCommitted` in `saveDraftPick` for KO |
 | Tournament picks standalone | Done | `setBonusDraft` → `bonus_committed`; no group gate |
 | Knockout only when officially confirmed | Done | `knockoutFixtureAvailability.ts` |
@@ -24,7 +25,8 @@ Verified against [FINAL_PLAN.md](./FINAL_PLAN.md). **Last reviewed:** 2026-06-02
 **UX differences from original plan text (owner-approved):**
 
 - No separate Rules route — rules on Welcome.
-- No global “Commit changes” button — auto-save + Lock group.
+- No global “Commit changes” button — auto-save + Lock / Unlock group.
+- Per-group unlock allowed until official results exist in that group.
 - Tournament predictions do not require all groups accepted first.
 - Auth uses **display name**, not email.
 - **Comparison — knockout:** others’ predictions hidden until fixture kickoff (not visible pre-kickoff).

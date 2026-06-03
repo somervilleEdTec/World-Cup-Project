@@ -1,10 +1,12 @@
-# Final prediction handover — debug / troubleshoot
+# Final prediction handover
+
+**Locking:** [LOCKING.md](./LOCKING.md) — with all results seeded, group unlock and per-fixture edits are blocked.
 
 **Purpose:** Local database seeded so the tournament is **one step from the end**: every official result exists **except the final**, and every test user has **exactly one prediction left** — the **final** match.
 
 **Branches:** Develop on `Debug`; release on `main` — [BRANCHING.md](./BRANCHING.md).
 
-**Next agent:** Read this file first, then [HANDOVER.md](./HANDOVER.md) and [KO_ENVIRONMENT.md](./KO_ENVIRONMENT.md). Use [AGENT_PROMPT.md](./AGENT_PROMPT.md) for general conventions.
+**Next agent:** Locking audit — [AGENT_PROMPT_LOCKING.md](./AGENT_PROMPT_LOCKING.md). This scenario: [HANDOVER.md](./HANDOVER.md), [KO_ENVIRONMENT.md](./KO_ENVIRONMENT.md).
 
 ---
 
