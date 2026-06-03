@@ -1,14 +1,15 @@
 # Agent Handover — World Cup Boys
 
-**Last updated:** 2026-06-02  
+**Last updated:** 2026-06-03  
 **Repository:** https://github.com/somervilleEdTec/World-Cup-Project  
 **Branches:** `main` (production) · `Debug` (development) — see [BRANCHING.md](./BRANCHING.md)  
-**Phase:** **Launch** — deploy live site for friend registration  
-**Launch:** [docs/LAUNCH_HANDOVER.md](./LAUNCH_HANDOVER.md) · Prompt: [docs/AGENT_PROMPT_LAUNCH.md](./AGENT_PROMPT_LAUNCH.md)  
-**Deploy:** [docs/DEPLOY.md](./DEPLOY.md) · **Go-live tests:** [docs/GO_LIVE.md](./GO_LIVE.md)  
+**Phase:** **Post-deploy** — https://worldcup.dosums.uk live; complete GO_LIVE before friend invites  
+**Post-deploy:** [docs/POST_DEPLOY_HANDOVER.md](./POST_DEPLOY_HANDOVER.md) · Prompt: [docs/AGENT_PROMPT_POST_DEPLOY.md](./AGENT_PROMPT_POST_DEPLOY.md)  
+**Deploy (Oracle + Cloudflare):** [docs/DEPLOY_ORACLE_CLOUDFLARE.md](./DEPLOY_ORACLE_CLOUDFLARE.md)  
+**Launch (greenfield):** [docs/LAUNCH_HANDOVER.md](./LAUNCH_HANDOVER.md) · [docs/GO_LIVE.md](./GO_LIVE.md)  
 **Local debug:** [docs/KO_ENVIRONMENT.md](./KO_ENVIRONMENT.md) · [docs/FINAL_PREDICTION_HANDOVER.md](./FINAL_PREDICTION_HANDOVER.md)
 
-**Next agent starts here:** [docs/LAUNCH_HANDOVER.md](./LAUNCH_HANDOVER.md) (public website + registration) · General dev: [docs/AGENT_PROMPT.md](./AGENT_PROMPT.md)
+**Next agent starts here:** [docs/POST_DEPLOY_HANDOVER.md](./POST_DEPLOY_HANDOVER.md) · Greenfield deploy: [docs/LAUNCH_HANDOVER.md](./LAUNCH_HANDOVER.md) · General dev: [docs/AGENT_PROMPT.md](./AGENT_PROMPT.md)
 
 ---
 
@@ -70,6 +71,9 @@ Friends-and-family prediction app for **FIFA World Cup 2026** (48 teams, 12 grou
 | [AGENT_PROMPT.md](./AGENT_PROMPT.md) | Copy-paste session prompt |
 | [UI_HANDOVER.md](./UI_HANDOVER.md) | UI history + bug log table |
 | [HANDOVER.md](./HANDOVER.md) | This file |
+| [POST_DEPLOY_HANDOVER.md](./POST_DEPLOY_HANDOVER.md) | **Site live** — pre-invite checklist |
+| [AGENT_PROMPT_POST_DEPLOY.md](./AGENT_PROMPT_POST_DEPLOY.md) | Post-deploy agent prompt |
+| [DEPLOY_ORACLE_CLOUDFLARE.md](./DEPLOY_ORACLE_CLOUDFLARE.md) | Oracle + Cloudflare tunnel ops |
 | [LAUNCH_HANDOVER.md](./LAUNCH_HANDOVER.md) | **Live site launch** (registration, deploy) |
 | [AGENT_PROMPT_LAUNCH.md](./AGENT_PROMPT_LAUNCH.md) | Copy-paste prompt for launch agent |
 | [BRANCHING.md](./BRANCHING.md) | Two-branch workflow (`main` + `Debug`) |

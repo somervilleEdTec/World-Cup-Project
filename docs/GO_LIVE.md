@@ -1,5 +1,8 @@
 # Go-live checklist — World Cup Boys
 
+**Production URL:** https://worldcup.dosums.uk — complete this checklist before sharing with friends.  
+**Ops reference:** [DEPLOY_ORACLE_CLOUDFLARE.md](./DEPLOY_ORACLE_CLOUDFLARE.md) · **Agent handoff:** [POST_DEPLOY_HANDOVER.md](./POST_DEPLOY_HANDOVER.md)
+
 Use before inviting your group (~10 friends). After June 2026 UX work, run **stress tests** first — see [STRESS_TEST_HANDOVER.md](./STRESS_TEST_HANDOVER.md).
 
 ## 1. Environment
@@ -55,7 +58,8 @@ npm run server  # terminal 2 — API + built SPA (:8787)
 2. Promote to admin:
 
 ```bash
-sqlite3 data.db "UPDATE users SET is_admin = 1 WHERE display_name = 'YourName';"
+# Production path on Oracle VM:
+sudo sqlite3 /opt/world-cup-boys/data.db "UPDATE users SET is_admin = 1 WHERE display_name = 'YourName';"
 ```
 
 3. Admin → **Mapping diagnostics** — expect group stage **72/72 mapped**
