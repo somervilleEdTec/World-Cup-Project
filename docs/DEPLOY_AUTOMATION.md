@@ -151,7 +151,7 @@ View runs: GitHub → **Actions** → **Deploy main (production)**.
 | `missing server host` (old runs) | `DEPLOY_HOST` secret empty or not created |
 | Permission denied (publickey) | `DEPLOY_SSH_KEY` is the **private** key; public key in `~/.ssh/authorized_keys` on server |
 | `sudo: a password is required` | sudoers snippet for `systemctl restart` |
-| `tsx: not found` during deploy | Server `.env` sets `NODE_ENV=production`; deploy uses `npm ci --include=dev` (see `deploy-production.sh`) |
+| `tsx: not found` during deploy | Server `.env` sets `NODE_ENV=production`, which makes `npm ci` skip devDependencies. `deploy-production.sh` runs `npm ci` / `npm run build` with `NODE_ENV` unset, then restores production mode. |
 | Health check fails | `systemctl status worldcup`; nginx proxy to `127.0.0.1:8787` |
 | Site old UI after deploy | `VITE_API_BASE_URL` in `.env` wrong; rebuild needs correct URL |
 | No live scores | `FOOTBALL_DATA_TOKEN` in server `.env`; `worldcup-jobs` running |

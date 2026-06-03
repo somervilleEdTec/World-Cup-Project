@@ -28,8 +28,9 @@ if [[ -z "${FOOTBALL_DATA_TOKEN:-}" ]]; then
   exit 1
 fi
 
-export NODE_ENV="${NODE_ENV:-production}"
 export PORT="${PORT:-8787}"
+# Set after npm ci/build — sourcing .env may set NODE_ENV=production, which makes npm skip devDependencies.
+PRODUCTION_NODE_ENV="${NODE_ENV:-production}"
 
 echo "==> Deploy World Cup Boys @ ${APP_ROOT}"
 echo "==> Git: $(git rev-parse --short HEAD) on $(git branch --show-current)"
@@ -38,9 +39,12 @@ git fetch origin main
 git checkout main
 git pull --ff-only origin main
 
-echo "==> npm ci (include dev — migrate/build/server need tsx, vite, typescript)"
-# NODE_ENV=production omits devDependencies; runtime still uses tsx via npm run server/jobs.
-npm ci --include=dev
+echo "==> npm ci (install devDependencies — tsx/vite needed for migrate, build, server)"
+# NODE_ENV=production in .env makes npm ci omit devDependencies on older npm (--include=dev may not apply).
+(
+  unset NODE_ENV
+  npm ci
+)
 
 echo "==> migrate"
 npm run migrate
@@ -48,11 +52,19 @@ npm run migrate
 echo "==> build"
 if [[ -z "${VITE_API_BASE_URL:-}" ]]; then
   echo "WARNING: VITE_API_BASE_URL not set in .env — frontend may call wrong API origin."
-  npm run build
+  (
+    unset NODE_ENV
+    npm run build
+  )
 else
   echo "VITE_API_BASE_URL=${VITE_API_BASE_URL}"
-  npm run build
+  (
+    unset NODE_ENV
+    npm run build
+  )
 fi
+
+export NODE_ENV="${PRODUCTION_NODE_ENV}"
 
 unit_exists() {
   local state
