@@ -95,7 +95,9 @@ sqlite3 data.db "UPDATE users SET is_admin = 1 WHERE display_name = 'YourName';"
 - [ ] Kickoff times display in **BST**
 - [ ] Mobile bottom nav usable at ~375px width
 - [ ] Rules visible on **Welcome** (no Rules tab)
-- [ ] Optional local KO regression on **Debug** only: `ALLOW_KO_SEED=1 npm run seed:ko-environment` — see [KO_ENVIRONMENT.md](./KO_ENVIRONMENT.md)
+- [ ] **Unlock group** works before results; blocked after any official result in that group
+- [ ] League table shows category columns; **Points** column last
+- [ ] Optional local regression on **Debug** only: `ALLOW_KO_SEED=1 npm run seed:complete-teams` (Team1/bender) or `seed:ko-environment` — see [KO_ENVIRONMENT.md](./KO_ENVIRONMENT.md), [AGENT_PROMPT_STRESS_TEST.md](./AGENT_PROMPT_STRESS_TEST.md)
 
 ## 6. During tournament
 

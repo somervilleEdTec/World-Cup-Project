@@ -1,59 +1,49 @@
-# Prediction locking — reference
+# Prediction locking — specification
 
-**Last updated:** 2026-06-03  
-**Code:** `src/lib/pickLocks.ts`, `src/server/services/predictions.ts`, `src/lib/comparisonVisibility.ts`  
-**Next agent:** [AGENT_PROMPT_LOCKING.md](./AGENT_PROMPT_LOCKING.md)
-
-This document describes **implemented** behaviour. [FINAL_PLAN.md](./FINAL_PLAN.md) remains the owner-approved rules spec; gaps between plan text and code should be resolved in a dedicated locking audit (see agent prompt above).
+> **Last updated:** 2026-06-03 (Debug → `main` sync)  
+> **FINAL_PLAN:** [FINAL_PLAN.md](./FINAL_PLAN.md) (owner-owned)  
+> **Code:** `src/lib/pickLocks.ts`, `src/server/services/predictions.ts`, `src/lib/comparisonVisibility.ts`, `src/server/jobs.ts`
 
 ---
 
-## Lock layers (strictest wins on save)
+## Three scopes
 
-### 1. Global group-stage lock
+| Scope | Who | Mechanism |
+|-------|-----|-----------|
+| **Tournament-wide** | All players | First tournament kickoff + `runAutoLocks` → `group_locked`; blocks all group picks + tournament bonus |
+| **Per-user voluntary** | One player | **Lock group** / **Unlock group** → `prediction_meta.accepted_groups` |
+| **Per-fixture** | All players | Kickoff time and/or official `results` row for that `match_id` |
 
-- **When:** Real time ≥ first tournament match kickoff (`getFirstMatchKickoff()`), or `prediction_meta.group_locked = 1` after `runAutoLocks()` (also run from `npm run jobs` and KO seeds).
-- **Effect:** No group-stage or tournament bonus edits for any user.
-- **Messages:** `Group-stage predictions are locked.` / `Tournament bonus predictions are locked.`
-
-### 2. Per-group voluntary lock (`accepted_groups`)
-
-- **When:** User taps **Lock group** on My Predictions → group letter appended to `prediction_meta.accepted_groups` (JSON array).
-- **Effect:** That user cannot save drafts for matches in that group (server checks `accepted_groups`).
-- **Unlock:** `POST /api/predictions/groups/:groupId/unlock` removes the letter **only if** no official result exists for any match in that group.
-- **UI:** Locked group shows scores as plain text; **Unlock group** disabled when `groupHasOfficialResults`.
-
-### 3. Per-fixture kickoff
-
-- **Group:** Each group match locks at its own kickoff (in addition to global lock at first kickoff).
-- **Knockout:** Each KO fixture locks at its kickoff (`isKnockoutFixtureLocked`).
-- **UI:** Inputs disabled; locked summary with prediction (and result/points when available).
-
-### 4. Official result (`results` table, `FINISHED`)
-
-- **When:** Admin override, football-data sync, or seed script inserts a result.
-- **Effect:**
-  - Cannot change prediction for **that** match (`assertMatchEditable` + official result check).
-  - Cannot **unlock** a group that has **any** finished match in that group (`assertGroupUnlockAllowed`).
-- **Knockout:** Same as kickoff lock path — result implies locked for edits.
-
-### 5. Knockout-only gates (not “locks” but block saves)
-
-| Gate | Rule |
-|------|------|
-| 72 group picks | All 72 group predictions committed before first global lock, to save any KO pick |
-| Fixture confirmed | KO match must appear in `buildConfirmedKnockoutFixtures(results)` |
+Saves use **committed** picks only (UI auto-saves as `committed`). Draft rows are legacy.
 
 ---
 
-## Comparison visibility (may differ from edit rules)
+## Lock trigger map → FINAL_PLAN
 
-| Stage | Others’ predictions visible |
-|-------|----------------------------|
-| Group | After global group lock (first kickoff / `group_locked`) |
-| Knockout | After that fixture’s kickoff |
+| Trigger | FINAL_PLAN | Edit lock | Comparison (others’ picks) |
+|---------|------------|-----------|----------------------------|
+| **First tournament kickoff** | Group stage + bonus lock at first kickoff | All group + bonus for everyone (`group_locked` / `shouldLockGroup`) | Group picks visible after global lock |
+| **Per-group Lock group** | Owner UX (not in original plan text) | That user cannot edit matches in that letter | Unchanged — still hidden until global group lock |
+| **Per-group Unlock group** | Owner UX | Removes letter from `accepted_groups` if no official results in group | — |
+| **Official result (one match)** | Implied integrity | That **fixture** cannot be edited; **unlock group** blocked if **any** match in group has a result | Group comparison still global-lock timing |
+| **Group fixture kickoff** | Rolling per match in plan spirit | **Not enforced on save today** — only global first kickoff + result row per fixture (`isGroupFixtureLocked` exists for UI helpers but save path uses `assertMatchEditable` without per-group kickoff) | — |
+| **KO fixture kickoff** | Per-fixture KO lock | That KO fixture for everyone | Others’ KO picks visible after that kickoff |
+| **KO official result** | — | That fixture locked even before kickoff (sync/seed edge case) | Still kickoff-based for visibility |
+| **72 group picks** | Completeness before KO | Blocks KO **saves** only until global lock | — |
+| **KO fixture confirmed** | Real qualifiers | Blocks KO save until both teams known | — |
 
-See `src/lib/comparisonVisibility.ts`.
+---
+
+## Resolved decisions (2026-06-03 debug sessions)
+
+| Question | Decision |
+|----------|----------|
+| One result freezes whole group for everyone? | **No.** Only that fixture is uneditable; voluntary unlock blocked for the group if **any** result exists in the group. |
+| Voluntary lock vs global lock? | Voluntary lock is per-user; global lock applies to everyone at first kickoff. |
+| Unlock after user locked a group? | **Yes**, until official results exist in that group or global/tournament lock is active. |
+| KO “Lock round” buttons? | **Not required** — automatic per-fixture lock at kickoff. |
+| Comparison vs edit for KO? | **Reveal at kickoff**; edit may also stop when official result exists before kickoff. |
+| Scoring on locked fixtures? | Uses last committed pick at lock/result time; see [FINAL_PLAN.md](./FINAL_PLAN.md) for point values and KO multipliers. |
 
 ---
 
@@ -61,19 +51,36 @@ See `src/lib/comparisonVisibility.ts`.
 
 | Method | Path | Notes |
 |--------|------|--------|
-| POST | `/api/predictions/groups/:groupId/lock` | Requires all 6 group scores saved |
-| POST | `/api/predictions/groups/:groupId/unlock` | Fails if group has any official result |
-| POST | `/api/system/locks/run` | Sets `group_locked`; use in tests / jobs |
+| POST | `/api/predictions/groups/:groupId/lock` | All 6 group scores required |
+| POST | `/api/predictions/groups/:groupId/unlock` | Fails if `groupHasOfficialResults` |
+| POST | `/api/system/locks/run` | Sets `group_locked` (jobs / admin) |
 
 ---
 
-## Open questions (for next agent)
+## Local verification
 
-1. Should **any** official result in a group freeze **all six** fixtures in that group for edits, or only fixtures with results? *(Today: only fixtures with a result row; other fixtures in the same group stay editable unless user-locked or global-locked.)*
-2. Should voluntary **Lock group** persist through unlock after partial results, or is results-based lock sufficient?
-3. Align comparison visibility with edit locks at kickoff vs at FT.
-4. Per-phase KO “Lock round” buttons — product not implemented; confirm not required.
+```bash
+ALLOW_KO_SEED=1 npm run seed:complete-teams
+npm run server    # http://localhost:8787 — Team1 / bender (admin)
+```
+
+See [KO_ENVIRONMENT.md](./KO_ENVIRONMENT.md), [FINAL_PREDICTION_HANDOVER.md](./FINAL_PREDICTION_HANDOVER.md).
 
 ---
 
-*End of locking reference.*
+## Tests
+
+| File | Coverage |
+|------|----------|
+| `src/__tests__/pickLocks.test.ts` | Global lock, results, unlock |
+| `src/__tests__/comparisonVisibility.test.ts` | Group / KO visibility |
+| `src/__tests__/lockingPolicy.test.ts` | Policy assertions vs this doc |
+| `src/server/__tests__/api.integration.test.ts` | Lock/unlock API, 72 gate, global lock |
+
+---
+
+## Related
+
+- [COMPLIANCE.md](./COMPLIANCE.md) — checklist  
+- [AGENT_PROMPT_STRESS_TEST.md](./AGENT_PROMPT_STRESS_TEST.md) — **next session** full QA  
+- [AGENT_PROMPT_LOCKING.md](./AGENT_PROMPT_LOCKING.md) — locking audit (largely complete; use stress prompt next)

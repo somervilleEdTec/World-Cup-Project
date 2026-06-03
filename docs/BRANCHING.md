@@ -60,6 +60,8 @@ All docs under `docs/` are maintained on **both** branches:
 | [FINAL_PREDICTION_HANDOVER.md](./FINAL_PREDICTION_HANDOVER.md) | “One final prediction left” local seed |
 | [KO_ENVIRONMENT.md](./KO_ENVIRONMENT.md) | Local KO test seed |
 | [STRESS_TEST_HANDOVER.md](./STRESS_TEST_HANDOVER.md) | Stress-test playbook |
+| [AGENT_PROMPT_STRESS_TEST.md](./AGENT_PROMPT_STRESS_TEST.md) | **Next agent** — stress / environment QA |
+| [LOCKING.md](./LOCKING.md) | Prediction lock specification |
 | [GO_LIVE.md](./GO_LIVE.md) | Launch checklist |
 | [DEPLOY.md](./DEPLOY.md) | Production deploy |
 

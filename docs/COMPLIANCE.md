@@ -17,6 +17,7 @@ Verified against [FINAL_PLAN.md](./FINAL_PLAN.md). **Last reviewed:** 2026-06-03
 | Group / fixture lock on official result | Done | `assertMatchEditable` + `assertGroupUnlockAllowed` in `pickLocks.ts` |
 | All 72 group picks before KO saves | Done | `assertAllGroupPicksCommitted` in `saveDraftPick` for KO |
 | Tournament picks standalone | Done | `setBonusDraft` → `bonus_committed`; no group gate |
+| Knockout round multipliers (QF/SF/Final) | Done | `knockoutStageMultiplier.ts`, `matchScoring.ts` |
 | Knockout only when officially confirmed | Done | `knockoutFixtureAvailability.ts` |
 | football-data sync + manual override | Done | `sync.ts`, admin routes |
 | Mapping diagnostics | Done | Admin API + `npm run diagnose:mappings` |
@@ -31,5 +32,7 @@ Verified against [FINAL_PLAN.md](./FINAL_PLAN.md). **Last reviewed:** 2026-06-03
 - Auth uses **display name**, not email.
 - **Comparison — knockout:** others’ predictions hidden until fixture kickoff (not visible pre-kickoff).
 - User-facing label **prediction**; API/DB still use `committed` state naming.
+
+**Tests:** 71 tests (`npm test`) — includes `lockingPolicy.test.ts`, lock/unlock integration tests.
 
 **Deferred (P3):** OAuth, PWA, PDF export, E2E tests, production CORS hardening.

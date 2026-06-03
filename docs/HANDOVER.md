@@ -8,8 +8,8 @@
 **Deploy:** [docs/DEPLOY.md](./DEPLOY.md) · **Go-live tests:** [docs/GO_LIVE.md](./GO_LIVE.md)  
 **Local debug:** [docs/KO_ENVIRONMENT.md](./KO_ENVIRONMENT.md) · [docs/FINAL_PREDICTION_HANDOVER.md](./FINAL_PREDICTION_HANDOVER.md)
 
-**Next agent starts here:** **[docs/AGENT_PROMPT_LOCKING.md](./AGENT_PROMPT_LOCKING.md)** — audit when predictions lock for all players · Reference: [docs/LOCKING.md](./LOCKING.md)  
-Also: [docs/LAUNCH_HANDOVER.md](./LAUNCH_HANDOVER.md) (launch) · General dev: [docs/AGENT_PROMPT.md](./AGENT_PROMPT.md)
+**Next agent starts here:** **[docs/AGENT_PROMPT_STRESS_TEST.md](./AGENT_PROMPT_STRESS_TEST.md)** — stress, environment & debug QA after 2026-06-03 merge  
+Also: [docs/LOCKING.md](./LOCKING.md) · [docs/LAUNCH_HANDOVER.md](./LAUNCH_HANDOVER.md) (launch) · [docs/AGENT_PROMPT.md](./AGENT_PROMPT.md) (general dev)
 
 ---
 
@@ -55,7 +55,7 @@ Friends-and-family prediction app for **FIFA World Cup 2026** (48 teams, 12 grou
 | Each knockout fixture | Kickoff **or** official result | `isKnockoutFixtureLocked` |
 | KO saves | Before global lock | Requires 72 committed group picks |
 
-**Next work:** Full audit — [AGENT_PROMPT_LOCKING.md](./AGENT_PROMPT_LOCKING.md).
+**Next work:** Stress test — [AGENT_PROMPT_STRESS_TEST.md](./AGENT_PROMPT_STRESS_TEST.md).
 
 ### Picks storage (June 2026 UX)
 
@@ -84,7 +84,8 @@ Friends-and-family prediction app for **FIFA World Cup 2026** (48 teams, 12 grou
 | [GO_LIVE.md](./GO_LIVE.md) | Pre-launch checklist |
 | [COMPLIANCE.md](./COMPLIANCE.md) | Plan compliance |
 | [LOCKING.md](./LOCKING.md) | Prediction lock layers (implemented) |
-| [AGENT_PROMPT_LOCKING.md](./AGENT_PROMPT_LOCKING.md) | **Next agent** — locking audit prompt |
+| [AGENT_PROMPT_STRESS_TEST.md](./AGENT_PROMPT_STRESS_TEST.md) | **Next agent** — stress / environment / debug QA |
+| [AGENT_PROMPT_LOCKING.md](./AGENT_PROMPT_LOCKING.md) | Locking audit prompt (reference) |
 
 ---
 

@@ -21,12 +21,14 @@ See **[docs/BRANCHING.md](docs/BRANCHING.md)**.
 
 ## New agent? (development & debug)
 
-1. **[docs/HANDOVER.md](docs/HANDOVER.md)** — architecture and API  
-2. **[docs/AGENT_PROMPT.md](docs/AGENT_PROMPT.md)** — copy-paste prompt for a dev session  
-3. **[docs/FINAL_PREDICTION_HANDOVER.md](docs/FINAL_PREDICTION_HANDOVER.md)** — end-of-tournament local debug  
-4. **[docs/KO_ENVIRONMENT.md](docs/KO_ENVIRONMENT.md)** · **[docs/STRESS_TEST_HANDOVER.md](docs/STRESS_TEST_HANDOVER.md)** — test seeds and playbook  
-5. **[docs/UI_HANDOVER.md](docs/UI_HANDOVER.md)** — completed UI work + bug log  
-6. **[docs/TODO.md](docs/TODO.md)** — task tracker  
+1. **[docs/AGENT_PROMPT_STRESS_TEST.md](docs/AGENT_PROMPT_STRESS_TEST.md)** — **next session:** stress, environment & debug QA  
+2. **[docs/HANDOVER.md](docs/HANDOVER.md)** — architecture and API  
+3. **[docs/LOCKING.md](docs/LOCKING.md)** — prediction lock specification  
+4. **[docs/AGENT_PROMPT.md](docs/AGENT_PROMPT.md)** — general dev session prompt  
+5. **[docs/FINAL_PREDICTION_HANDOVER.md](docs/FINAL_PREDICTION_HANDOVER.md)** — end-of-tournament local debug  
+6. **[docs/KO_ENVIRONMENT.md](docs/KO_ENVIRONMENT.md)** · **[docs/STRESS_TEST_HANDOVER.md](docs/STRESS_TEST_HANDOVER.md)** — test seeds and playbook  
+7. **[docs/UI_HANDOVER.md](docs/UI_HANDOVER.md)** — completed UI work + bug log  
+8. **[docs/DEPLOY_UPDATE.md](docs/DEPLOY_UPDATE.md)** — pull `main` on production host after merges  
 
 Product rules: **[docs/FINAL_PLAN.md](docs/FINAL_PLAN.md)**
 

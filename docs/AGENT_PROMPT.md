@@ -12,7 +12,7 @@ You are helping with **World Cup Boys** (“Welcome to the Shiva Bowl”) — FI
 **Branch:** `Debug` for changes · `main` for production ([BRANCHING.md](./BRANCHING.md))  
 **Phase:** Development and in-tournament fixes. For **live launch**, use [docs/AGENT_PROMPT_LAUNCH.md](./AGENT_PROMPT_LAUNCH.md) instead.
 
-**Priority task (locking):** Use [docs/AGENT_PROMPT_LOCKING.md](./AGENT_PROMPT_LOCKING.md) instead of this file when auditing prediction lock timing.
+**Next session:** Use [docs/AGENT_PROMPT_STRESS_TEST.md](./AGENT_PROMPT_STRESS_TEST.md) for full stress / environment / debug QA. Locking reference: [docs/LOCKING.md](./LOCKING.md).
 
 ## Mandatory first step — read in order
 

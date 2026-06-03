@@ -3,9 +3,9 @@
 **Last updated:** 2026-06-03  
 **Repository:** https://github.com/somervilleEdTec/World-Cup-Project  
 **Branches:** `main` (production) · `Debug` (development) — [BRANCHING.md](./BRANCHING.md)  
-**Phase:** UI polish complete; **next priority:** prediction locking audit — [AGENT_PROMPT_LOCKING.md](./AGENT_PROMPT_LOCKING.md) · [LOCKING.md](./LOCKING.md)
+**Phase:** **2026-06-03 debug merge** — scoring, lock/unlock, API fixes on `main`/`Debug`. **Next session:** full stress & environment QA.
 
-**Start here:** [AGENT_PROMPT_LOCKING.md](./AGENT_PROMPT_LOCKING.md) (locking) · [AGENT_PROMPT.md](./AGENT_PROMPT.md) (general)
+**Start here:** [AGENT_PROMPT_STRESS_TEST.md](./AGENT_PROMPT_STRESS_TEST.md) · Reference: [LOCKING.md](./LOCKING.md) · General: [AGENT_PROMPT.md](./AGENT_PROMPT.md)
 
 ---
 
@@ -46,7 +46,7 @@ sqlite3 data.db "UPDATE users SET is_admin = 1 WHERE display_name = 'YourName';"
 **Quality gates:**
 
 ```bash
-npm test        # 66 tests (16 files)
+npm test        # 71 tests (17 files)
 npm run seed:ko-environment   # optional — see KO_ENVIRONMENT.md
 npm run build
 npm run lint    # optional
