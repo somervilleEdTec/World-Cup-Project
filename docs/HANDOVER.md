@@ -253,7 +253,7 @@ npm run db:purge      # reset local SQLite data
 2. Owner go-live on production ([GO_LIVE.md](./GO_LIVE.md)).
 3. Keep `npm run jobs` + football-data sync during tournament.
 4. On **`main`**: empty DB + `FOOTBALL_DATA_TOKEN` only — never run KO seed scripts in production.
-5. On **`Debug`**: `cd C:\Users\tomso\World-Cup-Project`, then `Copy-Item .env.debug.example .env`, then `npm run seed:debug`. See [DEBUG.md](./DEBUG.md).
+5. On **`Debug`**: `cd C:\Users\tomso\World-Cup-Project`, `Copy-Item .env.debug.example .env`, `npm run seed:debug` (users only). Optional: `npm run seed:debug-random`. See [DEBUG.md](./DEBUG.md).
 6. Log new issues in [UI_HANDOVER.md](./UI_HANDOVER.md) §7.
 
 ---

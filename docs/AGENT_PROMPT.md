@@ -19,7 +19,7 @@ You are helping with **World Cup Boys** (“Welcome to the Shiva Bowl”) — FI
 | **`main`** | **Never** commit, push, merge, or deploy unless the user **explicitly states and confirms** a production release |
 
 **Local only on Debug:** `DEBUG_LOCAL=1`, localhost, **no** football-data.org — use **`npm run seed:debug`** for random results (or `--no-results`).  
-**Test users:** **Test1–Test20**, password **`guest`**, unless the user specifies otherwise.
+**Test users:** **Test1–Test20**, password **`guest`**, **no predictions / no results** by default unless the user asks for seeded data.
 
 Full policy: **[DEBUG.md](./DEBUG.md)**
 

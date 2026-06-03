@@ -43,7 +43,7 @@ Local environment (**Debug** only):
 cd C:\Users\tomso\World-Cup-Project
 Copy-Item .env.debug.example .env
 npm run seed:debug
-npm run seed:debug -- --no-results
+npm run seed:debug-random
 ```
 
 See **[DEBUG.md](./DEBUG.md)** · [KO_ENVIRONMENT.md](./KO_ENVIRONMENT.md). Use `npm run db:purge` to reset locally.

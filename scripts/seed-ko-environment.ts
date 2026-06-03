@@ -1,6 +1,7 @@
 /**
- * Debug-branch local seed — random results (or --no-results), no football-data.org.
- * Default: Test1–Test20, password guest (see docs/DEBUG.md).
+ * Debug-branch local seed — no football-data.org.
+ * Default: Test1–Test20, password guest, no predictions, no results (see docs/DEBUG.md).
+ * Optional: --with-predictions, --random-results, or scenario flags.
  */
 import 'dotenv/config';
 import {
@@ -298,15 +299,20 @@ async function main() {
   );
 
   const skipPurge = process.argv.includes('--no-purge');
-  const noResults = process.argv.includes('--no-results');
   const beforeFinal = process.argv.includes('--before-final');
   const fullBracket = process.argv.includes('--full-bracket');
   const completeTournament = process.argv.includes('--complete-tournament');
-
   const scenarioFlags = [beforeFinal, fullBracket, completeTournament].filter(Boolean);
   if (scenarioFlags.length > 1) {
     throw new Error('Use only one of --before-final, --full-bracket, or --complete-tournament.');
   }
+
+  const withPredictions =
+    process.argv.includes('--with-predictions') || scenarioFlags.length > 0;
+  const withResults =
+    process.argv.includes('--random-results') || scenarioFlags.length > 0;
+  const seedPredictions = withPredictions;
+  const seedResults = withResults;
 
   await initDatabase();
   if (!skipPurge) {
@@ -322,14 +328,19 @@ async function main() {
   });
   const adminDisplayName = displayNameForIndex(userPrefix, adminIndex);
 
-  for (const [displayName, userId] of userIds) {
-    await seedUserPredictions(userId, displayName);
+  if (seedPredictions) {
+    for (const [displayName, userId] of userIds) {
+      await seedUserPredictions(userId, displayName);
+    }
+  } else {
+    // eslint-disable-next-line no-console
+    console.log('\nNo predictions seeded (default Debug state).');
   }
 
   let groupActuals: Record<string, ActualResult> = {};
-  if (noResults) {
+  if (!seedResults) {
     // eslint-disable-next-line no-console
-    console.log('\nSkipping official results (--no-results).');
+    console.log('No official results seeded (default Debug state).');
   } else {
     // eslint-disable-next-line no-console
     console.log('\nGenerating random official results (local seed, no API token)…');
@@ -363,19 +374,24 @@ async function main() {
     allActuals = groupActuals;
   }
 
-  const lockNowIso = beforeFinal ? SIMULATED_BEFORE_FINAL_ISO : SIMULATED_NOW_ISO;
-  await runAutoLocks(lockNowIso);
-  // eslint-disable-next-line no-console
-  console.log(`Applied tournament locks (simulated date ${lockNowIso}).`);
+  if (seedResults || seedPredictions) {
+    const lockNowIso = beforeFinal ? SIMULATED_BEFORE_FINAL_ISO : SIMULATED_NOW_ISO;
+    await runAutoLocks(lockNowIso);
+    // eslint-disable-next-line no-console
+    console.log(`Applied tournament locks (simulated date ${lockNowIso}).`);
+  }
 
   const confirmed = buildConfirmedKnockoutFixtures(allActuals);
   const finalFixture = confirmed.find((m) => m.id === FINAL_MATCH_ID);
-  const leaderboard = await computeLeaderboard();
+  const leaderboard = seedResults || seedPredictions ? await computeLeaderboard() : [];
 
   const testUserCount = parseUserCount();
-  const scenarioLabel = noResults
-    ? 'no official results (picks only)'
-    : beforeFinal
+  const scenarioLabel =
+    !seedPredictions && !seedResults
+      ? 'users only (no predictions, no results)'
+      : !seedResults
+        ? 'predictions only (no official results)'
+        : beforeFinal
       ? 'before-final (one prediction left per user)'
       : completeTournament
         ? 'complete tournament (all results + all predictions)'
@@ -396,6 +412,8 @@ async function main() {
   // eslint-disable-next-line no-console
   console.log(`Official results: ${Object.keys(allActuals).length} matches`);
   // eslint-disable-next-line no-console
+  console.log(`Predictions seeded: ${seedPredictions ? 'yes' : 'no'}`);
+  // eslint-disable-next-line no-console
   console.log(`Confirmed KO fixtures for picks UI: ${confirmed.length}`);
   if (beforeFinal && finalFixture) {
     // eslint-disable-next-line no-console
@@ -403,14 +421,16 @@ async function main() {
       `Final fixture: ${finalFixture.homeTeamId} vs ${finalFixture.awayTeamId} — no official result; no user prediction yet.`
     );
   }
-  // eslint-disable-next-line no-console
-  console.log('Leaderboard (points):');
-  leaderboard
-    .sort((a, b) => b.points - a.points)
-    .forEach((row, index) => {
-      // eslint-disable-next-line no-console
-      console.log(`  ${index + 1}. ${row.name}: ${row.points} pts`);
-    });
+  if (leaderboard.length > 0) {
+    // eslint-disable-next-line no-console
+    console.log('Leaderboard (points):');
+    leaderboard
+      .sort((a, b) => b.points - a.points)
+      .forEach((row, index) => {
+        // eslint-disable-next-line no-console
+        console.log(`  ${index + 1}. ${row.name}: ${row.points} pts`);
+      });
+  }
 
   await closeDatabase();
 }

@@ -14,8 +14,9 @@
 | **`main`** | **Never** push, merge to `main`, or open PRs to `main` unless the user **explicitly requests and confirms** a production release |
 | Project folder | Run **all** `git` / `npm` commands inside the clone (not Desktop or another folder) |
 | Hosting | **Local only** (`localhost` / `127.0.0.1`) — not the Oracle VM |
-| Results | **No** football-data.org on Debug — use **random seeded results** or **no results** (see below) |
-| Test users | **`Test1` … `Test20`**, password **`guest`**, unless a task says otherwise |
+| Results | **No** football-data.org on Debug — use seeds when you need test data |
+| Default DB state | **Test1–Test20** / **`guest`**, **no predictions**, **no results** |
+| Test users | **20 accounts** unless a task says otherwise |
 
 See also [BRANCHING.md](./BRANCHING.md) · [CONTRIBUTING.md](../CONTRIBUTING.md) · [AGENT_PROMPT.md](./AGENT_PROMPT.md)
 
@@ -42,7 +43,7 @@ git clone https://github.com/somervilleEdTec/World-Cup-Project.git
 cd C:\Users\tomso\World-Cup-Project
 ```
 
-### Every session
+### Every session (default empty picks/results)
 
 ```powershell
 cd C:\Users\tomso\World-Cup-Project
@@ -54,6 +55,8 @@ npm install
 npm run seed:debug
 .\scripts\Test-LocalSite.ps1 -Mode Serve
 ```
+
+`npm run seed:debug` creates **Test1–Test20** with password **`guest`** only — **no** saved predictions and **no** official results.
 
 Browser: http://localhost:8787 — log in **Test1** / **guest** (sign-up password **MadSlags1** if needed).
 
@@ -73,51 +76,33 @@ npm run server
 
 ---
 
-## Results modes
+## Optional test data (when you need it)
 
-| `RESULTS_MODE` | Behaviour |
-|----------------|-----------|
-| **`none`** (default with `DEBUG_LOCAL`) | No live API; no automatic results. Use seeds or Admin manual override. |
-| **`random`** | Use seed scripts — they inject **random** official scores (0–`max-goals` per team). |
-| **`live`** | Not used on Debug. Reserved for production (`main`). |
-
-### Standard seed (20 users + random results)
+| Command | Predictions | Results |
+|---------|-------------|---------|
+| `npm run seed:debug` | **None** (default) | **None** |
+| `npm run seed:debug -- --with-predictions` | Random | None |
+| `npm run seed:debug-random` | Random | Random (group stage) |
+| `npm run seed:complete-teams` | Full tournament | Random (all rounds) |
+| `npm run seed:before-final` | Through SF/3rd | Random (final pick left) |
 
 From the project folder:
 
 ```powershell
 cd C:\Users\tomso\World-Cup-Project
-npm run seed:debug
-```
-
-Creates **Test1–Test20** / **`guest`**, random group picks and bonus picks, random group-stage official results (R32-only KO results unless flags below).
-
-Variants:
-
-| Command | Users | Results |
-|---------|-------|---------|
-| `npm run seed:debug` | Test1–20 | Random group results |
-| `npm run seed:debug -- --no-results` | Test1–20 | **No** official results |
-| `npm run seed:complete-teams` | Test1–20 | Random **full tournament** |
-| `npm run seed:before-final` | Test1–20 | Random; one final pick left per user |
-
-Override count or names only when a task says so:
-
-```powershell
-cd C:\Users\tomso\World-Cup-Project
-npm run seed:ko-environment -- --user-count 5 --user-prefix Test --password guest
+npm run seed:debug-random
 ```
 
 ---
 
 ## Environment file
 
-Use **[`.env.debug.example`](../.env.debug.example)** on **`Debug`**. Do not copy production `.env` values (no production URL, no live token required).
+Use **[`.env.debug.example`](../.env.debug.example)** on **`Debug`**. Do not copy production `.env` values.
 
 | Variable | Debug value |
 |----------|-------------|
 | `DEBUG_LOCAL` | `1` |
-| `RESULTS_MODE` | `none` or `random` (via seeds) |
+| `RESULTS_MODE` | `none` (default — matches empty DB after `seed:debug`) |
 | `ALLOW_KO_SEED` | `1` |
 | `VITE_API_BASE_URL` | `http://localhost:8787` |
 | `FOOTBALL_DATA_TOKEN` | Leave unset |

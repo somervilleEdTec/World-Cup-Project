@@ -28,7 +28,7 @@ cd C:\Users\tomso\World-Cup-Project
 git checkout Debug
 git pull origin Debug
 Copy-Item .env.debug.example .env
-npm run seed:debug                          # Test1–Test20 / guest, random results
+npm run seed:debug                          # Test1–Test20 / guest, no picks, no results
 .\scripts\Test-LocalSite.ps1 -Mode Serve    # http://localhost:8787/login
 ```
 

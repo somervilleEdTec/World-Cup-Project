@@ -28,8 +28,8 @@ npm run seed:debug
 Use your actual clone path if not `C:\Users\tomso\World-Cup-Project`. **Do not** run `git`/`npm` from Desktop.
 
 - **`DEBUG_LOCAL=1`** — no football-data.org sync  
-- **`RESULTS_MODE=none`** — no results until seeded; use **`npm run seed:debug`** for random results  
-- **`npm run seed:debug -- --no-results`** — users and picks only  
+- **`RESULTS_MODE=none`** — matches default empty DB after **`npm run seed:debug`**  
+- **`npm run seed:debug-random`** — optional random picks and group results  
 
 ---
 
