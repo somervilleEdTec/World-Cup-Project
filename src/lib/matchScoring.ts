@@ -20,7 +20,7 @@ export function classifyPickAccuracy(
   return 'miss';
 }
 
-/** Match-level points only (+1 result, +5 exact). Group position bonus is not per fixture. */
+/** Match-level points only (+2 result, +4 exact). Group position bonus is not per fixture. */
 export function computeMatchPoints(
   pick: Pick | undefined,
   actual: ActualResult | undefined
@@ -29,10 +29,10 @@ export function computeMatchPoints(
 
   let points = 0;
   if (resultKey(pick.homeScore, pick.awayScore) === resultKey(actual.homeScore, actual.awayScore)) {
-    points += 1;
+    points += 2;
   }
   if (pick.homeScore === actual.homeScore && pick.awayScore === actual.awayScore) {
-    points += 5;
+    points += 4;
   }
   return points;
 }

@@ -31,8 +31,8 @@
 
 After completing group predictions, users must preselect:
 
-- Tournament winner (+10)
-- Runner-up (+8)
+- Tournament winner (+6)
+- Runner-up (+5)
 - Third place (+6)
 - Fourth place (+4)
 
@@ -52,8 +52,8 @@ Rules:
 
 ### Group match points
 
-- Correct W/D/L: **+1**
-- Exact score bonus: **+5** (exact total = **6**)
+- Correct W/D/L: **+2**
+- Exact score bonus: **+4** (exact total = **6**)
 
 ### Group standing bonus
 
@@ -61,16 +61,16 @@ Rules:
 
 ### Knockout match points
 
-- Correct W/D/L (regulation): **+1**
-- Exact regulation score bonus: **+5**
+- Correct W/D/L (regulation): **+2**
+- Exact regulation score bonus: **+4**
 - Knockout draw: must select **team to progress** (ET/pens); no extra scoreline required.
 
 ### Tournament preselection bonuses
 
-- Champion: **+10**
-- Runner-up: **+8**
-- Third: **+6**
-- Fourth: **+4**
+- Champion: **+6**
+- Runner-up: **+5**
+- Third: **+4**
+- Fourth: **+3**
 
 ### Tie-breakers
 

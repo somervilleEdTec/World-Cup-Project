@@ -65,12 +65,12 @@ export function computeScore(
 
     const correctResult = resultKey(pick.homeScore, pick.awayScore) === resultKey(actual.homeScore, actual.awayScore);
     if (correctResult) {
-      points += 1;
+      points += 2;
       correctResults += 1;
     }
 
     if (pick.homeScore === actual.homeScore && pick.awayScore === actual.awayScore) {
-      points += 5;
+      points += 4;
       exactScores += 1;
     }
   });
@@ -96,19 +96,19 @@ export function computeScore(
   let bonusHits = 0;
   if (bonusPicks && finalPlacings) {
     if (bonusPicks.winnerTeamId === finalPlacings.winnerTeamId) {
-      points += 10;
-      bonusHits += 1;
-    }
-    if (bonusPicks.runnerUpTeamId === finalPlacings.runnerUpTeamId) {
-      points += 8;
-      bonusHits += 1;
-    }
-    if (bonusPicks.thirdTeamId === finalPlacings.thirdTeamId) {
       points += 6;
       bonusHits += 1;
     }
-    if (bonusPicks.fourthTeamId === finalPlacings.fourthTeamId) {
+    if (bonusPicks.runnerUpTeamId === finalPlacings.runnerUpTeamId) {
+      points += 5;
+      bonusHits += 1;
+    }
+    if (bonusPicks.thirdTeamId === finalPlacings.thirdTeamId) {
       points += 4;
+      bonusHits += 1;
+    }
+    if (bonusPicks.fourthTeamId === finalPlacings.fourthTeamId) {
+      points += 3;
       bonusHits += 1;
     }
   }

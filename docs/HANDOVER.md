@@ -35,13 +35,13 @@ Friends-and-family prediction app for **FIFA World Cup 2026** (48 teams, 12 grou
 
 | Rule | Points |
 |------|--------|
-| Correct W/D/L (any stage) | +1 |
-| Exact score bonus | +5 (6 total if exact) |
+| Correct W/D/L (any stage) | +2 |
+| Exact score bonus | +4 (6 total if exact) |
 | Exact group finishing position (per team) | +1 |
-| Preselected champion | +10 |
-| Preselected runner-up | +8 |
-| Preselected third place | +6 |
-| Preselected fourth place | +4 |
+| Preselected champion | +6 |
+| Preselected runner-up | +5 |
+| Preselected third place | +4 |
+| Preselected fourth place | +3 |
 
 ### Locking (implemented)
 
@@ -153,7 +153,7 @@ Jobs: src/server/jobs.ts (locks, sync poll)
 | `src/components/FixturePickCard.tsx` | Fixture UI; locked text + points |
 | `src/components/GroupStandingsTable.tsx` | Group projected/actual tables |
 | `src/lib/missingPicks.ts` | Missing predictions list for header |
-| `src/lib/matchScoring.ts` | Per-fixture points (+1 / +5) |
+| `src/lib/matchScoring.ts` | Per-fixture points (+2 / +4) |
 | `src/lib/comparisonVisibility.ts` | When others’ predictions are visible |
 | `src/lib/formatDateTime.ts` | BST kickoff formatting |
 | `src/components/TeamSelect.tsx` | Flag + name picker |

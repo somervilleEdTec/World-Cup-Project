@@ -18,8 +18,8 @@ export function WelcomePage() {
         <h3>How scoring works</h3>
         <h4>Match points</h4>
         <ul>
-          <li>Correct win/draw/loss: +1 point</li>
-          <li>Exact score bonus: +5 additional points (6 total when exact)</li>
+          <li>Correct win/draw/loss: +2 points</li>
+          <li>Exact score bonus: +4 additional points (6 total when exact)</li>
         </ul>
       </article>
 
@@ -31,10 +31,10 @@ export function WelcomePage() {
       <article className="card">
         <h3>Tournament result predictions</h3>
         <ul>
-          <li>Champion: +10</li>
-          <li>Runner-up: +8</li>
-          <li>Third place (bronze match winner): +6</li>
-          <li>Fourth place (bronze match loser): +4</li>
+          <li>Champion: +6</li>
+          <li>Runner-up: +5</li>
+          <li>Third place (bronze match winner): +4</li>
+          <li>Fourth place (bronze match loser): +3</li>
         </ul>
         <p>Enter these on the Tournament Results tab. They lock at the first match kickoff.</p>
       </article>
