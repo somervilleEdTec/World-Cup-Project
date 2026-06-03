@@ -133,6 +133,46 @@ TLS certificate must cover `worldcup.dosums.uk`. See [DEPLOY.md](./DEPLOY.md).
 
 ---
 
+## Wipe live database (empty start for friends)
+
+**Warning:** Removes **all users**, predictions, sessions, and stored results. Schema is recreated empty. After restart, `npm run jobs` / server startup may **re-import kickoffs and finished scores** from football-data.org (expected on production).
+
+**Preferred (GitHub):** Actions → **Wipe live database (manual)** → Run workflow → set input `confirm` to **`WIPE_LIVE_DATABASE`**. Uses the same deploy SSH secrets; pulls `main`, runs `scripts/wipe-live-database.sh`, verifies row counts, restarts systemd.
+
+**Or on the VM** (not from the deploy workflow on push):
+
+```bash
+cd ~/World-Cup-Project
+git pull --ff-only origin main
+bash scripts/wipe-live-database.sh
+```
+
+Manual steps equivalent to the script:
+
+```bash
+sudo systemctl stop worldcup worldcup-jobs 2>/dev/null || true
+npm run db:purge:live
+# equivalent: CONFIRM_LIVE_DB_PURGE=yes npm run db:purge
+sudo systemctl start worldcup-jobs worldcup 2>/dev/null || true
+```
+
+Verify empty:
+
+```bash
+sqlite3 data.db "SELECT COUNT(*) FROM users;"
+# expect 0
+```
+
+Promote yourself to admin again after re-registering:
+
+```bash
+sqlite3 data.db "UPDATE users SET is_admin = 1 WHERE display_name = 'YourName';"
+```
+
+**Never** run `db:purge` / `db:purge:live` from CI/deploy scripts. **`Debug`** local DB: use `npm run db:purge` without `--confirm-live` when `NODE_ENV` is not `production`.
+
+---
+
 ## Processes that must stay running
 
 | Process | Command | Role |

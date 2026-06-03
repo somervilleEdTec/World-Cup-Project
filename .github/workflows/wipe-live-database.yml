@@ -1,0 +1,60 @@
+# Manual only — wipes all users/predictions/results on production.
+# Does NOT run on push or deploy. See docs/PRODUCTION.md § Wipe live database.
+
+name: Wipe live database (manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type WIPE_LIVE_DATABASE to confirm full wipe'
+        required: true
+        type: string
+
+concurrency:
+  group: production-wipe
+  cancel-in-progress: false
+
+jobs:
+  wipe:
+    name: Wipe production database
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Require confirmation phrase
+        run: |
+          if [ "${{ github.event.inputs.confirm }}" != "WIPE_LIVE_DATABASE" ]; then
+            echo "Refusing wipe: workflow input must be exactly WIPE_LIVE_DATABASE"
+            exit 1
+          fi
+          echo "Confirmation accepted — proceeding with live database wipe."
+
+      - name: Check deploy secrets
+        run: |
+          missing=0
+          check() { if [ -z "$1" ]; then echo "  MISSING: $2"; missing=1; else echo "  OK: $2"; fi; }
+          check "${{ secrets.DEPLOY_HOST }}" "DEPLOY_HOST"
+          check "${{ secrets.DEPLOY_USER }}" "DEPLOY_USER"
+          check "${{ secrets.DEPLOY_SSH_KEY }}" "DEPLOY_SSH_KEY"
+          check "${{ secrets.DEPLOY_PATH }}" "DEPLOY_PATH"
+          if [ "${missing}" -ne 0 ]; then exit 1; fi
+
+      - name: Wipe live database over SSH
+        uses: appleboy/ssh-action@v1.2.2
+        env:
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          port: ${{ secrets.DEPLOY_PORT }}
+          command_timeout: 15m
+          envs: DEPLOY_PATH
+          script: |
+            set -euo pipefail
+            cd "${DEPLOY_PATH}"
+            git fetch origin main
+            git checkout main
+            git pull --ff-only origin main
+            chmod +x scripts/wipe-live-database.sh
+            bash scripts/wipe-live-database.sh

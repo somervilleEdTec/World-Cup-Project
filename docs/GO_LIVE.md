@@ -35,7 +35,7 @@ npm run build
 
 For a small friends pool, **SQLite** (`data.db`) is sufficient. Back up `data.db` regularly.
 
-Fresh start (destroys all users/picks/results): `npm run db:purge` — **do this before first go-live** on `main`
+Fresh start on **production** (destroys all users/picks/results): on the VM, `npm run db:purge:live` — see [PRODUCTION.md](./PRODUCTION.md) § Wipe live database. Local **Debug**: `npm run db:purge`.
 
 ## 3. Start processes
 

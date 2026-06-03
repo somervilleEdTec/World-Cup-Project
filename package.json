@@ -18,6 +18,7 @@
     "jobs": "tsx src/server/jobs.ts",
     "migrate": "tsx scripts/migrate.ts",
     "db:purge": "tsx scripts/purge-database.ts",
+    "db:purge:live": "tsx scripts/purge-database.ts --confirm-live",
     "seed:ko-environment": "tsx scripts/seed-ko-environment.ts",
     "seed:before-final": "tsx scripts/seed-ko-environment.ts -- --before-final",
     "seed:complete-teams": "tsx scripts/seed-ko-environment.ts -- --complete-tournament --user-prefix Team --password bender --max-goals 4",

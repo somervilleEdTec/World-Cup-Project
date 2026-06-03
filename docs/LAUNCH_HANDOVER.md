@@ -41,7 +41,7 @@ Copy-paste session prompt: [AGENT_PROMPT_LAUNCH.md](./AGENT_PROMPT_LAUNCH.md)
 - **Do not commit** `.env`, `data.db`, or API tokens to git.  
 - **Do not run** `npm run seed:ko-environment` or `seed:before-final` on production (`main`). Those are **Debug-only** (or `ALLOW_KO_SEED=1` locally).  
 - **Do not change** [FINAL_PLAN.md](./FINAL_PLAN.md) without owner approval.  
-- **Before first real users:** `npm run db:purge` once on the production host so the database is empty.
+- **Before first real users:** `npm run db:purge:live` once on the production host ([PRODUCTION.md](./PRODUCTION.md) § Wipe live database) so the database has no test users.
 
 ---
 
