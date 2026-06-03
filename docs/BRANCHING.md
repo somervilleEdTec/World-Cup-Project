@@ -64,6 +64,7 @@ All docs under `docs/` are maintained on **both** branches:
 | [LOCKING.md](./LOCKING.md) | Prediction lock specification |
 | [GO_LIVE.md](./GO_LIVE.md) | Launch checklist |
 | [DEPLOY.md](./DEPLOY.md) | Production deploy |
+| [DEPLOY_AUTOMATION.md](./DEPLOY_AUTOMATION.md) | Auto-deploy on push to `main` (GitHub Actions) |
 
 Work on **`Debug`**; merge doc updates to **`main`** with code.
 

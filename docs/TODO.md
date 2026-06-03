@@ -21,7 +21,7 @@
 
 - [x] Stress test playbook ([STRESS_TEST_HANDOVER.md](./STRESS_TEST_HANDOVER.md))
 - [x] KO-environment UX merged to `main` (predictions UI, comparison, seed script)
-- [ ] Owner production deploy ([DEPLOY.md](./DEPLOY.md))
+- [ ] Owner production deploy — one-time [DEPLOY_AUTOMATION.md](./DEPLOY_AUTOMATION.md) secrets + systemd; then auto on push to `main`
 - [ ] `FOOTBALL_DATA_TOKEN` + `npm run jobs` during tournament
 - [ ] Owner sign-off on [GO_LIVE.md](./GO_LIVE.md)
 

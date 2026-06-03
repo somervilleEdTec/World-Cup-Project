@@ -2,7 +2,9 @@
 
 **Last updated:** 2026-06-03
 
-Run these steps on the **production host** (VPS / owner machine serving the live site) after `git pull origin main`.
+> **Automated:** If GitHub Actions secrets are configured, every push to **`main`** deploys automatically. See **[DEPLOY_AUTOMATION.md](./DEPLOY_AUTOMATION.md)**.
+
+Manual steps below (same as `scripts/deploy-production.sh` on the server).
 
 ## 1. Pull latest `main`
 

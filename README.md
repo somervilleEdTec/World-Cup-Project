@@ -28,7 +28,8 @@ See **[docs/BRANCHING.md](docs/BRANCHING.md)**.
 5. **[docs/FINAL_PREDICTION_HANDOVER.md](docs/FINAL_PREDICTION_HANDOVER.md)** — end-of-tournament local debug  
 6. **[docs/KO_ENVIRONMENT.md](docs/KO_ENVIRONMENT.md)** · **[docs/STRESS_TEST_HANDOVER.md](docs/STRESS_TEST_HANDOVER.md)** — test seeds and playbook  
 7. **[docs/UI_HANDOVER.md](docs/UI_HANDOVER.md)** — completed UI work + bug log  
-8. **[docs/DEPLOY_UPDATE.md](docs/DEPLOY_UPDATE.md)** — pull `main` on production host after merges  
+8. **[docs/DEPLOY_AUTOMATION.md](docs/DEPLOY_AUTOMATION.md)** — auto-deploy on push to `main` (GitHub Actions + SSH)  
+9. **[docs/DEPLOY_UPDATE.md](docs/DEPLOY_UPDATE.md)** — manual deploy on production host  
 
 Product rules: **[docs/FINAL_PLAN.md](docs/FINAL_PLAN.md)**
 

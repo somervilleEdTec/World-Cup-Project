@@ -93,6 +93,10 @@ See [DEPLOY.md](./DEPLOY.md) for nginx, systemd, and Postgres details.
 
 ### 1. Code
 
+**Ongoing updates:** After one-time setup in [DEPLOY_AUTOMATION.md](./DEPLOY_AUTOMATION.md), every push to **`main`** deploys automatically via GitHub Actions.
+
+**First install on the server:**
+
 ```bash
 git clone https://github.com/somervilleEdTec/World-Cup-Project.git
 cd World-Cup-Project

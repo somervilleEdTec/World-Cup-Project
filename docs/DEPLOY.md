@@ -165,14 +165,20 @@ CMD ["npm", "run", "server"]
 
 Run migrations in an init container or entrypoint before `server`.
 
-## 9. Quality checks before deploy
+## 9. Automated deploy (push to `main`)
+
+Configure GitHub Actions once, then each push to **`main`** runs tests and deploys over SSH. Full guide: **[DEPLOY_AUTOMATION.md](./DEPLOY_AUTOMATION.md)**.
+
+Server script (also used by CI): `bash scripts/deploy-production.sh`
+
+## 10. Quality checks before deploy
 
 ```bash
 npm test
 npm run build
 ```
 
-## 10. Split frontend hosting (alternative)
+## 11. Split frontend hosting (alternative)
 
 If the SPA is on Vercel/Netlify and the API elsewhere:
 

@@ -1,0 +1,16 @@
+[Unit]
+Description=World Cup Boys background jobs (locks + football-data sync)
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+WorkingDirectory=/opt/world-cup-boys
+EnvironmentFile=/opt/world-cup-boys/.env
+Environment=NODE_ENV=production
+ExecStart=/usr/bin/npm run jobs
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

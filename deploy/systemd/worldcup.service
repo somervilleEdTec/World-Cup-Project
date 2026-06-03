@@ -1,0 +1,16 @@
+[Unit]
+Description=World Cup Boys API and SPA
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+WorkingDirectory=/opt/world-cup-boys
+EnvironmentFile=/opt/world-cup-boys/.env
+Environment=NODE_ENV=production
+ExecStart=/usr/bin/npm run server
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
