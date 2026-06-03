@@ -78,6 +78,7 @@ Friends-and-family prediction app for **FIFA World Cup 2026** (48 teams, 12 grou
 | [LAUNCH_HANDOVER.md](./LAUNCH_HANDOVER.md) | **Live site launch** (registration, deploy) |
 | [AGENT_PROMPT_LAUNCH.md](./AGENT_PROMPT_LAUNCH.md) | Copy-paste prompt for launch agent |
 | [BRANCHING.md](./BRANCHING.md) | Two-branch workflow (`main` + `Debug`) |
+| [PRODUCTION.md](./PRODUCTION.md) | **Live** — https://worldcup.dosums.uk, Oracle VM, deploy secrets |
 | [DEBUG_BRANCH.md](./DEBUG_BRANCH.md) | Debug = local PC only; never live deploy |
 | [DEPLOY_AUTOMATION.md](./DEPLOY_AUTOMATION.md) | Auto-deploy on **`main`** only |
 | [FINAL_PLAN.md](./FINAL_PLAN.md) | Locked competition rules |

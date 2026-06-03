@@ -5,7 +5,7 @@
 **Product:** World Cup Boys — “Welcome to the Shiva Bowl”  
 **Repository:** https://github.com/somervilleEdTec/World-Cup-Project  
 **Branch for production:** **`main` only**  
-**Phase:** Launch — empty production database, live results from football-data.org
+**Phase:** Live on Oracle VM — https://worldcup.dosums.uk — auto-deploy from **`main`** ([PRODUCTION.md](./PRODUCTION.md))
 
 ---
 
@@ -26,7 +26,7 @@ Copy-paste session prompt: [AGENT_PROMPT_LAUNCH.md](./AGENT_PROMPT_LAUNCH.md)
 
 | Goal | Success criteria |
 |------|------------------|
-| **Public URL** | Friends open `https://your-domain` (or agreed URL) and see Welcome / login |
+| **Public URL** | Friends open **https://worldcup.dosums.uk** and see Welcome / login |
 | **Registration** | New users: display name + password (≤6 chars) + **join password** |
 | **Empty start** | No test users (`Test 1`…), no fake results in production DB |
 | **Live results** | `FOOTBALL_DATA_TOKEN` set; kickoffs + finished scores sync from football-data.org |
@@ -60,7 +60,7 @@ NODE_ENV=production
 JOIN_PASSWORD=choose_a_shared_secret
 
 # Public URL baked into frontend at build time
-VITE_API_BASE_URL=https://your-domain.com
+VITE_API_BASE_URL=https://worldcup.dosums.uk
 
 # Optional — omit for SQLite (~10 friends is fine)
 # DATABASE_URL=postgres://user:pass@host:5432/worldcup_boys
@@ -150,7 +150,7 @@ npm run build
 
 - Point DNS **A record** to the server.  
 - Configure **nginx** (or Caddy) TLS reverse proxy to `http://127.0.0.1:8787` — example in [DEPLOY.md](./DEPLOY.md).  
-- Rebuild if you change public URL: `VITE_API_BASE_URL=https://your-domain.com npm run build`.
+- Rebuild if you change public URL: `VITE_API_BASE_URL=https://worldcup.dosums.uk npm run build`.
 
 ### 5. Owner admin account
 

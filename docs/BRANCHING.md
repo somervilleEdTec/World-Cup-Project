@@ -12,7 +12,7 @@ This repo uses **two branches only**:
 Historical `cursor/*` branches have been removed.
 
 **Full Debug rules:** [DEBUG_BRANCH.md](./DEBUG_BRANCH.md)  
-**Live deploy setup:** [DEPLOY_AUTOMATION.md](./DEPLOY_AUTOMATION.md)
+**Live site:** https://worldcup.dosums.uk — [PRODUCTION.md](./PRODUCTION.md) · **Deploy:** [DEPLOY_AUTOMATION.md](./DEPLOY_AUTOMATION.md)
 
 ---
 
@@ -72,6 +72,7 @@ git checkout main          # production / live server clone
 
 | Doc | Use |
 |-----|-----|
+| [PRODUCTION.md](./PRODUCTION.md) | **Live** — worldcup.dosums.uk, VM, GitHub secrets |
 | [DEBUG_BRANCH.md](./DEBUG_BRANCH.md) | **Debug = local only, no live deploy** |
 | [DEPLOY_AUTOMATION.md](./DEPLOY_AUTOMATION.md) | Auto-deploy on push to **`main`** |
 | [LAUNCH_HANDOVER.md](./LAUNCH_HANDOVER.md) | Live website launch |

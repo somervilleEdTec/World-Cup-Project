@@ -21,7 +21,9 @@
 
 - [x] Stress test playbook ([STRESS_TEST_HANDOVER.md](./STRESS_TEST_HANDOVER.md))
 - [x] KO-environment UX merged to `main` (predictions UI, comparison, seed script)
-- [ ] Owner production deploy — one-time [DEPLOY_AUTOMATION.md](./DEPLOY_AUTOMATION.md) secrets + systemd; then auto on push to `main`
+- [x] Production VM + clone at `/home/ubuntu/World-Cup-Project` ([PRODUCTION.md](./PRODUCTION.md))
+- [ ] GitHub Actions secrets (`DEPLOY_*`) — then auto-deploy on push to `main`
+- [ ] systemd `worldcup` + `worldcup-jobs` on server; nginx → :8787
 - [ ] `FOOTBALL_DATA_TOKEN` + `npm run jobs` during tournament
 - [ ] Owner sign-off on [GO_LIVE.md](./GO_LIVE.md)
 

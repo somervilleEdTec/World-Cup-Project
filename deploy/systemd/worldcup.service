@@ -4,9 +4,9 @@ After=network.target
 
 [Service]
 Type=simple
-User=www-data
-WorkingDirectory=/opt/world-cup-boys
-EnvironmentFile=/opt/world-cup-boys/.env
+User=ubuntu
+WorkingDirectory=/home/ubuntu/World-Cup-Project
+EnvironmentFile=/home/ubuntu/World-Cup-Project/.env
 Environment=NODE_ENV=production
 ExecStart=/usr/bin/npm run server
 Restart=on-failure

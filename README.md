@@ -13,9 +13,15 @@ Friends-and-family prediction app for FIFA World Cup 2026 (48 teams, 12 groups, 
 
 See **[docs/BRANCHING.md](docs/BRANCHING.md)** and **[docs/DEBUG_BRANCH.md](docs/DEBUG_BRANCH.md)**.
 
-## Launching the live site?
+## Live site
 
-1. **[docs/LAUNCH_HANDOVER.md](docs/LAUNCH_HANDOVER.md)** — **start here** (deploy, registration, invite friends)  
+**https://worldcup.dosums.uk** — production on Oracle VM; details in **[docs/PRODUCTION.md](docs/PRODUCTION.md)**.  
+Push to **`main`** auto-deploys when GitHub Actions secrets are set ([docs/DEPLOY_AUTOMATION.md](docs/DEPLOY_AUTOMATION.md)).
+
+## Launching / operating the live site?
+
+1. **[docs/PRODUCTION.md](docs/PRODUCTION.md)** — URL, server, `.env`, GitHub secrets  
+2. **[docs/LAUNCH_HANDOVER.md](docs/LAUNCH_HANDOVER.md)** — registration and invite friends  
 2. **[docs/AGENT_PROMPT_LAUNCH.md](docs/AGENT_PROMPT_LAUNCH.md)** — copy-paste prompt for a launch agent session  
 3. **[docs/DEPLOY.md](docs/DEPLOY.md)** · **[docs/GO_LIVE.md](docs/GO_LIVE.md)** — hosting and smoke tests  
 

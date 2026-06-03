@@ -1,5 +1,7 @@
 # Automated deploy on push to `main` (live site only)
 
+**Live site:** https://worldcup.dosums.uk — full owner values in [PRODUCTION.md](./PRODUCTION.md).
+
 | Branch | GitHub Actions | Live website |
 |--------|----------------|--------------|
 | **`main`** | **deploy-main.yml** — test + SSH deploy | **Updated** on each push (when secrets configured) |
@@ -17,17 +19,20 @@ When you push to **`main`**, GitHub Actions runs tests, then SSHs to your produc
 
 ### 1. Production server (first time)
 
-Clone the app on the VPS (path must match `DEPLOY_PATH` later, e.g. `/opt/world-cup-boys`):
+**Owner VM (2026-06-03):** app at `/home/ubuntu/World-Cup-Project` on `ubuntu@84.8.146.237`. See [PRODUCTION.md](./PRODUCTION.md).
+
+Generic clone (path must match `DEPLOY_PATH` in GitHub secrets):
 
 ```bash
-sudo mkdir -p /opt/world-cup-boys
-sudo chown "$USER":"$USER" /opt/world-cup-boys
-git clone https://github.com/somervilleEdTec/World-Cup-Project.git /opt/world-cup-boys
-cd /opt/world-cup-boys
+cd ~
+git clone https://github.com/somervilleEdTec/World-Cup-Project.git
+cd World-Cup-Project
 git checkout main
 cp .env.example .env
-# Edit .env: FOOTBALL_DATA_TOKEN, VITE_API_BASE_URL, JOIN_PASSWORD, NODE_ENV=production
+nano .env   # VITE_API_BASE_URL=https://worldcup.dosums.uk, NODE_ENV=production, FOOTBALL_DATA_TOKEN, JOIN_PASSWORD
 npm install
+npm run migrate
+npm run build
 bash scripts/deploy-production.sh
 ```
 
@@ -40,33 +45,28 @@ sudo systemctl daemon-reload
 sudo systemctl enable --now worldcup-jobs worldcup
 ```
 
-Allow the deploy user to restart without a password (replace `deploy` with your SSH user):
+Allow the deploy user to restart without a password (owner: **`ubuntu`**):
 
 ```bash
 sudo tee /etc/sudoers.d/worldcup-deploy <<'EOF'
-deploy ALL=(root) NOPASSWD: /bin/systemctl restart worldcup, /bin/systemctl restart worldcup-jobs
+ubuntu ALL=(root) NOPASSWD: /bin/systemctl restart worldcup, /bin/systemctl restart worldcup-jobs
 EOF
 sudo chmod 440 /etc/sudoers.d/worldcup-deploy
 ```
 
-### 3. Deploy SSH key on the server
+### 3. SSH key for GitHub Actions
 
-On your **laptop** (or a one-off machine):
+**Owner:** use the Oracle launch private key (already works for SSH):
 
-```bash
-ssh-keygen -t ed25519 -f ~/.ssh/worldcup-deploy -N "" -C "github-actions-deploy"
-```
+- File: `C:\Users\tomso\Desktop\ssh-key-2026-06-02.key`
+- Paste **entire file** into GitHub secret `DEPLOY_SSH_KEY`
 
-Add the **public** key to the server:
+Optional extra key: generate `worldcup-deploy`, append `.pub` to `~/.ssh/authorized_keys` on the server, use that private key in `DEPLOY_SSH_KEY` instead.
 
-```bash
-ssh-copy-id -i ~/.ssh/worldcup-deploy.pub deploy@YOUR_SERVER_HOST
-```
+Test from Windows:
 
-Test:
-
-```bash
-ssh -i ~/.ssh/worldcup-deploy deploy@YOUR_SERVER_HOST 'cd /opt/world-cup-boys && bash scripts/deploy-production.sh'
+```powershell
+ssh -i "C:\Users\tomso\Desktop\ssh-key-2026-06-02.key" -o HostKeyAlgorithms=+ssh-rsa -o PubkeyAcceptedAlgorithms=+ssh-rsa ubuntu@84.8.146.237 "cd ~/World-Cup-Project && bash scripts/deploy-production.sh"
 ```
 
 ### 4. GitHub repository secrets (required for deploy to run)
@@ -75,13 +75,13 @@ In GitHub: **Settings → Secrets and variables → Actions → New repository s
 
 If any required secret is missing, the workflow fails at **Check deploy secrets** with a clear list (not `missing server host`).
 
-| Secret | Example | Required |
-|--------|---------|----------|
-| `DEPLOY_HOST` | `203.0.113.10` or `worldcup.example.com` | **Yes** — empty causes deploy failure |
-| `DEPLOY_USER` | `deploy` or `ubuntu` | **Yes** |
-| `DEPLOY_SSH_KEY` | Full private key file contents (`worldcup-deploy`) | **Yes** |
-| `DEPLOY_PATH` | `/opt/world-cup-boys` | **Yes** |
-| `DEPLOY_PORT` | `22` | No — omit to use SSH default port 22 |
+| Secret | Owner value (2026-06-03) | Required |
+|--------|--------------------------|----------|
+| `DEPLOY_HOST` | `84.8.146.237` | **Yes** |
+| `DEPLOY_USER` | `ubuntu` | **Yes** |
+| `DEPLOY_SSH_KEY` | Full `ssh-key-2026-06-02.key` contents | **Yes** |
+| `DEPLOY_PATH` | `/home/ubuntu/World-Cup-Project` | **Yes** |
+| `DEPLOY_PORT` | `22` | No — omit for default |
 
 Do **not** put `FOOTBALL_DATA_TOKEN` in GitHub secrets unless you prefer CI to inject it — keep secrets in the server `.env` only.
 
@@ -90,7 +90,7 @@ Do **not** put `FOOTBALL_DATA_TOKEN` in GitHub secrets unless you prefer CI to i
 ```env
 NODE_ENV=production
 FOOTBALL_DATA_TOKEN=your_football_data_org_token
-VITE_API_BASE_URL=https://your-public-domain.com
+VITE_API_BASE_URL=https://worldcup.dosums.uk
 JOIN_PASSWORD=your_shared_signup_password
 PORT=8787
 ```
@@ -139,6 +139,7 @@ View runs: GitHub → **Actions** → **Deploy main (production)**.
 
 ## Related
 
+- [PRODUCTION.md](./PRODUCTION.md) — live URL, IP, paths, owner SSH  
 - [DEPLOY.md](./DEPLOY.md) — nginx, Postgres, hosting  
-- [DEPLOY_UPDATE.md](./DEPLOY_UPDATE.md) — manual pull steps (superseded by automation when secrets are set)  
+- [DEPLOY_UPDATE.md](./DEPLOY_UPDATE.md) — manual pull steps (superseded when secrets are set)  
 - [BRANCHING.md](./BRANCHING.md) — `main` vs `Debug`
