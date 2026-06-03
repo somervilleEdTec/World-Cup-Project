@@ -19,8 +19,10 @@ import { computeLeaderboard } from '../src/server/services/leaderboard.js';
 import type { ActualResult, Pick, TournamentBonusPick } from '../src/types.js';
 
 const TEST_USER_COUNT = 10;
-const TEST_PASSWORD = 'summer';
-const ADMIN_DISPLAY_NAME = 'Test 1';
+const DEFAULT_TEST_PASSWORD = 'summer';
+const DEFAULT_USER_PREFIX = 'Test ';
+const DEFAULT_ADMIN_INDEX = 1;
+const DEFAULT_MAX_GOALS = 3;
 /** Simulates tournament after first kickoff — locks group + bonus picks in DB. */
 const SIMULATED_NOW_ISO = '2026-07-20T00:00:00Z';
 /** After third-place, before final kickoff — one final prediction left per user. */
@@ -29,14 +31,36 @@ const SIMULATED_BEFORE_FINAL_ISO = '2026-07-19T12:00:00Z';
 const SEED_KO_PICKS_NOW_ISO = '2026-06-27T00:00:00Z';
 const FINAL_MATCH_ID = 'final';
 
+function parseArgValue(flag: string): string | undefined {
+  const idx = process.argv.indexOf(flag);
+  if (idx >= 0 && process.argv[idx + 1]) return process.argv[idx + 1];
+  const prefixed = process.argv.find((a) => a.startsWith(`${flag}=`));
+  if (prefixed) return prefixed.slice(flag.length + 1);
+  return undefined;
+}
+
+function parseMaxGoals(): number {
+  const raw = parseArgValue('--max-goals');
+  if (!raw) return DEFAULT_MAX_GOALS;
+  const n = Number.parseInt(raw, 10);
+  if (!Number.isFinite(n) || n < 0) throw new Error('--max-goals must be a non-negative integer');
+  return n;
+}
+
+let maxGoalsPerTeam = DEFAULT_MAX_GOALS;
+
 function randomInt(maxInclusive: number): number {
   return Math.floor(Math.random() * (maxInclusive + 1));
 }
 
 function randomScorePair(): { homeScore: number; awayScore: number; progressingTeamId?: string } {
-  const homeScore = randomInt(3);
-  const awayScore = randomInt(3);
+  const homeScore = randomInt(maxGoalsPerTeam);
+  const awayScore = randomInt(maxGoalsPerTeam);
   return { homeScore, awayScore };
+}
+
+function displayNameForIndex(userPrefix: string, index: number): string {
+  return `${userPrefix}${index}`;
 }
 
 function shuffle<T>(items: T[]): T[] {
@@ -127,7 +151,22 @@ async function generateOfficialKnockoutResults(
   groupActuals: Record<string, ActualResult>,
   options?: { excludeResultMatchIds?: string[] }
 ): Promise<Record<string, ActualResult>> {
-  const exclude = new Set(options?.excludeResultMatchIds ?? []);
+  return generateOfficialKnockoutResultsWithPredictions(groupActuals, undefined, options);
+}
+
+/** Insert KO results fixture-by-fixture; optional per-user picks before each result (avoids pick lock). */
+async function generateOfficialKnockoutResultsWithPredictions(
+  groupActuals: Record<string, ActualResult>,
+  userIds?: Map<string, string>,
+  options?: {
+    excludeResultMatchIds?: string[];
+    excludePredictionMatchIds?: string[];
+    pickNowIso?: string;
+  }
+): Promise<Record<string, ActualResult>> {
+  const excludeResults = new Set(options?.excludeResultMatchIds ?? []);
+  const excludePredictions = new Set(options?.excludePredictionMatchIds ?? []);
+  const pickNowIso = options?.pickNowIso ?? SEED_KO_PICKS_NOW_ISO;
   const actuals = { ...groupActuals };
   let picks = picksFromActuals(actuals);
 
@@ -135,7 +174,19 @@ async function generateOfficialKnockoutResults(
     const resolved = buildKnockoutMatches(picks, actuals);
     const match = resolved.find((m) => m.id === template.id);
     if (!match || match.homeTeamId === 'tbd' || match.awayTeamId === 'tbd') continue;
-    if (actuals[match.id] || exclude.has(match.id)) continue;
+    if (actuals[match.id]) continue;
+
+    if (userIds && !excludePredictions.has(match.id)) {
+      for (const [, userId] of userIds) {
+        await saveDraftPick(
+          userId,
+          randomKnockoutPick(match.id, match.homeTeamId, match.awayTeamId),
+          pickNowIso
+        );
+      }
+    }
+
+    if (excludeResults.has(match.id)) continue;
 
     const { homeScore, awayScore } = randomScorePair();
     actuals[match.id] = await insertResult(
@@ -151,23 +202,28 @@ async function generateOfficialKnockoutResults(
   return actuals;
 }
 
-async function seedTestUsers(): Promise<Map<string, string>> {
+async function seedTestUsers(options: {
+  userPrefix: string;
+  password: string;
+  adminIndex: number;
+}): Promise<Map<string, string>> {
   const userIds = new Map<string, string>();
 
   for (let i = 1; i <= TEST_USER_COUNT; i += 1) {
-    const displayName = `Test ${i}`;
-    const user = await register(displayName, TEST_PASSWORD, process.env.JOIN_PASSWORD ?? 'MadSlags1');
+    const displayName = displayNameForIndex(options.userPrefix, i);
+    const user = await register(displayName, options.password, process.env.JOIN_PASSWORD ?? 'MadSlags1');
     userIds.set(displayName, user.id);
     // eslint-disable-next-line no-console
     console.log(`Registered ${displayName}`);
   }
 
   const db = getDb();
-  const adminId = userIds.get(ADMIN_DISPLAY_NAME);
+  const adminDisplayName = displayNameForIndex(options.userPrefix, options.adminIndex);
+  const adminId = userIds.get(adminDisplayName);
   if (adminId) {
     await db.run(`UPDATE users SET is_admin = 1 WHERE id = ?`, [adminId]);
     // eslint-disable-next-line no-console
-    console.log(`${ADMIN_DISPLAY_NAME} promoted to admin.`);
+    console.log(`${adminDisplayName} promoted to admin.`);
   }
 
   return userIds;
@@ -215,14 +271,21 @@ async function seedUserKnockoutPredictions(
 }
 
 async function main() {
-  assertDevSeedAllowed('npm run seed:ko-environment / seed:before-final');
+  assertDevSeedAllowed('npm run seed:ko-environment / seed:before-final / seed:complete-teams');
+
+  maxGoalsPerTeam = parseMaxGoals();
+  const testPassword = parseArgValue('--password') ?? DEFAULT_TEST_PASSWORD;
+  const userPrefix = parseArgValue('--user-prefix') ?? DEFAULT_USER_PREFIX;
+  const adminIndex = Number.parseInt(parseArgValue('--admin-index') ?? String(DEFAULT_ADMIN_INDEX), 10);
 
   const skipPurge = process.argv.includes('--no-purge');
   const beforeFinal = process.argv.includes('--before-final');
   const fullBracket = process.argv.includes('--full-bracket');
+  const completeTournament = process.argv.includes('--complete-tournament');
 
-  if (beforeFinal && fullBracket) {
-    throw new Error('Use only one of --before-final or --full-bracket.');
+  const scenarioFlags = [beforeFinal, fullBracket, completeTournament].filter(Boolean);
+  if (scenarioFlags.length > 1) {
+    throw new Error('Use only one of --before-final, --full-bracket, or --complete-tournament.');
   }
 
   await initDatabase();
@@ -232,7 +295,12 @@ async function main() {
     console.log('Database purged and schema recreated.');
   }
 
-  const userIds = await seedTestUsers();
+  const userIds = await seedTestUsers({
+    userPrefix,
+    password: testPassword,
+    adminIndex: Number.isFinite(adminIndex) ? adminIndex : DEFAULT_ADMIN_INDEX
+  });
+  const adminDisplayName = displayNameForIndex(userPrefix, adminIndex);
 
   for (const [displayName, userId] of userIds) {
     await seedUserPredictions(userId, displayName);
@@ -248,18 +316,21 @@ async function main() {
     });
     // eslint-disable-next-line no-console
     console.log(`Official KO results through third-place; final (${FINAL_MATCH_ID}) has teams but no score.`);
+  } else if (beforeFinal) {
+    // eslint-disable-next-line no-console
+    console.log('\nSeeding KO predictions then official results (through third-place; final teams only)…');
+    allActuals = await generateOfficialKnockoutResultsWithPredictions(groupActuals, userIds, {
+      excludeResultMatchIds: [FINAL_MATCH_ID],
+      excludePredictionMatchIds: [FINAL_MATCH_ID]
+    });
   } else if (fullBracket) {
     allActuals = await generateOfficialKnockoutResults(groupActuals);
+  } else if (completeTournament) {
+    // eslint-disable-next-line no-console
+    console.log('\nSeeding KO predictions then official results (full tournament, no API token)…');
+    allActuals = await generateOfficialKnockoutResultsWithPredictions(groupActuals, userIds);
   } else {
     allActuals = groupActuals;
-  }
-
-  if (beforeFinal) {
-    // eslint-disable-next-line no-console
-    console.log('\nSeeding knockout predictions (all confirmed fixtures except final)…');
-    for (const [displayName, userId] of userIds) {
-      await seedUserKnockoutPredictions(userId, displayName, allActuals, [FINAL_MATCH_ID], SEED_KO_PICKS_NOW_ISO);
-    }
   }
 
   const lockNowIso = beforeFinal ? SIMULATED_BEFORE_FINAL_ISO : SIMULATED_NOW_ISO;
@@ -273,18 +344,20 @@ async function main() {
 
   const scenarioLabel = beforeFinal
     ? 'before-final (one prediction left per user)'
-    : fullBracket
-      ? 'full bracket'
-      : 'group stage only';
+    : completeTournament
+      ? 'complete tournament (all results + all predictions)'
+      : fullBracket
+        ? 'full bracket'
+        : 'group stage only';
 
   // eslint-disable-next-line no-console
   console.log('\n--- KO environment summary ---');
   // eslint-disable-next-line no-console
   console.log(`Scenario: ${scenarioLabel}`);
   // eslint-disable-next-line no-console
-  console.log(`Users: ${TEST_USER_COUNT} (password: ${TEST_PASSWORD})`);
+  console.log(`Users: ${TEST_USER_COUNT} (password: ${testPassword}, max goals per team: ${maxGoalsPerTeam})`);
   // eslint-disable-next-line no-console
-  console.log(`Admin login: ${ADMIN_DISPLAY_NAME} / ${TEST_PASSWORD}`);
+  console.log(`Admin login: ${adminDisplayName} / ${testPassword}`);
   // eslint-disable-next-line no-console
   console.log(`Official results: ${Object.keys(allActuals).length} matches`);
   // eslint-disable-next-line no-console
