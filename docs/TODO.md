@@ -1,7 +1,7 @@
 # World Cup Boys — Agent TODO Tracker
 
 > Sync with [HANDOVER.md](./HANDOVER.md).  
-> **Current phase:** Go-live — [GO_LIVE.md](./GO_LIVE.md)
+> **Current phase:** **Live** — https://worldcup.dosums.uk · auto-deploy from `main` · [PRODUCTION.md](./PRODUCTION.md)
 
 ## Status legend
 
@@ -21,11 +21,12 @@
 
 - [x] Stress test playbook ([STRESS_TEST_HANDOVER.md](./STRESS_TEST_HANDOVER.md))
 - [x] KO-environment UX merged to `main` (predictions UI, comparison, seed script)
-- [x] Production VM + clone at `/home/ubuntu/World-Cup-Project` ([PRODUCTION.md](./PRODUCTION.md))
-- [ ] GitHub Actions secrets (`DEPLOY_*`) — then auto-deploy on push to `main`
-- [ ] systemd `worldcup` + `worldcup-jobs` on server; nginx → :8787
-- [ ] `FOOTBALL_DATA_TOKEN` + `npm run jobs` during tournament
-- [ ] Owner sign-off on [GO_LIVE.md](./GO_LIVE.md)
+- [x] Production VM + app at `/home/ubuntu/World-Cup-Project` ([PRODUCTION.md](./PRODUCTION.md))
+- [x] Live site https://worldcup.dosums.uk (nginx → Node :8787)
+- [x] GitHub Actions secrets + auto-deploy on push to `main`
+- [x] Server `.env` (`VITE_API_BASE_URL`, `FOOTBALL_DATA_TOKEN`, `NODE_ENV=production`)
+- [ ] Ongoing: `npm run jobs` / `worldcup-jobs` during tournament; friend registration smoke test ([GO_LIVE.md](./GO_LIVE.md))
+- [ ] Optional: formal systemd units + sudoers for deploy restarts ([PRODUCTION.md](./PRODUCTION.md))
 
 ---
 

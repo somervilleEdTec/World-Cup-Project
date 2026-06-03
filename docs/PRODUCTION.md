@@ -1,8 +1,25 @@
 # Production environment — World Cup Boys (live)
 
 **Last updated:** 2026-06-03  
-**Public site:** https://worldcup.dosums.uk  
-**Automated deploy:** push to **`main`** → [DEPLOY_AUTOMATION.md](./DEPLOY_AUTOMATION.md)
+**Status:** **Live and operational** — https://worldcup.dosums.uk  
+**Automated deploy:** **Active** — every push to **`main`** runs [deploy-main.yml](../.github/workflows/deploy-main.yml) (see [DEPLOY_AUTOMATION.md](./DEPLOY_AUTOMATION.md))
+
+---
+
+## Operational summary
+
+| Component | Status |
+|-----------|--------|
+| Public site | **https://worldcup.dosums.uk** |
+| Oracle VM | `ubuntu@84.8.146.237` (`worldcup-boys`) |
+| App on server | `/home/ubuntu/World-Cup-Project` on branch **`main`** |
+| GitHub Actions secrets | `DEPLOY_HOST`, `DEPLOY_USER`, `DEPLOY_PATH`, `DEPLOY_SSH_KEY` configured |
+| Auto-deploy | Push to **`main`** → CI → SSH → `deploy-production.sh` |
+| **`Debug` branch** | Local PC only — **never** updates production |
+
+**Day-to-day release:** merge to `main`, `git push origin main` — live site updates after a green Actions run.
+
+**Local development:** work on **`Debug`**, test with `Test-LocalSite.ps1` / `npm test` — see [DEBUG_BRANCH.md](./DEBUG_BRANCH.md).
 
 ---
 
@@ -45,9 +62,9 @@ PORT=8787
 
 ---
 
-## GitHub Actions — enable auto-deploy
+## GitHub Actions — auto-deploy (configured)
 
-**Settings → Secrets and variables → Actions → Repository secrets** (four required):
+Repository secrets are set (2026-06-03). To rotate keys, use **Settings → Secrets and variables → Actions**:
 
 | Secret name | Value for this server |
 |-------------|------------------------|
@@ -60,16 +77,15 @@ Optional: `DEPLOY_PORT` = `22`
 
 **Do not** store `FOOTBALL_DATA_TOKEN` in GitHub — only in server `.env`.
 
-After secrets exist:
+Each push to **`main`** triggers **Deploy main (production)** automatically after CI passes. Manual re-run: **Actions → Deploy main (production) → Run workflow**.
 
-1. **Actions → Deploy main (production) → Run workflow** (branch `main`), or  
-2. `git push origin main` — deploy runs automatically after CI passes.
+**Health check on server:** `curl -s http://127.0.0.1:8787/api/health`
 
 **Debug branch** never deploys — [DEBUG_BRANCH.md](./DEBUG_BRANCH.md).
 
 ---
 
-## First-time server setup (after clone)
+## First-time server setup (completed 2026-06-03 — reference for rebuilds)
 
 ```bash
 cd ~/World-Cup-Project

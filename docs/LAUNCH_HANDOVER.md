@@ -5,7 +5,7 @@
 **Product:** World Cup Boys — “Welcome to the Shiva Bowl”  
 **Repository:** https://github.com/somervilleEdTec/World-Cup-Project  
 **Branch for production:** **`main` only**  
-**Phase:** Live on Oracle VM — https://worldcup.dosums.uk — auto-deploy from **`main`** ([PRODUCTION.md](./PRODUCTION.md))
+**Phase:** **Operational** — https://worldcup.dosums.uk is live; auto-deploy from **`main`** is active ([PRODUCTION.md](./PRODUCTION.md))
 
 ---
 

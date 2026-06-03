@@ -4,7 +4,7 @@
 
 | Branch | GitHub Actions | Live website |
 |--------|----------------|--------------|
-| **`main`** | **deploy-main.yml** — test + SSH deploy | **Updated** on each push (when secrets configured) |
+| **`main`** | **deploy-main.yml** — test + SSH deploy | **Live** — updates https://worldcup.dosums.uk on each successful run |
 | **`Debug`** | **None** | **Never** updated — test on your PC only |
 
 When you push to **`main`**, GitHub Actions runs tests, then SSHs to your production server and runs `scripts/deploy-production.sh` (must be on `main` branch on the server).

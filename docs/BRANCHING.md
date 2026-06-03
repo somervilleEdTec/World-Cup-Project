@@ -6,7 +6,7 @@ This repo uses **two branches only**:
 
 | Branch | Purpose | Live website | GitHub Actions |
 |--------|---------|--------------|----------------|
-| **`main`** | Production code and live deploy | **Yes** — auto-deploy on push | `deploy-main.yml` (test + deploy) |
+| **`main`** | Production code and live deploy | **Yes** — https://worldcup.dosums.uk updates on push | `deploy-main.yml` (test + deploy) |
 | **`Debug`** | Development on your PC | **No** — never deploys | **None** — test locally only |
 
 Historical `cursor/*` branches have been removed.

@@ -1,6 +1,8 @@
 # Go-live checklist — World Cup Boys
 
-Use before inviting your group (~10 friends). After June 2026 UX work, run **stress tests** first — see [STRESS_TEST_HANDOVER.md](./STRESS_TEST_HANDOVER.md).
+**Production is live:** https://worldcup.dosums.uk (Oracle VM, auto-deploy from **`main`** — [PRODUCTION.md](./PRODUCTION.md)).
+
+Use this checklist before inviting your group (~10 friends). For stress testing, see [STRESS_TEST_HANDOVER.md](./STRESS_TEST_HANDOVER.md).
 
 ## 1. Environment
 

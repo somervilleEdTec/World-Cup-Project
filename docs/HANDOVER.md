@@ -3,9 +3,9 @@
 **Last updated:** 2026-06-03  
 **Repository:** https://github.com/somervilleEdTec/World-Cup-Project  
 **Branches:** `main` (production, **live deploy**) · `Debug` (PC-only dev, **no live deploy**) — [BRANCHING.md](./BRANCHING.md) · [DEBUG_BRANCH.md](./DEBUG_BRANCH.md)  
-**Phase:** **Launch** — deploy live site for friend registration  
-**Launch:** [docs/LAUNCH_HANDOVER.md](./LAUNCH_HANDOVER.md) · Prompt: [docs/AGENT_PROMPT_LAUNCH.md](./AGENT_PROMPT_LAUNCH.md)  
-**Deploy:** [docs/DEPLOY.md](./DEPLOY.md) · **Go-live tests:** [docs/GO_LIVE.md](./GO_LIVE.md)  
+**Phase:** **Live** — https://worldcup.dosums.uk · auto-deploy from **`main`** ([PRODUCTION.md](./PRODUCTION.md))  
+**Launch / ops:** [docs/LAUNCH_HANDOVER.md](./LAUNCH_HANDOVER.md) · [docs/DEPLOY_AUTOMATION.md](./DEPLOY_AUTOMATION.md)  
+**Deploy:** [docs/DEPLOY.md](./DEPLOY.md) · **Friend invite checks:** [docs/GO_LIVE.md](./GO_LIVE.md)  
 **Local debug:** [docs/KO_ENVIRONMENT.md](./KO_ENVIRONMENT.md) · [docs/FINAL_PREDICTION_HANDOVER.md](./FINAL_PREDICTION_HANDOVER.md)
 
 **Next agent starts here:** **[docs/AGENT_PROMPT_STRESS_TEST.md](./AGENT_PROMPT_STRESS_TEST.md)** — stress, environment & debug QA after 2026-06-03 merge  
