@@ -341,14 +341,18 @@ td {
   text-align: center;
 }
 
-.league-table-page .league-total {
-  font-weight: 700;
+.league-table-page th,
+.league-table-page td {
   text-align: center;
 }
 
-.league-table-page th:last-child,
-.league-table-page td:last-child {
-  text-align: center;
+.league-table-page th:nth-child(2),
+.league-table-page td:nth-child(2) {
+  text-align: left;
+}
+
+.league-table-page .league-total {
+  font-weight: 700;
 }
 
 .league-table th:first-child,
