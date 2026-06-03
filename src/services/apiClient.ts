@@ -1,6 +1,9 @@
 import { TournamentBonusPick, Pick } from '../types';
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8787';
+/** Same-origin when the API serves the built SPA; dev falls back to :8787 unless proxied. */
+const API_BASE =
+  import.meta.env.VITE_API_BASE_URL ??
+  (import.meta.env.DEV ? 'http://localhost:8787' : '');
 const TOKEN_KEY = 'wcb_token';
 
 export function getToken(): string | null {
@@ -19,6 +22,31 @@ export function isAuthErrorMessage(message: string): boolean {
   return /unauthor/i.test(message);
 }
 
+/** Hide low-level parse/network noise; show actionable errors only. */
+export function shouldShowUserError(message: string): boolean {
+  return (
+    !isAuthErrorMessage(message) &&
+    !/JSON\.parse/i.test(message) &&
+    !/HTML instead of JSON/i.test(message) &&
+    !/Invalid server response/i.test(message)
+  );
+}
+
+function parseResponseBody(text: string, response: Response): unknown {
+  if (!text) return {};
+  try {
+    return JSON.parse(text) as unknown;
+  } catch {
+    const preview = text.trim().slice(0, 80);
+    const looksHtml = preview.startsWith('<');
+    throw new Error(
+      looksHtml
+        ? `API returned HTML instead of JSON (${response.status}). Check VITE_API_BASE_URL or log in again.`
+        : `Invalid server response (${response.status}).`
+    );
+  }
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const token = getToken();
   const headers = new Headers(init?.headers);
@@ -26,8 +54,16 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   if (token) headers.set('Authorization', `Bearer ${token}`);
 
   const response = await fetch(`${API_BASE}${path}`, { ...init, headers });
-  const data = await response.json();
-  if (!response.ok) throw new Error(data.error ?? 'Request failed');
+  const text = await response.text();
+  const data = parseResponseBody(text, response);
+
+  if (!response.ok) {
+    const error =
+      typeof data === 'object' && data !== null && 'error' in data
+        ? String((data as { error: unknown }).error)
+        : `Request failed (${response.status})`;
+    throw new Error(error);
+  }
   return data as T;
 }
 

@@ -8,13 +8,18 @@ import { picksFromActuals } from '../lib/pickUtils';
 import {
   fetchPredictionState,
   isAuthErrorMessage,
+  shouldShowUserError,
   lockGroup,
   saveBonusDraft,
   saveDraftPick,
   unlockGroup
 } from '../services/apiClient';
 import { TeamSelect } from '../components/TeamSelect';
-import { ALL_GROUP_IDS } from '../lib/pickLocks';
+import {
+  ALL_GROUP_IDS,
+  allGroupPicksCommitted as computeAllGroupPicksCommitted,
+  countCommittedGroupPicks
+} from '../lib/pickLocks';
 import { computeMissingPicks } from '../lib/missingPicks';
 import {
   computeGroupStandings,
@@ -121,7 +126,9 @@ export function MyPicksPage() {
         handleAuthFailure();
         return;
       }
-      setGroupMessage(message);
+      if (shouldShowUserError(message)) {
+        setGroupMessage(message);
+      }
     }
   };
 
@@ -133,10 +140,6 @@ export function MyPicksPage() {
   const activeGroupMatches = groupMatches.filter((match) => match.group === activeGroup);
   const calendarGroupLocked = shouldLockGroup(nowIso);
   const tournamentLocked = calendarGroupLocked;
-
-  useEffect(() => {
-    setAcceptedGroupsLocal(state.acceptedGroups ?? []);
-  }, [state.acceptedGroups]);
 
   const userGroupLocked = acceptedGroupsLocal.includes(activeGroup);
 
@@ -195,14 +198,27 @@ export function MyPicksPage() {
         delete next[pick.matchId];
         return next;
       });
-      await refresh();
+      setState((prev) => {
+        const committedPicks = { ...prev.committedPicks, [pick.matchId]: pick };
+        return {
+          ...prev,
+          committedPicks,
+          draftPicks: Object.fromEntries(
+            Object.entries(prev.draftPicks).filter(([id]) => id !== pick.matchId)
+          ),
+          groupPicksCommittedCount: countCommittedGroupPicks(committedPicks),
+          allGroupPicksCommitted: computeAllGroupPicksCommitted(committedPicks)
+        };
+      });
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Could not save prediction';
       if (isAuthErrorMessage(message)) {
         handleAuthFailure();
         return;
       }
-      setGroupMessage(message);
+      if (shouldShowUserError(message)) {
+        setGroupMessage(message);
+      }
     }
   };
 
@@ -397,7 +413,7 @@ export function MyPicksPage() {
               Next Group
             </button>
           </div>
-          {groupMessage && !isAuthErrorMessage(groupMessage) && (
+          {groupMessage && shouldShowUserError(groupMessage) && (
             <p className={groupMessage.includes('locked') ? 'success' : 'warning'}>{groupMessage}</p>
           )}
         </article>

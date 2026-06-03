@@ -5,7 +5,8 @@ import { TeamLabel } from '../components/TeamLabel';
 import {
   fetchComparisonFixtures,
   fetchMatchComparison,
-  fetchNextMatchComparison
+  fetchNextMatchComparison,
+  shouldShowUserError
 } from '../services/apiClient';
 import { formatFixtureScore } from '../components/FixtureScoreSummary';
 import { formatKickoffBst } from '../lib/formatDateTime';
@@ -79,7 +80,8 @@ export function ComparisonPage() {
       })
       .catch((err) => {
         setData(null);
-        setError(err instanceof Error ? err.message : 'Unable to load comparison');
+        const message = err instanceof Error ? err.message : 'Unable to load comparison';
+        setError(shouldShowUserError(message) ? message : null);
       })
       .finally(() => setLoading(false));
   }, [selectedMatchId]);
