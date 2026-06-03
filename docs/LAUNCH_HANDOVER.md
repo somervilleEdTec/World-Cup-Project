@@ -7,13 +7,22 @@
 **Branch for production:** **`main` only**  
 **Phase:** Launch — empty production database, live results from football-data.org
 
+**Production (2026-06-03):** Site live at **https://worldcup.dosums.uk** (Oracle VM + Cloudflare Tunnel).  
+**Next agent (pre-invite):** [POST_DEPLOY_HANDOVER.md](./POST_DEPLOY_HANDOVER.md) · [AGENT_PROMPT_POST_DEPLOY.md](./AGENT_PROMPT_POST_DEPLOY.md)  
+**Oracle + Cloudflare runbook:** [DEPLOY_ORACLE_CLOUDFLARE.md](./DEPLOY_ORACLE_CLOUDFLARE.md)
+
 ---
 
 ## Start here (agent)
 
+**Site already at login screen?** Start at [POST_DEPLOY_HANDOVER.md](./POST_DEPLOY_HANDOVER.md), not below.
+
+**Greenfield deploy:**
+
 1. **This file** — launch scope and checklist  
 2. [DEPLOY.md](./DEPLOY.md) — hosting, HTTPS, Postgres vs SQLite, systemd  
-3. [GO_LIVE.md](./GO_LIVE.md) — post-deploy smoke tests before inviting friends  
+3. [DEPLOY_ORACLE_CLOUDFLARE.md](./DEPLOY_ORACLE_CLOUDFLARE.md) — Oracle Always Free + Cloudflare Tunnel ($0)  
+4. [GO_LIVE.md](./GO_LIVE.md) — post-deploy smoke tests before inviting friends  
 4. [HANDOVER.md](./HANDOVER.md) — architecture, API, env vars  
 5. [FINAL_PLAN.md](./FINAL_PLAN.md) — competition rules (**do not change** without owner)  
 6. [BRANCHING.md](./BRANCHING.md) — `main` vs `Debug`; no test seeds on production  
@@ -239,6 +248,9 @@ Confirm with the owner:
 
 | Doc | When to use |
 |-----|-------------|
+| [POST_DEPLOY_HANDOVER.md](./POST_DEPLOY_HANDOVER.md) | **Site up** — final prep before friends |
+| [AGENT_PROMPT_POST_DEPLOY.md](./AGENT_PROMPT_POST_DEPLOY.md) | Copy-paste post-deploy agent prompt |
+| [DEPLOY_ORACLE_CLOUDFLARE.md](./DEPLOY_ORACLE_CLOUDFLARE.md) | Oracle + Cloudflare tunnel (dosums.uk) |
 | [LAUNCH_HANDOVER.md](./LAUNCH_HANDOVER.md) | **This file** — public launch |
 | [DEPLOY.md](./DEPLOY.md) | nginx, systemd, Postgres, Docker sketch |
 | [GO_LIVE.md](./GO_LIVE.md) | Smoke tests and tournament ops |

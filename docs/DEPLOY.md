@@ -1,5 +1,8 @@
 # Production deployment — World Cup Boys
 
+**Live deployment (2026-06-03):** https://worldcup.dosums.uk — Oracle Always Free + Cloudflare Tunnel.  
+See **[DEPLOY_ORACLE_CLOUDFLARE.md](./DEPLOY_ORACLE_CLOUDFLARE.md)** and **[POST_DEPLOY_HANDOVER.md](./POST_DEPLOY_HANDOVER.md)**.
+
 This guide covers running the app in production with **PostgreSQL**, optional **football-data.org** fixture import, and a **single-host** layout (API serves the built SPA).
 
 ## Prerequisites

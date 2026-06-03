@@ -12,11 +12,16 @@ Deploy and launch **World Cup Boys** (“Welcome to the Shiva Bowl”) so friend
 **Production branch:** `main` only  
 **Work branch for fixes:** `Debug` → merge to `main` when stable
 
+## If site is already live at worldcup.dosums.uk
+
+Use **[docs/AGENT_PROMPT_POST_DEPLOY.md](./AGENT_PROMPT_POST_DEPLOY.md)** instead.
+
 ## Mandatory first step — read in order
 
 1. **[docs/LAUNCH_HANDOVER.md](./LAUNCH_HANDOVER.md)** — launch scope, checklist, invite flow  
-2. **[docs/DEPLOY.md](./DEPLOY.md)** — HTTPS, hosting, Postgres/SQLite, systemd  
-3. **[docs/GO_LIVE.md](./GO_LIVE.md)** — smoke tests before inviting friends  
+2. **[docs/DEPLOY_ORACLE_CLOUDFLARE.md](./DEPLOY_ORACLE_CLOUDFLARE.md)** — Oracle + Cloudflare ($0)  
+3. **[docs/DEPLOY.md](./DEPLOY.md)** — HTTPS, hosting, Postgres/SQLite, systemd  
+4. **[docs/GO_LIVE.md](./GO_LIVE.md)** — smoke tests before inviting friends  
 4. **[docs/HANDOVER.md](./HANDOVER.md)** — architecture and API  
 5. **[docs/FINAL_PLAN.md](./FINAL_PLAN.md)** — rules (**do not change** without owner)
 

@@ -13,10 +13,21 @@ Friends-and-family prediction app for FIFA World Cup 2026 (48 teams, 12 groups, 
 
 See **[docs/BRANCHING.md](docs/BRANCHING.md)**.
 
-## Launching the live site?
+## Live site (production)
 
-1. **[docs/LAUNCH_HANDOVER.md](docs/LAUNCH_HANDOVER.md)** — **start here** (deploy, registration, invite friends)  
-2. **[docs/AGENT_PROMPT_LAUNCH.md](docs/AGENT_PROMPT_LAUNCH.md)** — copy-paste prompt for a launch agent session  
+**Production URL:** https://worldcup.dosums.uk  
+**Testing URL:** https://world-cup-project.pages.dev (Cloudflare Pages — keep for deploy/UI tests; set `VITE_API_BASE_URL=https://worldcup.dosums.uk` on Pages)
+
+**Next agent (before inviting friends):**
+
+1. **[docs/POST_DEPLOY_HANDOVER.md](docs/POST_DEPLOY_HANDOVER.md)** — **start here** (GO_LIVE, admin, ops)  
+2. **[docs/AGENT_PROMPT_POST_DEPLOY.md](docs/AGENT_PROMPT_POST_DEPLOY.md)** — copy-paste post-deploy agent prompt  
+3. **[docs/DEPLOY_ORACLE_CLOUDFLARE.md](docs/DEPLOY_ORACLE_CLOUDFLARE.md)** — Oracle VM + Cloudflare Tunnel  
+
+## Launching from scratch?
+
+1. **[docs/LAUNCH_HANDOVER.md](docs/LAUNCH_HANDOVER.md)** — full deploy playbook  
+2. **[docs/AGENT_PROMPT_LAUNCH.md](docs/AGENT_PROMPT_LAUNCH.md)** — launch agent prompt  
 3. **[docs/DEPLOY.md](docs/DEPLOY.md)** · **[docs/GO_LIVE.md](docs/GO_LIVE.md)** — hosting and smoke tests  
 
 ## New agent? (development & debug)
