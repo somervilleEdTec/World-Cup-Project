@@ -1,9 +1,7 @@
 import { TournamentBonusPick, Pick } from '../types';
 
-/** Same-origin when the API serves the built SPA; dev falls back to :8787 unless proxied. */
-const API_BASE =
-  import.meta.env.VITE_API_BASE_URL ??
-  (import.meta.env.DEV ? 'http://localhost:8787' : '');
+/** Same-origin — Express in prod, Vite /api proxy in dev. Override only when API is on another host. */
+const API_BASE = import.meta.env.VITE_API_BASE_URL ?? '';
 const TOKEN_KEY = 'wcb_token';
 
 export function getToken(): string | null {
@@ -27,9 +25,18 @@ export function shouldShowUserError(message: string): boolean {
   return (
     !isAuthErrorMessage(message) &&
     !/JSON\.parse/i.test(message) &&
+    !/unexpected token/i.test(message) &&
+    !/is not valid JSON/i.test(message) &&
     !/HTML instead of JSON/i.test(message) &&
-    !/Invalid server response/i.test(message)
+    !/Invalid server response/i.test(message) &&
+    !/Failed to fetch/i.test(message) &&
+    !/NetworkError/i.test(message)
   );
+}
+
+export function userFacingError(err: unknown, fallback: string): string | null {
+  const message = err instanceof Error ? err.message : fallback;
+  return shouldShowUserError(message) ? message : null;
 }
 
 function parseResponseBody(text: string, response: Response): unknown {

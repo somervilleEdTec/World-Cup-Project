@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useMemo, useState } from 'react';
+import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { groupMatches, teams } from '../data/tournament';
 import { FixturePickCard } from '../components/FixturePickCard';
@@ -9,6 +9,7 @@ import {
   fetchPredictionState,
   isAuthErrorMessage,
   shouldShowUserError,
+  userFacingError,
   lockGroup,
   saveBonusDraft,
   saveDraftPick,
@@ -103,12 +104,17 @@ export function MyPicksPage() {
   /** Per-group voluntary lock (UI + server); each group is independent. */
   const [acceptedGroupsLocal, setAcceptedGroupsLocal] = useState<string[]>([]);
 
-  const nowIso = new Date().toISOString();
+  const [nowIso, setNowIso] = useState(() => new Date().toISOString());
+  useEffect(() => {
+    const tick = () => setNowIso(new Date().toISOString());
+    const id = window.setInterval(tick, 30_000);
+    return () => window.clearInterval(id);
+  }, []);
 
-  const handleAuthFailure = () => {
+  const handleAuthFailure = useCallback(() => {
     setGroupMessage('');
     navigate('/login', { replace: true });
-  };
+  }, [navigate]);
 
   const refresh = async () => {
     try {
@@ -190,7 +196,7 @@ export function MyPicksPage() {
     ? knockoutFixturesForPhase(activeKoPhase.id, confirmedKnockoutFixtures)
     : [];
 
-  const saveMatchPick = async (pick: Pick) => {
+  const saveMatchPick = useCallback(async (pick: Pick) => {
     try {
       await saveDraftPick(pick);
       setPendingGroupPicks((current) => {
@@ -216,13 +222,16 @@ export function MyPicksPage() {
         handleAuthFailure();
         return;
       }
-      if (shouldShowUserError(message)) {
-        setGroupMessage(message);
-      }
+      const visible = userFacingError(err, 'Could not save prediction');
+      if (visible) setGroupMessage(visible);
     }
-  };
+  }, [handleAuthFailure]);
 
-  const flushPendingForGroup = async () => {
+  const handleGroupScoreChange = useCallback((matchId: string, updated: Pick) => {
+    setPendingGroupPicks((current) => ({ ...current, [matchId]: updated }));
+  }, []);
+
+  const flushPendingForGroup = async (options?: { refresh?: boolean }) => {
     const matches = groupMatches.filter((match) => match.group === activeGroup);
     for (const match of matches) {
       const pick = pendingGroupPicks[match.id];
@@ -237,7 +246,9 @@ export function MyPicksPage() {
       }
       return next;
     });
-    await refresh();
+    if (options?.refresh !== false) {
+      await refresh();
+    }
   };
 
   const changeGroupIndex = (nextIndex: number) => {
@@ -267,7 +278,10 @@ export function MyPicksPage() {
       setBonusMessage('Tournament result predictions saved. They lock at the first match kickoff.');
       await refresh();
     } catch (err) {
-      setBonusMessage(err instanceof Error ? err.message : 'Could not save tournament predictions');
+      setBonusMessage(
+        userFacingError(err, 'Could not save tournament predictions') ??
+          'Could not save tournament predictions'
+      );
     }
   };
 
@@ -345,9 +359,7 @@ export function MyPicksPage() {
                 inputsDisabled={calendarGroupLocked || matchKickoffLocked}
                 showLockedSummary={!userGroupLocked && matchKickoffLocked}
                 onSave={saveMatchPick}
-                onScoresChange={(updated) =>
-                  setPendingGroupPicks((current) => ({ ...current, [match.id]: updated }))
-                }
+                onScoresChange={(updated) => handleGroupScoreChange(match.id, updated)}
               />
             );
           })}
@@ -383,7 +395,7 @@ export function MyPicksPage() {
                     await unlockGroup(activeGroup);
                     setGroupMessage(`Group ${activeGroup} unlocked.`);
                   } else {
-                    await flushPendingForGroup();
+                    await flushPendingForGroup({ refresh: false });
                     await lockGroup(activeGroup);
                     setGroupMessage(`Group ${activeGroup} locked.`);
                   }
@@ -396,7 +408,8 @@ export function MyPicksPage() {
                     handleAuthFailure();
                     return;
                   }
-                  setGroupMessage(message);
+                  const visible = userFacingError(err, message);
+                  if (visible) setGroupMessage(visible);
                 }
               }}
             >

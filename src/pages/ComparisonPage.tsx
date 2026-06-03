@@ -6,7 +6,7 @@ import {
   fetchComparisonFixtures,
   fetchMatchComparison,
   fetchNextMatchComparison,
-  shouldShowUserError
+  userFacingError
 } from '../services/apiClient';
 import { formatFixtureScore } from '../components/FixtureScoreSummary';
 import { formatKickoffBst } from '../lib/formatDateTime';
@@ -80,8 +80,7 @@ export function ComparisonPage() {
       })
       .catch((err) => {
         setData(null);
-        const message = err instanceof Error ? err.message : 'Unable to load comparison';
-        setError(shouldShowUserError(message) ? message : null);
+        setError(userFacingError(err, 'Unable to load comparison'));
       })
       .finally(() => setLoading(false));
   }, [selectedMatchId]);

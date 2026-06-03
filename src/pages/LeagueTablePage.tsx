@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { fetchLeaderboard, shouldShowUserError } from '../services/apiClient';
+import { fetchLeaderboard, userFacingError } from '../services/apiClient';
 import { LeaderboardEntry } from '../types';
 
 export function LeagueTablePage() {
@@ -9,10 +9,7 @@ export function LeagueTablePage() {
   useEffect(() => {
     fetchLeaderboard()
       .then((response) => setEntries(response as LeaderboardEntry[]))
-      .catch((err) => {
-        const message = err instanceof Error ? err.message : 'Unable to load leaderboard';
-        if (shouldShowUserError(message)) setError(message);
-      });
+      .catch((err) => setError(userFacingError(err, 'Unable to load leaderboard')));
   }, []);
 
   return (

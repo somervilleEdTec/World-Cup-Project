@@ -119,9 +119,9 @@ function EditableScoreInputs({
     if (disabled || !edited) return;
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     saveTimerRef.current = setTimeout(() => {
-      void onSave(buildPick());
+      void onSaveRef.current(buildPickRef.current());
     }, AUTOSAVE_MS);
-  }, [buildPick, disabled, edited, onSave]);
+  }, [disabled, edited]);
 
   useEffect(() => {
     scheduleSave();
