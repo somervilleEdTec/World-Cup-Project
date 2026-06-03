@@ -1,35 +1,51 @@
 # Contributing
 
-## Branches
+## Branches — strict policy
 
-This project uses **two branches only**:
+| Branch | Who uses it | Push policy |
+|--------|-------------|-------------|
+| **`Debug`** | **All** day-to-day development | **Default** — commit and push here only |
+| **`main`** | Production / live site | **Only** when the owner **explicitly asks and confirms** a release |
 
-| Branch | Use |
-|--------|-----|
-| **`Debug`** | All development and local testing |
-| **`main`** | Production — merges from `Debug` trigger live deploy |
+**Agents and contributors:** do **not** push to **`main`**, merge to **`main`**, or trigger production deploys unless the user clearly requests and confirms that step.
 
-See **[docs/BRANCHING.md](docs/BRANCHING.md)** for the full workflow.
+See **[docs/DEBUG.md](docs/DEBUG.md)** and **[docs/BRANCHING.md](docs/BRANCHING.md)**.
 
-## Before you push
+---
+
+## Debug local setup
+
+```bash
+git checkout Debug
+cp .env.debug.example .env
+npm install
+npm run seed:debug          # Test1–Test20 / guest, random results
+.\scripts\Test-LocalSite.ps1 -Mode Serve   # Windows → http://localhost:8787
+```
+
+- **`DEBUG_LOCAL=1`** — no football-data.org sync  
+- **`RESULTS_MODE=none`** — no results until seeded; use **`npm run seed:debug`** for random results  
+- **`npm run seed:debug -- --no-results`** — users and picks only  
+
+---
+
+## Before you push to `Debug`
 
 ```bash
 npm test
 npm run build
 npm run lint
-npm run format:check   # optional
 ```
 
-## Pull requests
+---
 
-1. Branch from **`Debug`** (or work directly on `Debug`).
-2. Open PR into **`Debug`** for review, or merge locally.
-3. When ready for production: merge **`Debug` → `main`** and push **`main`**.
+## Production release (owner-confirmed only)
 
-Do not push experimental work directly to **`main`** without tests passing.
+```bash
+git checkout main
+git merge Debug
+npm test && npm run build
+git push origin main
+```
 
-## Documentation
-
-- Index: [docs/README.md](docs/README.md)
-- Architecture: [docs/HANDOVER.md](docs/HANDOVER.md)
-- Competition rules: [docs/FINAL_PLAN.md](docs/FINAL_PLAN.md) (owner approval required)
+Ops: [docs/PRODUCTION.md](docs/PRODUCTION.md)

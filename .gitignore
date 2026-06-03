@@ -3,6 +3,7 @@ dist
 .env
 .env.*
 !.env.example
+!.env.debug.example
 data.db
 data.db-shm
 data.db-wal

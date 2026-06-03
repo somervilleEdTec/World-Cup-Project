@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import { initDatabase } from './database';
 import { runAutoLocks } from './services/predictions';
+import { isDebugLocalMode, shouldSyncFootballData } from '../lib/runtimeConfig';
 import { bootstrapFootballData } from './footballDataStartup';
 import { syncFootballData, syncKickoffsFromFootballData } from './services/sync';
 import { seedGroupMatchMappings } from './services/matchMapping';
@@ -18,7 +19,7 @@ async function main() {
   }, LOCK_INTERVAL_MS);
 
   const token = process.env.FOOTBALL_DATA_TOKEN;
-  if (token) {
+  if (shouldSyncFootballData() && token) {
     try {
       await bootstrapFootballData(token);
     } catch (error) {
@@ -37,9 +38,11 @@ async function main() {
 
   // eslint-disable-next-line no-console
   console.log(
-    token
-      ? 'Scheduler started: locks 30s, results 2m, kickoffs 6h (football-data.org)'
-      : 'Scheduler started: locks 30s (set FOOTBALL_DATA_TOKEN for live sync)'
+    isDebugLocalMode()
+      ? 'Scheduler started: locks 30s (DEBUG_LOCAL=1 — no live sync)'
+      : token && shouldSyncFootballData()
+        ? 'Scheduler started: locks 30s, results 2m, kickoffs 6h (football-data.org)'
+        : 'Scheduler started: locks 30s (no live sync)'
   );
 }
 

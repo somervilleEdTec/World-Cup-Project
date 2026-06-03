@@ -198,9 +198,16 @@ Assert-Command npm
 $nodeVersion = (node -v)
 Write-Host "Node $nodeVersion"
 
-if (-not (Test-Path (Join-Path $RepoRoot '.env')) -and (Test-Path (Join-Path $RepoRoot '.env.example'))) {
-  Write-Host 'No .env file — copying .env.example to .env (edit FOOTBALL_DATA_TOKEN if needed).' -ForegroundColor Yellow
-  Copy-Item (Join-Path $RepoRoot '.env.example') (Join-Path $RepoRoot '.env')
+$debugEnvExample = Join-Path $RepoRoot '.env.debug.example'
+$defaultEnvExample = Join-Path $RepoRoot '.env.example'
+if (-not (Test-Path (Join-Path $RepoRoot '.env'))) {
+  if (Test-Path $debugEnvExample) {
+    Write-Host 'No .env file — copying .env.debug.example to .env (Debug local mode).' -ForegroundColor Yellow
+    Copy-Item $debugEnvExample (Join-Path $RepoRoot '.env')
+  } elseif (Test-Path $defaultEnvExample) {
+    Write-Host 'No .env file — copying .env.example to .env.' -ForegroundColor Yellow
+    Copy-Item $defaultEnvExample (Join-Path $RepoRoot '.env')
+  }
 }
 
 if ($env:PORT) {

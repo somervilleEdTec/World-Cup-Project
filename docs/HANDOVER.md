@@ -4,6 +4,7 @@
 **Repository:** https://github.com/somervilleEdTec/World-Cup-Project  
 **Branches:** **`main`** (live deploy) · **`Debug`** (PC only) — [BRANCHING.md](./BRANCHING.md)  
 **Live:** https://worldcup.dosums.uk — [PRODUCTION.md](./PRODUCTION.md) · [GO_LIVE.md](./GO_LIVE.md)  
+**Debug policy:** [DEBUG.md](./DEBUG.md) — local only, Test1–20/guest, no live API  
 **Local debug:** [KO_ENVIRONMENT.md](./KO_ENVIRONMENT.md)  
 **Agent prompt:** [AGENT_PROMPT.md](./AGENT_PROMPT.md) · **Doc index:** [README.md](./README.md)
 
@@ -252,7 +253,7 @@ npm run db:purge      # reset local SQLite data
 2. Owner go-live on production ([GO_LIVE.md](./GO_LIVE.md)).
 3. Keep `npm run jobs` + football-data sync during tournament.
 4. On **`main`**: empty DB + `FOOTBALL_DATA_TOKEN` only — never run KO seed scripts in production.
-5. On **`Debug`**: `ALLOW_KO_SEED=1 npm run seed:complete-teams` or `seed:ko-environment` for local testing.
+5. On **`Debug`**: `cp .env.debug.example .env` then `npm run seed:debug` (Test1–20 / guest). See [DEBUG.md](./DEBUG.md).
 6. Log new issues in [UI_HANDOVER.md](./UI_HANDOVER.md) §7.
 
 ---

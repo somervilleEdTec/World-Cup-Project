@@ -4,6 +4,8 @@
 
 This repository uses **two branches only**. All other remote branches should be deleted.
 
+**Policy:** All work happens on **`Debug`**. **`main`** is updated **only** when the owner explicitly requests and confirms a production release. See **[DEBUG.md](./DEBUG.md)**.
+
 | Branch | Purpose | Live site | GitHub Actions |
 |--------|---------|-----------|----------------|
 | **`main`** | Production code | **Yes** — https://worldcup.dosums.uk | [deploy-main.yml](../.github/workflows/deploy-main.yml) on every push |
@@ -32,15 +34,15 @@ npm run build
 git push origin Debug                       # does NOT change the live site
 ```
 
-Optional local test data (**Debug** only):
+Local environment (**Debug** only):
 
 ```powershell
-$env:ALLOW_KO_SEED = "1"
-npm run seed:ko-environment
-npm run seed:complete-teams
+cp .env.debug.example .env
+npm run seed:debug              # Test1–Test20 / guest, random results
+npm run seed:debug -- --no-results   # users + picks only
 ```
 
-Local database: use `npm run db:purge` freely. See [KO_ENVIRONMENT.md](./KO_ENVIRONMENT.md).
+See **[DEBUG.md](./DEBUG.md)** · [KO_ENVIRONMENT.md](./KO_ENVIRONMENT.md). Use `npm run db:purge` to reset locally.
 
 ---
 
@@ -84,7 +86,7 @@ git checkout main     # production server clone
 
 | Audience | Start here |
 |----------|------------|
-| Branch workflow | This file |
+| **Debug** (default) | [DEBUG.md](./DEBUG.md) · this file |
 | Live operations (`main`) | [PRODUCTION.md](./PRODUCTION.md) · [GO_LIVE.md](./GO_LIVE.md) |
 | Development (`Debug`) | [HANDOVER.md](./HANDOVER.md) · [KO_ENVIRONMENT.md](./KO_ENVIRONMENT.md) |
 | Competition rules | [FINAL_PLAN.md](./FINAL_PLAN.md) |

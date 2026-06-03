@@ -15,13 +15,14 @@
 | [PRODUCTION.md](./PRODUCTION.md) | Live URL, VM, `.env`, auto-deploy, systemd, wipe DB |
 | [GO_LIVE.md](./GO_LIVE.md) | Smoke tests and in-tournament ops |
 
-### `Debug` — development
+### `Debug` — development (default)
 
 | Doc | Description |
 |-----|-------------|
-| [BRANCHING.md](./BRANCHING.md) | Local workflow; seeds; no live deploy |
+| [DEBUG.md](./DEBUG.md) | **Start here** — local-only, Test1–20/guest, no live API |
+| [BRANCHING.md](./BRANCHING.md) | Workflow; never push `main` without confirmation |
 | [HANDOVER.md](./HANDOVER.md) | Architecture, API, file map, env vars |
-| [KO_ENVIRONMENT.md](./KO_ENVIRONMENT.md) | Local test seeds (`ALLOW_KO_SEED=1`) |
+| [KO_ENVIRONMENT.md](./KO_ENVIRONMENT.md) | `npm run seed:debug` and variants |
 | [LOCKING.md](./LOCKING.md) | Prediction lock specification |
 | [UI_HANDOVER.md](./UI_HANDOVER.md) | UI surfaces and bug log |
 | [AGENT_PROMPT.md](./AGENT_PROMPT.md) | Copy-paste prompt for agent sessions |

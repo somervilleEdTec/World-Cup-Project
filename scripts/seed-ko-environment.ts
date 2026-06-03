@@ -1,11 +1,15 @@
 /**
- * Seeds a local KO evaluation database:
- * - 10 users "Test 1" … "Test 10" (password: summer)
- * - Random committed group picks + tournament bonus per user
- * - Official results (manual override) for all group matches + knockout bracket
- *   Scores are random 0–3 per team; no FOOTBALL_DATA_TOKEN required.
+ * Debug-branch local seed — random results (or --no-results), no football-data.org.
+ * Default: Test1–Test20, password guest (see docs/DEBUG.md).
  */
 import 'dotenv/config';
+import {
+  DEBUG_ADMIN_INDEX,
+  DEBUG_TEST_USER_COUNT,
+  DEBUG_USER_PASSWORD,
+  DEBUG_USER_PREFIX,
+  debugDisplayName
+} from './lib/debugDefaults.js';
 import { assertDevSeedAllowed } from './lib/devSeedGuard.js';
 import { groupMatches, teams } from '../src/data/tournament.js';
 import { KNOCKOUT_TEMPLATES, buildKnockoutMatches } from '../src/lib/bracketEngine.js';
@@ -18,10 +22,9 @@ import { runAutoLocks, saveDraftPick, setBonusDraft } from '../src/server/servic
 import { computeLeaderboard } from '../src/server/services/leaderboard.js';
 import type { ActualResult, Pick, TournamentBonusPick } from '../src/types.js';
 
-const TEST_USER_COUNT = 10;
-const DEFAULT_TEST_PASSWORD = 'summer';
-const DEFAULT_USER_PREFIX = 'Test ';
-const DEFAULT_ADMIN_INDEX = 1;
+const DEFAULT_TEST_PASSWORD = DEBUG_USER_PASSWORD;
+const DEFAULT_USER_PREFIX = DEBUG_USER_PREFIX;
+const DEFAULT_ADMIN_INDEX = DEBUG_ADMIN_INDEX;
 const DEFAULT_MAX_GOALS = 3;
 /** Simulates tournament after first kickoff — locks group + bonus picks in DB. */
 const SIMULATED_NOW_ISO = '2026-07-20T00:00:00Z';
@@ -60,7 +63,17 @@ function randomScorePair(): { homeScore: number; awayScore: number; progressingT
 }
 
 function displayNameForIndex(userPrefix: string, index: number): string {
-  return `${userPrefix}${index}`;
+  return debugDisplayName(index, userPrefix.replace(/\s+$/, ''));
+}
+
+function parseUserCount(): number {
+  const raw = parseArgValue('--user-count');
+  if (!raw) return DEBUG_TEST_USER_COUNT;
+  const n = Number.parseInt(raw, 10);
+  if (!Number.isFinite(n) || n < 1) {
+    throw new Error('--user-count must be a positive integer');
+  }
+  return n;
 }
 
 function shuffle<T>(items: T[]): T[] {
@@ -209,7 +222,8 @@ async function seedTestUsers(options: {
 }): Promise<Map<string, string>> {
   const userIds = new Map<string, string>();
 
-  for (let i = 1; i <= TEST_USER_COUNT; i += 1) {
+  const testUserCount = parseUserCount();
+  for (let i = 1; i <= testUserCount; i += 1) {
     const displayName = displayNameForIndex(options.userPrefix, i);
     const user = await register(
       displayName,
@@ -284,6 +298,7 @@ async function main() {
   );
 
   const skipPurge = process.argv.includes('--no-purge');
+  const noResults = process.argv.includes('--no-results');
   const beforeFinal = process.argv.includes('--before-final');
   const fullBracket = process.argv.includes('--full-bracket');
   const completeTournament = process.argv.includes('--complete-tournament');
@@ -311,9 +326,15 @@ async function main() {
     await seedUserPredictions(userId, displayName);
   }
 
-  // eslint-disable-next-line no-console
-  console.log('\nGenerating official results (manual override, no API token)…');
-  const groupActuals = await generateOfficialGroupResults();
+  let groupActuals: Record<string, ActualResult> = {};
+  if (noResults) {
+    // eslint-disable-next-line no-console
+    console.log('\nSkipping official results (--no-results).');
+  } else {
+    // eslint-disable-next-line no-console
+    console.log('\nGenerating random official results (local seed, no API token)…');
+    groupActuals = await generateOfficialGroupResults();
+  }
   let allActuals: Record<string, ActualResult>;
   if (beforeFinal) {
     allActuals = await generateOfficialKnockoutResults(groupActuals, {
@@ -351,13 +372,16 @@ async function main() {
   const finalFixture = confirmed.find((m) => m.id === FINAL_MATCH_ID);
   const leaderboard = await computeLeaderboard();
 
-  const scenarioLabel = beforeFinal
-    ? 'before-final (one prediction left per user)'
-    : completeTournament
-      ? 'complete tournament (all results + all predictions)'
-      : fullBracket
-        ? 'full bracket'
-        : 'group stage only';
+  const testUserCount = parseUserCount();
+  const scenarioLabel = noResults
+    ? 'no official results (picks only)'
+    : beforeFinal
+      ? 'before-final (one prediction left per user)'
+      : completeTournament
+        ? 'complete tournament (all results + all predictions)'
+        : fullBracket
+          ? 'full bracket'
+          : 'group stage only';
 
   // eslint-disable-next-line no-console
   console.log('\n--- KO environment summary ---');
@@ -365,7 +389,7 @@ async function main() {
   console.log(`Scenario: ${scenarioLabel}`);
   // eslint-disable-next-line no-console
   console.log(
-    `Users: ${TEST_USER_COUNT} (password: ${testPassword}, max goals per team: ${maxGoalsPerTeam})`
+    `Users: ${testUserCount} × ${displayNameForIndex(userPrefix, 1)}… (password: ${testPassword}, max goals per team: ${maxGoalsPerTeam})`
   );
   // eslint-disable-next-line no-console
   console.log(`Admin login: ${adminDisplayName} / ${testPassword}`);

@@ -8,40 +8,44 @@ Copy everything below the line into a new Cursor agent session.
 
 You are helping with **World Cup Boys** (“Welcome to the Shiva Bowl”) — FIFA World Cup 2026 prediction app for friends/family.
 
-**Repository:** https://github.com/somervilleEdTec/World-Cup-Project  
-**Code changes:** **`Debug` branch only** — test locally; never deploy from Debug ([BRANCHING.md](./BRANCHING.md))  
-**Live site:** merge to **`main`** and `git push origin main` ([PRODUCTION.md](./PRODUCTION.md))  
-**Current focus:** [TODO.md](./TODO.md)
+**Repository:** https://github.com/somervilleEdTec/World-Cup-Project
+
+### Branch policy (mandatory)
+
+| Rule | Action |
+|------|--------|
+| Work on | **`Debug` only** — `git checkout Debug` before any change |
+| Push to | **`origin/Debug` only** |
+| **`main`** | **Never** commit, push, merge, or deploy unless the user **explicitly states and confirms** a production release |
+
+**Local only on Debug:** `DEBUG_LOCAL=1`, localhost, **no** football-data.org — use **`npm run seed:debug`** for random results (or `--no-results`).  
+**Test users:** **Test1–Test20**, password **`guest`**, unless the user specifies otherwise.
+
+Full policy: **[DEBUG.md](./DEBUG.md)**
 
 ## Mandatory first step — read in order
 
-1. [HANDOVER.md](./HANDOVER.md) — architecture, API, environment
-2. [BRANCHING.md](./BRANCHING.md) — **`main`** vs **`Debug`**
-3. [FINAL_PLAN.md](./FINAL_PLAN.md) — competition rules (**do not change** without owner)
-4. [LOCKING.md](./LOCKING.md) — prediction locks
-5. [KO_ENVIRONMENT.md](./KO_ENVIRONMENT.md) — local test seeds (`Debug` only)
-6. [GO_LIVE.md](./GO_LIVE.md) — smoke tests after deploy
+1. [DEBUG.md](./DEBUG.md) — Debug branch rules  
+2. [BRANCHING.md](./BRANCHING.md) — `main` vs `Debug`  
+3. [HANDOVER.md](./HANDOVER.md) — architecture, API  
+4. [FINAL_PLAN.md](./FINAL_PLAN.md) — competition rules (**do not change** without owner)  
+5. [LOCKING.md](./LOCKING.md) — prediction locks  
+6. [KO_ENVIRONMENT.md](./KO_ENVIRONMENT.md) — seed variants  
 
-## Local setup (Windows — owner)
+## Local setup
 
 ```powershell
 git checkout Debug
 git pull origin Debug
+cp .env.debug.example .env
 npm install
+npm run seed:debug
 .\scripts\Test-LocalSite.ps1 -Mode Serve
 ```
 
-Register: **Name** + password (≤6 chars) + sign-up password **`MadSlags1`**
+Sign-up password: **`MadSlags1`** (from `.env`). Test logins: **Test1** / **guest** (through **Test20**).
 
-Optional KO test database:
-
-```powershell
-$env:ALLOW_KO_SEED = "1"
-npm run seed:ko-environment
-npm run seed:before-final    # one final pick left per user
-```
-
-## Quality gates
+## Quality gates (before push to Debug)
 
 ```powershell
 npm test
@@ -49,10 +53,9 @@ npm run build
 npm run lint
 ```
 
-Fix bugs on **`Debug`**, merge to **`main`** when ready for production.
-
 ## Rules
 
-- Do **not** edit [FINAL_PLAN.md](./FINAL_PLAN.md) without owner approval.
-- Do **not** run `seed:*` on production.
+- Do **not** edit [FINAL_PLAN.md](./FINAL_PLAN.md) without owner approval.  
+- Do **not** set `FOOTBALL_DATA_TOKEN` or `NODE_ENV=production` in local `.env`.  
+- Do **not** push to **`main`** without explicit user confirmation.  
 - Log UI bugs in [UI_HANDOVER.md](./UI_HANDOVER.md).

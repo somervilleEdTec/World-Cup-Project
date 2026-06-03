@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 import express from 'express';
 import { createApp } from './app';
 import { initDatabase, closeDatabase } from './database';
+import { isDebugLocalMode, shouldSyncFootballData } from '../lib/runtimeConfig';
 import { bootstrapFootballData, warnIfNonLiveResultsPresent } from './footballDataStartup';
 import { seedGroupMatchMappings } from './services/matchMapping';
 
@@ -13,8 +14,15 @@ async function main() {
   await initDatabase();
   await seedGroupMatchMappings();
 
+  if (isDebugLocalMode()) {
+    // eslint-disable-next-line no-console
+    console.log(
+      'DEBUG_LOCAL=1 — local Debug mode: no football-data.org sync. Use npm run seed:debug for random results.'
+    );
+  }
+
   const footballToken = process.env.FOOTBALL_DATA_TOKEN;
-  if (footballToken) {
+  if (shouldSyncFootballData() && footballToken) {
     try {
       await bootstrapFootballData(footballToken);
     } catch (error) {
@@ -31,10 +39,10 @@ async function main() {
       'FOOTBALL_DATA_TOKEN is required in production for live results from football-data.org.'
     );
     process.exit(1);
-  } else {
+  } else if (!isDebugLocalMode()) {
     // eslint-disable-next-line no-console
     console.warn(
-      'FOOTBALL_DATA_TOKEN not set — no live results. Use npm run jobs or set the token in .env.'
+      'No live results sync — set FOOTBALL_DATA_TOKEN for production or DEBUG_LOCAL=1 + seed:debug for local testing.'
     );
     await warnIfNonLiveResultsPresent();
   }

@@ -14,7 +14,8 @@
 | **`main`** | Production — push updates the live site (GitHub Actions) |
 | **`Debug`** | Development on your PC — **never** deploys live |
 
-Full workflow: **[docs/BRANCHING.md](docs/BRANCHING.md)** · Doc index: **[docs/README.md](docs/README.md)**
+**All work on `Debug`** — push to `main` only when explicitly confirmed.  
+**Debug policy:** **[docs/DEBUG.md](docs/DEBUG.md)** · Workflow: **[docs/BRANCHING.md](docs/BRANCHING.md)**
 
 ---
 
@@ -25,26 +26,29 @@ Full workflow: **[docs/BRANCHING.md](docs/BRANCHING.md)** · Doc index: **[docs/
 ```powershell
 git checkout Debug
 git pull origin Debug
-.\scripts\Test-LocalSite.ps1              # install, migrate, test, build
-.\scripts\Test-LocalSite.ps1 -Mode Serve  # http://localhost:8787/login
+cp .env.debug.example .env
+npm run seed:debug                          # Test1–Test20 / guest, random results
+.\scripts\Test-LocalSite.ps1 -Mode Serve    # http://localhost:8787/login
 ```
 
-Register with name + password (≤6 chars) + sign-up password **`MadSlags1`**.
+Sign-up gate: **`MadSlags1`**. Test logins: **Test1** … **Test20** / **`guest`**.
 
 ### macOS / Linux
 
 ```bash
 git checkout Debug
+cp .env.debug.example .env
 npm install
-npm run migrate
-npm test && npm run build
-npm run server    # :8787
-npm run jobs      # locks + football-data sync (optional token)
+npm run seed:debug
+npm run server    # :8787 — no live football-data when DEBUG_LOCAL=1
+npm run jobs      # locks only in debug mode
 ```
 
 ---
 
-## Release to production
+## Release to production (explicit confirmation only)
+
+Do **not** push `main` unless the owner asks and confirms.
 
 ```bash
 git checkout main
@@ -53,7 +57,7 @@ npm test && npm run build
 git push origin main
 ```
 
-Ops runbook: **[docs/PRODUCTION.md](docs/PRODUCTION.md)**
+Ops: **[docs/PRODUCTION.md](docs/PRODUCTION.md)**
 
 ---
 
