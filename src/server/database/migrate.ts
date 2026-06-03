@@ -30,7 +30,10 @@ export async function runMigrations(db: DatabaseClient): Promise<void> {
     const sql = fs.readFileSync(path.resolve(process.cwd(), 'migrations', fileName), 'utf8');
     await db.exec(sql);
     const now = new Date().toISOString();
-    await db.run(`INSERT INTO schema_migrations (version, applied_at) VALUES (?, ?)`, [version, now]);
+    await db.run(`INSERT INTO schema_migrations (version, applied_at) VALUES (?, ?)`, [
+      version,
+      now
+    ]);
   }
 }
 

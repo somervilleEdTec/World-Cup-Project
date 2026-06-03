@@ -1,6 +1,10 @@
 import { fetchCompetitionFixtures, PROVIDER } from '../../services/footballDataService';
 import { upsertMatchKickoff } from '../kickoffs';
-import { explainMappingFailure, internalIdFromProvider, resolveInternalMatchId } from './matchMapping';
+import {
+  explainMappingFailure,
+  internalIdFromProvider,
+  resolveInternalMatchId
+} from './matchMapping';
 import type { MappingFailureReason } from './matchMapping';
 
 export async function syncKickoffsFromFootballData(apiToken: string) {

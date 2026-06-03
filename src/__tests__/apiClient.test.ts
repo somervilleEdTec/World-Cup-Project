@@ -4,9 +4,7 @@ import { shouldShowUserError, userFacingError } from '../services/apiClient';
 describe('apiClient user errors', () => {
   it('hides JSON parse and HTML proxy failures', () => {
     expect(
-      shouldShowUserError(
-        'JSON.parse: unexpected character at line 1 column 2 of the JSON data'
-      )
+      shouldShowUserError('JSON.parse: unexpected character at line 1 column 2 of the JSON data')
     ).toBe(false);
     expect(shouldShowUserError('Unexpected token < in JSON at position 0')).toBe(false);
     expect(shouldShowUserError('API returned HTML instead of JSON (200).')).toBe(false);

@@ -1,46 +1,52 @@
-# Repository branches
+# Branches: `main` and `Debug`
 
 **Last updated:** 2026-06-03
 
-This repo uses **two branches only**:
+This repository uses **two branches only**. All other remote branches should be deleted.
 
-| Branch | Purpose | Live website | GitHub Actions |
-|--------|---------|--------------|----------------|
-| **`main`** | Production code and live deploy | **Yes** — https://worldcup.dosums.uk updates on push | `deploy-main.yml` (test + deploy) |
-| **`Debug`** | Development on your PC | **No** — never deploys | **None** — test locally only |
-
-Historical `cursor/*` branches have been removed.
-
-**Full Debug rules:** [DEBUG_BRANCH.md](./DEBUG_BRANCH.md)  
-**Live site:** https://worldcup.dosums.uk — [PRODUCTION.md](./PRODUCTION.md) · **Deploy:** [DEPLOY_AUTOMATION.md](./DEPLOY_AUTOMATION.md)
+| Branch | Purpose | Live site | GitHub Actions |
+|--------|---------|-----------|----------------|
+| **`main`** | Production code | **Yes** — https://worldcup.dosums.uk | [deploy-main.yml](../.github/workflows/deploy-main.yml) on every push |
+| **`Debug`** | Development on your PC | **No** — never deploys | **None** |
 
 ---
 
-## Workflow
+## `Debug` — local development only
 
-### Day-to-day development (your PC — `Debug`)
+| Rule | Enforcement |
+|------|-------------|
+| No live deploy | `deploy-main.yml` triggers only on **`main`** |
+| No production script on wrong branch | `scripts/deploy-production.sh` exits if not on **`main`** |
+| No CI on push | Pushing **`Debug`** does not run workflows |
+| Test locally | `npm test`, `npm run build`, `.\scripts\Test-LocalSite.ps1` (Windows) |
 
-```bash
+### Daily workflow (PC)
+
+```powershell
 git checkout Debug
 git pull origin Debug
-# … edit …
+# edit…
 npm test
 npm run build
-# Windows: .\scripts\Test-LocalSite.ps1 -Mode Serve  →  http://localhost:8787
-git add -A && git commit -m "Describe change"
-git push origin Debug
+.\scripts\Test-LocalSite.ps1 -Mode Serve    # http://localhost:8787
+git push origin Debug                       # does NOT change the live site
 ```
 
-**Pushing `Debug` does not run deploy and does not change the live site.**
+Optional local test data (**Debug** only):
 
-Optional test data (Debug only, local DB):
-
-```bash
-ALLOW_KO_SEED=1 npm run seed:ko-environment
-ALLOW_KO_SEED=1 npm run seed:complete-teams
+```powershell
+$env:ALLOW_KO_SEED = "1"
+npm run seed:ko-environment
+npm run seed:complete-teams
 ```
 
-### Release to live site (`main` only)
+Local database: use `npm run db:purge` freely. See [KO_ENVIRONMENT.md](./KO_ENVIRONMENT.md).
+
+---
+
+## `main` — production and live deploy
+
+### Release flow (Debug → live)
 
 ```bash
 git checkout main
@@ -50,9 +56,15 @@ npm test && npm run build
 git push origin main
 ```
 
-GitHub Actions then deploys to the production server (requires secrets in [DEPLOY_AUTOMATION.md](./DEPLOY_AUTOMATION.md)).
+A green **Deploy main (production)** run updates https://worldcup.dosums.uk. See [PRODUCTION.md](./PRODUCTION.md).
 
 **Never** run `scripts/deploy-production.sh` on the server unless the repo is on **`main`**.
+
+### Production server database
+
+- Empty DB for real users; `FOOTBALL_DATA_TOKEN` in `.env`
+- **No** `seed:*` on production
+- Wipe live data: [PRODUCTION.md](./PRODUCTION.md) § Wipe live database
 
 ---
 
@@ -61,40 +73,19 @@ GitHub Actions then deploys to the production server (requires secrets in [DEPLO
 ```bash
 git clone https://github.com/somervilleEdTec/World-Cup-Project.git
 cd World-Cup-Project
-git checkout Debug         # daily dev
+git checkout Debug    # daily development
 # or
-git checkout main          # production / live server clone
+git checkout main     # production server clone
 ```
 
 ---
 
-## Documentation
+## Documentation map
 
-| Doc | Use |
-|-----|-----|
-| [PRODUCTION.md](./PRODUCTION.md) | **Live** — worldcup.dosums.uk, VM, GitHub secrets |
-| [DEBUG_BRANCH.md](./DEBUG_BRANCH.md) | **Debug = local only, no live deploy** |
-| [DEPLOY_AUTOMATION.md](./DEPLOY_AUTOMATION.md) | Auto-deploy on push to **`main`** |
-| [LAUNCH_HANDOVER.md](./LAUNCH_HANDOVER.md) | Live website launch |
-| [HANDOVER.md](./HANDOVER.md) | Architecture, API |
-| [AGENT_PROMPT.md](./AGENT_PROMPT.md) | Dev agent prompt |
-| [STRESS_TEST_HANDOVER.md](./STRESS_TEST_HANDOVER.md) | Stress-test playbook |
-
-Work on **`Debug`**; merge to **`main`** when ready for production.
-
----
-
-## Local database
-
-`data.db` is **not** in git.
-
-### On `main` (production server)
-
-- Empty DB for real users; `FOOTBALL_DATA_TOKEN` in `.env`
-- **No** `seed:*` scripts on production
-- Deploy via GitHub Actions or `bash scripts/deploy-production.sh` on **`main`**
-
-### On `Debug` (your PC)
-
-- Use seeds and `npm run db:purge` freely for local testing
-- See [KO_ENVIRONMENT.md](./KO_ENVIRONMENT.md)
+| Audience | Start here |
+|----------|------------|
+| Branch workflow | This file |
+| Live operations (`main`) | [PRODUCTION.md](./PRODUCTION.md) · [GO_LIVE.md](./GO_LIVE.md) |
+| Development (`Debug`) | [HANDOVER.md](./HANDOVER.md) · [KO_ENVIRONMENT.md](./KO_ENVIRONMENT.md) |
+| Competition rules | [FINAL_PLAN.md](./FINAL_PLAN.md) |
+| Full doc index | [README.md](./README.md) |

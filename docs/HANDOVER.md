@@ -2,14 +2,10 @@
 
 **Last updated:** 2026-06-03  
 **Repository:** https://github.com/somervilleEdTec/World-Cup-Project  
-**Branches:** `main` (production, **live deploy**) · `Debug` (PC-only dev, **no live deploy**) — [BRANCHING.md](./BRANCHING.md) · [DEBUG_BRANCH.md](./DEBUG_BRANCH.md)  
-**Phase:** **Live** — https://worldcup.dosums.uk · auto-deploy from **`main`** ([PRODUCTION.md](./PRODUCTION.md))  
-**Launch / ops:** [docs/LAUNCH_HANDOVER.md](./LAUNCH_HANDOVER.md) · [docs/DEPLOY_AUTOMATION.md](./DEPLOY_AUTOMATION.md)  
-**Deploy:** [docs/DEPLOY.md](./DEPLOY.md) · **Friend invite checks:** [docs/GO_LIVE.md](./GO_LIVE.md)  
-**Local debug:** [docs/KO_ENVIRONMENT.md](./KO_ENVIRONMENT.md) · [docs/FINAL_PREDICTION_HANDOVER.md](./FINAL_PREDICTION_HANDOVER.md)
-
-**Next agent starts here:** **[docs/AGENT_PROMPT_STRESS_TEST.md](./AGENT_PROMPT_STRESS_TEST.md)** — stress, environment & debug QA after 2026-06-03 merge  
-Also: [docs/LOCKING.md](./LOCKING.md) · [docs/LAUNCH_HANDOVER.md](./LAUNCH_HANDOVER.md) (launch) · [docs/AGENT_PROMPT.md](./AGENT_PROMPT.md) (general dev)
+**Branches:** **`main`** (live deploy) · **`Debug`** (PC only) — [BRANCHING.md](./BRANCHING.md)  
+**Live:** https://worldcup.dosums.uk — [PRODUCTION.md](./PRODUCTION.md) · [GO_LIVE.md](./GO_LIVE.md)  
+**Local debug:** [KO_ENVIRONMENT.md](./KO_ENVIRONMENT.md)  
+**Agent prompt:** [AGENT_PROMPT.md](./AGENT_PROMPT.md) · **Doc index:** [README.md](./README.md)
 
 ---
 
@@ -55,7 +51,7 @@ Friends-and-family prediction app for **FIFA World Cup 2026** (48 teams, 12 grou
 | Each knockout fixture | Kickoff **or** official result | `isKnockoutFixtureLocked` |
 | KO saves | Before global lock | Requires 72 committed group picks |
 
-**Next work:** Stress test — [AGENT_PROMPT_STRESS_TEST.md](./AGENT_PROMPT_STRESS_TEST.md).
+**Next work:** See [TODO.md](./TODO.md) and [GO_LIVE.md](./GO_LIVE.md) for QA checklist.
 
 ### Picks storage (June 2026 UX)
 
@@ -68,27 +64,22 @@ Friends-and-family prediction app for **FIFA World Cup 2026** (48 teams, 12 grou
 
 ## 3. Documentation index
 
+See **[README.md](./README.md)** for the full map. Active docs:
+
 | File | Role |
 |------|------|
-| [STRESS_TEST_HANDOVER.md](./STRESS_TEST_HANDOVER.md) | Stress test playbook (reference) |
-| [KO_ENVIRONMENT.md](./KO_ENVIRONMENT.md) | Local KO test seed (`npm run seed:ko-environment`) |
-| [AGENT_PROMPT.md](./AGENT_PROMPT.md) | Copy-paste session prompt |
-| [UI_HANDOVER.md](./UI_HANDOVER.md) | UI history + bug log table |
-| [HANDOVER.md](./HANDOVER.md) | This file |
-| [LAUNCH_HANDOVER.md](./LAUNCH_HANDOVER.md) | **Live site launch** (registration, deploy) |
-| [AGENT_PROMPT_LAUNCH.md](./AGENT_PROMPT_LAUNCH.md) | Copy-paste prompt for launch agent |
-| [BRANCHING.md](./BRANCHING.md) | Two-branch workflow (`main` + `Debug`) |
-| [PRODUCTION.md](./PRODUCTION.md) | **Live** — https://worldcup.dosums.uk, Oracle VM, deploy secrets |
-| [DEBUG_BRANCH.md](./DEBUG_BRANCH.md) | Debug = local PC only; never live deploy |
-| [DEPLOY_AUTOMATION.md](./DEPLOY_AUTOMATION.md) | Auto-deploy on **`main`** only |
-| [FINAL_PLAN.md](./FINAL_PLAN.md) | Locked competition rules |
+| [BRANCHING.md](./BRANCHING.md) | **`main`** vs **`Debug`** workflow |
+| [PRODUCTION.md](./PRODUCTION.md) | Live ops, auto-deploy, wipe DB |
+| [GO_LIVE.md](./GO_LIVE.md) | Smoke tests and in-tournament ops |
+| [HANDOVER.md](./HANDOVER.md) | This file — architecture and API |
+| [KO_ENVIRONMENT.md](./KO_ENVIRONMENT.md) | Local test seeds (`Debug` only) |
+| [LOCKING.md](./LOCKING.md) | Prediction lock specification |
+| [FINAL_PLAN.md](./FINAL_PLAN.md) | Competition rules |
+| [AGENT_PROMPT.md](./AGENT_PROMPT.md) | Agent session prompt |
+| [UI_HANDOVER.md](./UI_HANDOVER.md) | UI map and bug log |
 | [TODO.md](./TODO.md) | Backlog |
-| [DEPLOY.md](./DEPLOY.md) | Production |
-| [GO_LIVE.md](./GO_LIVE.md) | Pre-launch checklist |
-| [COMPLIANCE.md](./COMPLIANCE.md) | Plan compliance |
-| [LOCKING.md](./LOCKING.md) | Prediction lock layers (implemented) |
-| [AGENT_PROMPT_STRESS_TEST.md](./AGENT_PROMPT_STRESS_TEST.md) | **Next agent** — stress / environment / debug QA |
-| [AGENT_PROMPT_LOCKING.md](./AGENT_PROMPT_LOCKING.md) | Locking audit prompt (reference) |
+
+Historical docs: [archive/README.md](./archive/README.md)
 
 ---
 
@@ -135,7 +126,7 @@ Friends-and-family prediction app for **FIFA World Cup 2026** (48 teams, 12 grou
 
 - [ ] Admin role — manual SQL after register (`display_name`, not email)
 - [x] Live football-data — `FOOTBALL_DATA_TOKEN` required on production; server + `npm run jobs` sync from api.football-data.org
-- [ ] Production — Postgres + [DEPLOY.md](./DEPLOY.md)
+- [ ] Production — see [PRODUCTION.md](./PRODUCTION.md)
 - [ ] E2E browser tests — none
 
 ### P3 not started
@@ -274,7 +265,7 @@ npm run db:purge      # reset local SQLite data
 4. **72 KO gate** vs friendly UX — saves blocked until 72 group picks committed.
 5. Auto-save debounce — last edit may be lost on fast navigation.
 6. No HTTPS/CORS in dev — configure for production.
-7. `COMPLIANCE.md` may describe old draft/commit UI — trust code + STRESS_TEST_HANDOVER.
+7. `COMPLIANCE.md` may describe old draft/commit UI — trust code and [UI_HANDOVER.md](./UI_HANDOVER.md).
 
 ---
 

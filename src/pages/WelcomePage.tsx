@@ -5,7 +5,10 @@ export function WelcomePage() {
     <section className="stack">
       <article className="card">
         <h2>Welcome</h2>
-        <p>World Cup Boys — Welcome to the Shiva Bowl. Enter tournament results, group scores, and knockout predictions.</p>
+        <p>
+          World Cup Boys — Welcome to the Shiva Bowl. Enter tournament results, group scores, and
+          knockout predictions.
+        </p>
       </article>
 
       <article className="card quick-links">
@@ -28,7 +31,10 @@ export function WelcomePage() {
 
       <article className="card">
         <h3>Group standings bonus</h3>
-        <p>+1 point for each team you place in the exact correct finishing position within its group (1st through 4th).</p>
+        <p>
+          +1 point for each team you place in the exact correct finishing position within its group
+          (1st through 4th).
+        </p>
       </article>
 
       <article className="card">

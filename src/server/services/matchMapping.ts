@@ -53,7 +53,10 @@ export async function registerExternalMapping(
   );
 }
 
-export async function internalIdFromProvider(provider: string, providerId: string): Promise<string | null> {
+export async function internalIdFromProvider(
+  provider: string,
+  providerId: string
+): Promise<string | null> {
   const db = getDb();
   const row = await db.get<{ internal_id: string }>(
     `SELECT internal_id FROM match_external_ids WHERE provider = ? AND provider_id = ?`,

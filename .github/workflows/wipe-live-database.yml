@@ -45,7 +45,7 @@ jobs:
         run: |
           set -euo pipefail
           if ! printf '%s' "$DEPLOY_SSH_KEY" | grep -q '^-----BEGIN '; then
-            echo "ERROR: DEPLOY_SSH_KEY is not a valid private key. Fix before wipe — see docs/DEPLOY_AUTOMATION.md"
+            echo "ERROR: DEPLOY_SSH_KEY is not a valid private key. Fix before wipe — see docs/PRODUCTION.md"
             exit 1
           fi
           echo "OK: DEPLOY_SSH_KEY format."

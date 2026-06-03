@@ -71,7 +71,9 @@ export function TeamSelect({ name, value, onChange, disabled = false, label }: T
                 type="button"
                 role="option"
                 aria-selected={team.id === selectedId}
-                className={team.id === selectedId ? 'team-select-option active' : 'team-select-option'}
+                className={
+                  team.id === selectedId ? 'team-select-option active' : 'team-select-option'
+                }
                 onClick={() => choose(team)}
               >
                 <TeamLabel team={team} />

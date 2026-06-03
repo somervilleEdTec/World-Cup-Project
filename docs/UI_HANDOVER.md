@@ -12,7 +12,7 @@
 
 **Do:**
 
-1. Read [STRESS_TEST_HANDOVER.md](./STRESS_TEST_HANDOVER.md) and run the playbook.
+1. Read [GO_LIVE.md](./GO_LIVE.md) for smoke-test checklist.
 2. Log bugs in §6 below.
 3. Fix with small PRs; run `npm test` + `npm run build`.
 

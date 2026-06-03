@@ -71,7 +71,9 @@ export function ComparisonPage() {
 
   useEffect(() => {
     setLoading(true);
-    const loader = selectedMatchId ? fetchMatchComparison(selectedMatchId) : fetchNextMatchComparison();
+    const loader = selectedMatchId
+      ? fetchMatchComparison(selectedMatchId)
+      : fetchNextMatchComparison();
 
     loader
       .then((response) => {
@@ -125,13 +127,17 @@ export function ComparisonPage() {
               const away = teams.find((t) => t.id === fixture.awayTeamId);
               return (
                 <option key={fixture.id} value={fixture.id}>
-                  {fixture.stage} — {home?.name ?? 'TBD'} vs {away?.name ?? 'TBD'} — {formatKickoffBst(fixture.kickoff)}
+                  {fixture.stage} — {home?.name ?? 'TBD'} vs {away?.name ?? 'TBD'} —{' '}
+                  {formatKickoffBst(fixture.kickoff)}
                 </option>
               );
             })}
           </select>
         </label>
-        <p className="kicker">{data.match.stage}{data.match.group ? ` · Group ${data.match.group}` : ''}</p>
+        <p className="kicker">
+          {data.match.stage}
+          {data.match.group ? ` · Group ${data.match.group}` : ''}
+        </p>
         <div className="fixture-row">
           {homeTeam && homeTeam.id !== 'tbd' ? <TeamLabel team={homeTeam} /> : <span>TBD</span>}
           <strong>vs</strong>
@@ -162,8 +168,14 @@ export function ComparisonPage() {
           </thead>
           <tbody>
             {data.entries.map((entry) => (
-              <tr key={entry.userId} className={entry.isCurrentUser ? 'comparison-row-you' : undefined}>
-                <td>{entry.displayName}{entry.isCurrentUser ? ' (you)' : ''}</td>
+              <tr
+                key={entry.userId}
+                className={entry.isCurrentUser ? 'comparison-row-you' : undefined}
+              >
+                <td>
+                  {entry.displayName}
+                  {entry.isCurrentUser ? ' (you)' : ''}
+                </td>
                 <td className={pickCellClass(entry, data.actualResult)}>
                   {formatPick(entry, data.match.stage)}
                 </td>

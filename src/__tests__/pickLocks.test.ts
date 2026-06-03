@@ -43,7 +43,9 @@ describe('pick locks', () => {
 
   it('blocks knockout picks when an official result exists', () => {
     const actual = { matchId: 'r32-1', homeScore: 2, awayScore: 1 };
-    expect(() => assertMatchEditable(koMatch, false, '2026-06-01T00:00:00Z', actual)).toThrow(/locked/i);
+    expect(() => assertMatchEditable(koMatch, false, '2026-06-01T00:00:00Z', actual)).toThrow(
+      /locked/i
+    );
     expect(isKnockoutFixtureLocked(koMatch, '2026-06-01T00:00:00Z', actual)).toBe(true);
     expect(isKnockoutFixtureLocked(koMatch, '2026-06-01T00:00:00Z')).toBe(false);
   });

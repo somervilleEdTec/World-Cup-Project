@@ -19,7 +19,7 @@
 
 ## Go-live
 
-- [x] Stress test playbook ([STRESS_TEST_HANDOVER.md](./STRESS_TEST_HANDOVER.md))
+- [x] Stress test playbook (archived — see [GO_LIVE.md](./GO_LIVE.md))
 - [x] KO-environment UX merged to `main` (predictions UI, comparison, seed script)
 - [x] Production VM + app at `/home/ubuntu/World-Cup-Project` ([PRODUCTION.md](./PRODUCTION.md))
 - [x] Live site https://worldcup.dosums.uk (nginx → Node :8787)
@@ -60,7 +60,7 @@
 ## P2 — Ops
 
 - [x] Postgres + migrations
-- [x] Deploy docs ([DEPLOY.md](./DEPLOY.md), [GO_LIVE.md](./GO_LIVE.md))
+- [x] Deploy docs ([PRODUCTION.md](./PRODUCTION.md), [GO_LIVE.md](./GO_LIVE.md))
 - [x] API integration tests (66 tests)
 - [x] football-data seed + sync
 - [x] Windows `scripts/Test-LocalSite.ps1`

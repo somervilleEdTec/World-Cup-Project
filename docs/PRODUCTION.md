@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-06-03  
 **Status:** **Live and operational** — https://worldcup.dosums.uk  
-**Automated deploy:** **Active** — every push to **`main`** runs [deploy-main.yml](../.github/workflows/deploy-main.yml) (see [DEPLOY_AUTOMATION.md](./DEPLOY_AUTOMATION.md))
+**Automated deploy:** **Active** — every push to **`main`** runs [deploy-main.yml](../.github/workflows/deploy-main.yml) (see § Auto-deploy below)
 
 ---
 
@@ -19,7 +19,7 @@
 
 **Day-to-day release:** merge to `main`, `git push origin main` — live site updates after a green Actions run.
 
-**Local development:** work on **`Debug`**, test with `Test-LocalSite.ps1` / `npm test` — see [DEBUG_BRANCH.md](./DEBUG_BRANCH.md).
+**Local development:** work on **`Debug`**, test with `Test-LocalSite.ps1` / `npm test` — see [BRANCHING.md](./BRANCHING.md).
 
 ---
 
@@ -41,7 +41,7 @@
 ssh -i "C:\Users\tomso\Desktop\ssh-key-2026-06-02.key" -o HostKeyAlgorithms=+ssh-rsa -o PubkeyAcceptedAlgorithms=+ssh-rsa ubuntu@84.8.146.237
 ```
 
-**Oracle console access** (troubleshooting only): `oci-console` key + serial connection — see [DEPLOY_AUTOMATION.md](./DEPLOY_AUTOMATION.md).
+**Oracle console access** (troubleshooting only): `oci-console` key + serial connection.
 
 ---
 
@@ -81,7 +81,44 @@ Each push to **`main`** triggers **Deploy main (production)** automatically afte
 
 **Health check on server:** `curl -s http://127.0.0.1:8787/api/health`
 
-**Debug branch** never deploys — [DEBUG_BRANCH.md](./DEBUG_BRANCH.md).
+**`Debug` branch** never deploys — [BRANCHING.md](./BRANCHING.md).
+
+---
+
+## Auto-deploy (GitHub Actions)
+
+| Branch | Workflow | Live site |
+|--------|----------|-----------|
+| **`main`** | [deploy-main.yml](../.github/workflows/deploy-main.yml) | Updates on each green run |
+| **`Debug`** | None | Never updated |
+
+### What runs on push to `main`
+
+1. **CI** — `npm ci`, `npm test`, `npm run build`
+2. **Deploy** — SSH → `scripts/deploy-production.sh`: pull `main`, `npm ci` (with dev deps), migrate, build, restart systemd, health check
+
+Manual re-run: **Actions → Deploy main (production) → Run workflow** (on branch **`main`** only).
+
+### SSH key for `DEPLOY_SSH_KEY` secret
+
+Paste the **entire** private key file (`ssh-key-2026-06-02.key`), including `-----BEGIN` through `-----END`. Not the `.pub` file, not a file path, no extra quotes.
+
+Test from Windows:
+
+```powershell
+ssh -i "C:\Users\tomso\Desktop\ssh-key-2026-06-02.key" -o HostKeyAlgorithms=+ssh-rsa -o PubkeyAcceptedAlgorithms=+ssh-rsa ubuntu@84.8.146.237 "curl -s http://127.0.0.1:8787/api/health"
+```
+
+### Deploy troubleshooting
+
+| Symptom | Fix |
+|---------|-----|
+| `ssh.ParsePrivateKey: ssh: no key found` | Re-paste full private key into `DEPLOY_SSH_KEY` |
+| Permission denied (publickey) | Private key in secret; matching public key on server |
+| `tsx: not found` | `deploy-production.sh` unsets `NODE_ENV` during `npm ci` / build |
+| `sudo: a password is required` | Install sudoers snippet below |
+| Health check fails | `systemctl status worldcup`; nginx → `127.0.0.1:8787` |
+| Old UI after deploy | Fix `VITE_API_BASE_URL` in `.env` and redeploy |
 
 ---
 
@@ -129,7 +166,7 @@ bash scripts/deploy-production.sh
 
 Public traffic: **https://worldcup.dosums.uk** → proxy to **http://127.0.0.1:8787**.
 
-TLS certificate must cover `worldcup.dosums.uk`. See [DEPLOY.md](./DEPLOY.md).
+TLS certificate must cover `worldcup.dosums.uk`. Typical nginx `proxy_pass http://127.0.0.1:8787;` for API and static assets.
 
 ---
 
@@ -184,6 +221,6 @@ sqlite3 data.db "UPDATE users SET is_admin = 1 WHERE display_name = 'YourName';"
 
 ## Related
 
-- [GO_LIVE.md](./GO_LIVE.md) — smoke tests before inviting friends  
 - [BRANCHING.md](./BRANCHING.md) — `main` vs `Debug`  
-- [LAUNCH_HANDOVER.md](./LAUNCH_HANDOVER.md) — registration launch checklist
+- [GO_LIVE.md](./GO_LIVE.md) — smoke tests before inviting friends  
+- [README.md](./README.md) — full documentation index

@@ -67,7 +67,10 @@ export async function register(
   return { id, displayName: name, isAdmin: false };
 }
 
-export async function login(displayName: string, password: string): Promise<{ user: AuthUser; token: string }> {
+export async function login(
+  displayName: string,
+  password: string
+): Promise<{ user: AuthUser; token: string }> {
   const db = getDb();
   const name = normalizeName(displayName);
   const row = await db.get<{
@@ -75,7 +78,10 @@ export async function login(displayName: string, password: string): Promise<{ us
     password_hash: string;
     display_name: string;
     is_admin: number;
-  }>(`SELECT id, password_hash, display_name, is_admin FROM users WHERE LOWER(display_name) = LOWER(?)`, [name]);
+  }>(
+    `SELECT id, password_hash, display_name, is_admin FROM users WHERE LOWER(display_name) = LOWER(?)`,
+    [name]
+  );
 
   if (!row || !verifyPassword(password, row.password_hash)) {
     throw new Error('Invalid credentials');
@@ -85,12 +91,10 @@ export async function login(displayName: string, password: string): Promise<{ us
   const now = new Date();
   const expires = new Date(now.getTime() + SESSION_TTL_HOURS * 60 * 60 * 1000);
 
-  await db.run(`INSERT INTO sessions (token, user_id, created_at, expires_at) VALUES (?, ?, ?, ?)`, [
-    token,
-    row.id,
-    now.toISOString(),
-    expires.toISOString()
-  ]);
+  await db.run(
+    `INSERT INTO sessions (token, user_id, created_at, expires_at) VALUES (?, ?, ?, ?)`,
+    [token, row.id, now.toISOString(), expires.toISOString()]
+  );
 
   return {
     token,

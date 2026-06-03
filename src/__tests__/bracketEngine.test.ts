@@ -19,7 +19,9 @@ function groupPicks(group: string, scores: Array<[number, number]>): Record<stri
   return picks;
 }
 
-function allGroupPicks(overrides: Partial<Record<string, Array<[number, number]>>> = {}): Record<string, Pick> {
+function allGroupPicks(
+  overrides: Partial<Record<string, Array<[number, number]>>> = {}
+): Record<string, Pick> {
   const groups = 'ABCDEFGHIJKL'.split('');
   return groups.reduce<Record<string, Pick>>((acc, group) => {
     const defaults: Array<[number, number]> = [
@@ -63,8 +65,10 @@ describe('bracketEngine', () => {
     const picks = allGroupPicks();
     const ko = buildKnockoutMatches(picks);
 
-    const actuals: Record<string, { matchId: string; homeScore: number; awayScore: number; progressingTeamId?: string }> =
-      {};
+    const actuals: Record<
+      string,
+      { matchId: string; homeScore: number; awayScore: number; progressingTeamId?: string }
+    > = {};
     ko.forEach((match) => {
       actuals[match.id] = {
         matchId: match.id,
@@ -74,9 +78,23 @@ describe('bracketEngine', () => {
       };
     });
 
-    const placings = deriveFinalPlacings({ ...picks, ...Object.fromEntries(
-      Object.entries(actuals).map(([id, a]) => [id, { matchId: id, homeScore: a.homeScore, awayScore: a.awayScore, progressingTeamId: a.progressingTeamId }])
-    ) }, actuals);
+    const placings = deriveFinalPlacings(
+      {
+        ...picks,
+        ...Object.fromEntries(
+          Object.entries(actuals).map(([id, a]) => [
+            id,
+            {
+              matchId: id,
+              homeScore: a.homeScore,
+              awayScore: a.awayScore,
+              progressingTeamId: a.progressingTeamId
+            }
+          ])
+        )
+      },
+      actuals
+    );
 
     expect(placings?.winnerTeamId).toBeTruthy();
     expect(placings?.runnerUpTeamId).toBeTruthy();

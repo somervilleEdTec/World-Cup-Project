@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { computeScore, lockableKnockoutMatchIds, shouldLockGroup, validatePick } from '../lib/tournamentLogic';
+import {
+  computeScore,
+  lockableKnockoutMatchIds,
+  shouldLockGroup,
+  validatePick
+} from '../lib/tournamentLogic';
 import { picksFromActuals } from '../lib/pickUtils';
 import { Match, Pick, TournamentBonusPick } from '../types';
 

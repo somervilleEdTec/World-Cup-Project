@@ -64,7 +64,7 @@ ALLOW_KO_SEED=1 npm run seed:complete-teams
 npm run server    # http://localhost:8787 — Team1 / bender (admin)
 ```
 
-See [KO_ENVIRONMENT.md](./KO_ENVIRONMENT.md), [FINAL_PREDICTION_HANDOVER.md](./FINAL_PREDICTION_HANDOVER.md).
+See [KO_ENVIRONMENT.md](./KO_ENVIRONMENT.md) (`seed:before-final` for final-pick scenario).
 
 ---
 
@@ -82,5 +82,5 @@ See [KO_ENVIRONMENT.md](./KO_ENVIRONMENT.md), [FINAL_PREDICTION_HANDOVER.md](./F
 ## Related
 
 - [COMPLIANCE.md](./COMPLIANCE.md) — checklist  
-- [AGENT_PROMPT_STRESS_TEST.md](./AGENT_PROMPT_STRESS_TEST.md) — **next session** full QA  
+- [AGENT_PROMPT.md](./AGENT_PROMPT.md) — agent session prompt  
 - [AGENT_PROMPT_LOCKING.md](./AGENT_PROMPT_LOCKING.md) — locking audit (largely complete; use stress prompt next)

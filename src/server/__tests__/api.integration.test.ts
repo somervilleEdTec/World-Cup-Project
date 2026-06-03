@@ -22,9 +22,7 @@ function registerPayload(displayName: string, password = 'abc') {
 
 describe('API integration', () => {
   it('registers, logs in, saves draft, commits, and reads leaderboard', async () => {
-    const register = await request(app)
-      .post('/api/auth/register')
-      .send(registerPayload('Alice'));
+    const register = await request(app).post('/api/auth/register').send(registerPayload('Alice'));
     expect(register.status).toBe(200);
 
     const login = await request(app)

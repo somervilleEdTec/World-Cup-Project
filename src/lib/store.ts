@@ -1,7 +1,12 @@
 import { create } from 'zustand';
 import { getMatches } from '../lib/matchResolver';
 import { Pick, PlayerPredictionState, TournamentBonusPick } from '../types';
-import { affectedFutureMatches, lockableKnockoutMatchIds, shouldLockGroup, validatePick } from './tournamentLogic';
+import {
+  affectedFutureMatches,
+  lockableKnockoutMatchIds,
+  shouldLockGroup,
+  validatePick
+} from './tournamentLogic';
 
 interface AppState extends PlayerPredictionState {
   nowIso: string;
@@ -36,7 +41,10 @@ export const useAppStore = create<AppState>((set, get) => ({
     const impacted = affectedFutureMatches(matchId);
 
     set((state) => {
-      const updated: Record<string, Pick> = { ...state.draftPicks, [matchId]: { ...pick, reviewed: true } };
+      const updated: Record<string, Pick> = {
+        ...state.draftPicks,
+        [matchId]: { ...pick, reviewed: true }
+      };
       impacted.forEach((id) => {
         const previous = state.draftPicks[id] ?? state.committedPicks[id];
         if (previous) {

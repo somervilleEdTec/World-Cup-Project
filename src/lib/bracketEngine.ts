@@ -29,55 +29,259 @@ interface KoTemplate {
 }
 
 const R32_TEMPLATES: KoTemplate[] = [
-  { id: 'r32-1', stage: 'R32', kickoff: '2026-06-28T19:00:00Z', home: { kind: 'pos', group: 'A', position: 2 }, away: { kind: 'pos', group: 'B', position: 2 } },
-  { id: 'r32-2', stage: 'R32', kickoff: '2026-06-29T17:00:00Z', home: { kind: 'pos', group: 'E', position: 1 }, away: { kind: 'third', slot: '1E' } },
-  { id: 'r32-3', stage: 'R32', kickoff: '2026-06-29T20:00:00Z', home: { kind: 'pos', group: 'F', position: 1 }, away: { kind: 'pos', group: 'C', position: 2 } },
-  { id: 'r32-4', stage: 'R32', kickoff: '2026-06-29T23:00:00Z', home: { kind: 'pos', group: 'C', position: 1 }, away: { kind: 'pos', group: 'F', position: 2 } },
-  { id: 'r32-5', stage: 'R32', kickoff: '2026-06-30T17:00:00Z', home: { kind: 'pos', group: 'I', position: 1 }, away: { kind: 'third', slot: '1I' } },
-  { id: 'r32-6', stage: 'R32', kickoff: '2026-06-30T20:00:00Z', home: { kind: 'pos', group: 'E', position: 2 }, away: { kind: 'pos', group: 'I', position: 2 } },
-  { id: 'r32-7', stage: 'R32', kickoff: '2026-06-30T23:00:00Z', home: { kind: 'pos', group: 'A', position: 1 }, away: { kind: 'third', slot: '1A' } },
-  { id: 'r32-8', stage: 'R32', kickoff: '2026-07-01T02:00:00Z', home: { kind: 'pos', group: 'L', position: 1 }, away: { kind: 'third', slot: '1L' } },
-  { id: 'r32-9', stage: 'R32', kickoff: '2026-07-01T19:00:00Z', home: { kind: 'pos', group: 'D', position: 1 }, away: { kind: 'third', slot: '1D' } },
-  { id: 'r32-10', stage: 'R32', kickoff: '2026-07-01T22:00:00Z', home: { kind: 'pos', group: 'G', position: 1 }, away: { kind: 'third', slot: '1G' } },
-  { id: 'r32-11', stage: 'R32', kickoff: '2026-07-02T19:00:00Z', home: { kind: 'pos', group: 'K', position: 2 }, away: { kind: 'pos', group: 'L', position: 2 } },
-  { id: 'r32-12', stage: 'R32', kickoff: '2026-07-02T22:00:00Z', home: { kind: 'pos', group: 'H', position: 1 }, away: { kind: 'pos', group: 'J', position: 2 } },
-  { id: 'r32-13', stage: 'R32', kickoff: '2026-07-02T23:30:00Z', home: { kind: 'pos', group: 'B', position: 1 }, away: { kind: 'third', slot: '1B' } },
-  { id: 'r32-14', stage: 'R32', kickoff: '2026-07-03T19:00:00Z', home: { kind: 'pos', group: 'J', position: 1 }, away: { kind: 'pos', group: 'H', position: 2 } },
-  { id: 'r32-15', stage: 'R32', kickoff: '2026-07-03T22:00:00Z', home: { kind: 'pos', group: 'K', position: 1 }, away: { kind: 'third', slot: '1K' } },
-  { id: 'r32-16', stage: 'R32', kickoff: '2026-07-03T23:30:00Z', home: { kind: 'pos', group: 'D', position: 2 }, away: { kind: 'pos', group: 'G', position: 2 } }
+  {
+    id: 'r32-1',
+    stage: 'R32',
+    kickoff: '2026-06-28T19:00:00Z',
+    home: { kind: 'pos', group: 'A', position: 2 },
+    away: { kind: 'pos', group: 'B', position: 2 }
+  },
+  {
+    id: 'r32-2',
+    stage: 'R32',
+    kickoff: '2026-06-29T17:00:00Z',
+    home: { kind: 'pos', group: 'E', position: 1 },
+    away: { kind: 'third', slot: '1E' }
+  },
+  {
+    id: 'r32-3',
+    stage: 'R32',
+    kickoff: '2026-06-29T20:00:00Z',
+    home: { kind: 'pos', group: 'F', position: 1 },
+    away: { kind: 'pos', group: 'C', position: 2 }
+  },
+  {
+    id: 'r32-4',
+    stage: 'R32',
+    kickoff: '2026-06-29T23:00:00Z',
+    home: { kind: 'pos', group: 'C', position: 1 },
+    away: { kind: 'pos', group: 'F', position: 2 }
+  },
+  {
+    id: 'r32-5',
+    stage: 'R32',
+    kickoff: '2026-06-30T17:00:00Z',
+    home: { kind: 'pos', group: 'I', position: 1 },
+    away: { kind: 'third', slot: '1I' }
+  },
+  {
+    id: 'r32-6',
+    stage: 'R32',
+    kickoff: '2026-06-30T20:00:00Z',
+    home: { kind: 'pos', group: 'E', position: 2 },
+    away: { kind: 'pos', group: 'I', position: 2 }
+  },
+  {
+    id: 'r32-7',
+    stage: 'R32',
+    kickoff: '2026-06-30T23:00:00Z',
+    home: { kind: 'pos', group: 'A', position: 1 },
+    away: { kind: 'third', slot: '1A' }
+  },
+  {
+    id: 'r32-8',
+    stage: 'R32',
+    kickoff: '2026-07-01T02:00:00Z',
+    home: { kind: 'pos', group: 'L', position: 1 },
+    away: { kind: 'third', slot: '1L' }
+  },
+  {
+    id: 'r32-9',
+    stage: 'R32',
+    kickoff: '2026-07-01T19:00:00Z',
+    home: { kind: 'pos', group: 'D', position: 1 },
+    away: { kind: 'third', slot: '1D' }
+  },
+  {
+    id: 'r32-10',
+    stage: 'R32',
+    kickoff: '2026-07-01T22:00:00Z',
+    home: { kind: 'pos', group: 'G', position: 1 },
+    away: { kind: 'third', slot: '1G' }
+  },
+  {
+    id: 'r32-11',
+    stage: 'R32',
+    kickoff: '2026-07-02T19:00:00Z',
+    home: { kind: 'pos', group: 'K', position: 2 },
+    away: { kind: 'pos', group: 'L', position: 2 }
+  },
+  {
+    id: 'r32-12',
+    stage: 'R32',
+    kickoff: '2026-07-02T22:00:00Z',
+    home: { kind: 'pos', group: 'H', position: 1 },
+    away: { kind: 'pos', group: 'J', position: 2 }
+  },
+  {
+    id: 'r32-13',
+    stage: 'R32',
+    kickoff: '2026-07-02T23:30:00Z',
+    home: { kind: 'pos', group: 'B', position: 1 },
+    away: { kind: 'third', slot: '1B' }
+  },
+  {
+    id: 'r32-14',
+    stage: 'R32',
+    kickoff: '2026-07-03T19:00:00Z',
+    home: { kind: 'pos', group: 'J', position: 1 },
+    away: { kind: 'pos', group: 'H', position: 2 }
+  },
+  {
+    id: 'r32-15',
+    stage: 'R32',
+    kickoff: '2026-07-03T22:00:00Z',
+    home: { kind: 'pos', group: 'K', position: 1 },
+    away: { kind: 'third', slot: '1K' }
+  },
+  {
+    id: 'r32-16',
+    stage: 'R32',
+    kickoff: '2026-07-03T23:30:00Z',
+    home: { kind: 'pos', group: 'D', position: 2 },
+    away: { kind: 'pos', group: 'G', position: 2 }
+  }
 ];
 
 const LATER_KO_TEMPLATES: KoTemplate[] = [
-  { id: 'r16-1', stage: 'R16', kickoff: '2026-07-04T19:00:00Z', home: { kind: 'winner', matchId: 'r32-2' }, away: { kind: 'winner', matchId: 'r32-5' } },
-  { id: 'r16-2', stage: 'R16', kickoff: '2026-07-04T22:00:00Z', home: { kind: 'winner', matchId: 'r32-1' }, away: { kind: 'winner', matchId: 'r32-3' } },
-  { id: 'r16-3', stage: 'R16', kickoff: '2026-07-06T19:00:00Z', home: { kind: 'winner', matchId: 'r32-11' }, away: { kind: 'winner', matchId: 'r32-12' } },
-  { id: 'r16-4', stage: 'R16', kickoff: '2026-07-06T22:00:00Z', home: { kind: 'winner', matchId: 'r32-9' }, away: { kind: 'winner', matchId: 'r32-10' } },
-  { id: 'r16-5', stage: 'R16', kickoff: '2026-07-05T19:00:00Z', home: { kind: 'winner', matchId: 'r32-4' }, away: { kind: 'winner', matchId: 'r32-6' } },
-  { id: 'r16-6', stage: 'R16', kickoff: '2026-07-05T22:00:00Z', home: { kind: 'winner', matchId: 'r32-7' }, away: { kind: 'winner', matchId: 'r32-8' } },
-  { id: 'r16-7', stage: 'R16', kickoff: '2026-07-07T19:00:00Z', home: { kind: 'winner', matchId: 'r32-14' }, away: { kind: 'winner', matchId: 'r32-16' } },
-  { id: 'r16-8', stage: 'R16', kickoff: '2026-07-07T22:00:00Z', home: { kind: 'winner', matchId: 'r32-13' }, away: { kind: 'winner', matchId: 'r32-15' } },
-  { id: 'qf-1', stage: 'QF', kickoff: '2026-07-09T19:00:00Z', home: { kind: 'winner', matchId: 'r16-1' }, away: { kind: 'winner', matchId: 'r16-2' } },
-  { id: 'qf-2', stage: 'QF', kickoff: '2026-07-10T19:00:00Z', home: { kind: 'winner', matchId: 'r16-3' }, away: { kind: 'winner', matchId: 'r16-4' } },
-  { id: 'qf-3', stage: 'QF', kickoff: '2026-07-11T19:00:00Z', home: { kind: 'winner', matchId: 'r16-5' }, away: { kind: 'winner', matchId: 'r16-6' } },
-  { id: 'qf-4', stage: 'QF', kickoff: '2026-07-11T22:00:00Z', home: { kind: 'winner', matchId: 'r16-7' }, away: { kind: 'winner', matchId: 'r16-8' } },
-  { id: 'sf-1', stage: 'SF', kickoff: '2026-07-14T19:00:00Z', home: { kind: 'winner', matchId: 'qf-1' }, away: { kind: 'winner', matchId: 'qf-2' } },
-  { id: 'sf-2', stage: 'SF', kickoff: '2026-07-15T19:00:00Z', home: { kind: 'winner', matchId: 'qf-3' }, away: { kind: 'winner', matchId: 'qf-4' } },
-  { id: 'third-place', stage: 'THIRD_PLACE', kickoff: '2026-07-18T19:00:00Z', home: { kind: 'loser', matchId: 'sf-1' }, away: { kind: 'loser', matchId: 'sf-2' } },
-  { id: 'final', stage: 'FINAL', kickoff: '2026-07-19T19:00:00Z', home: { kind: 'winner', matchId: 'sf-1' }, away: { kind: 'winner', matchId: 'sf-2' } }
+  {
+    id: 'r16-1',
+    stage: 'R16',
+    kickoff: '2026-07-04T19:00:00Z',
+    home: { kind: 'winner', matchId: 'r32-2' },
+    away: { kind: 'winner', matchId: 'r32-5' }
+  },
+  {
+    id: 'r16-2',
+    stage: 'R16',
+    kickoff: '2026-07-04T22:00:00Z',
+    home: { kind: 'winner', matchId: 'r32-1' },
+    away: { kind: 'winner', matchId: 'r32-3' }
+  },
+  {
+    id: 'r16-3',
+    stage: 'R16',
+    kickoff: '2026-07-06T19:00:00Z',
+    home: { kind: 'winner', matchId: 'r32-11' },
+    away: { kind: 'winner', matchId: 'r32-12' }
+  },
+  {
+    id: 'r16-4',
+    stage: 'R16',
+    kickoff: '2026-07-06T22:00:00Z',
+    home: { kind: 'winner', matchId: 'r32-9' },
+    away: { kind: 'winner', matchId: 'r32-10' }
+  },
+  {
+    id: 'r16-5',
+    stage: 'R16',
+    kickoff: '2026-07-05T19:00:00Z',
+    home: { kind: 'winner', matchId: 'r32-4' },
+    away: { kind: 'winner', matchId: 'r32-6' }
+  },
+  {
+    id: 'r16-6',
+    stage: 'R16',
+    kickoff: '2026-07-05T22:00:00Z',
+    home: { kind: 'winner', matchId: 'r32-7' },
+    away: { kind: 'winner', matchId: 'r32-8' }
+  },
+  {
+    id: 'r16-7',
+    stage: 'R16',
+    kickoff: '2026-07-07T19:00:00Z',
+    home: { kind: 'winner', matchId: 'r32-14' },
+    away: { kind: 'winner', matchId: 'r32-16' }
+  },
+  {
+    id: 'r16-8',
+    stage: 'R16',
+    kickoff: '2026-07-07T22:00:00Z',
+    home: { kind: 'winner', matchId: 'r32-13' },
+    away: { kind: 'winner', matchId: 'r32-15' }
+  },
+  {
+    id: 'qf-1',
+    stage: 'QF',
+    kickoff: '2026-07-09T19:00:00Z',
+    home: { kind: 'winner', matchId: 'r16-1' },
+    away: { kind: 'winner', matchId: 'r16-2' }
+  },
+  {
+    id: 'qf-2',
+    stage: 'QF',
+    kickoff: '2026-07-10T19:00:00Z',
+    home: { kind: 'winner', matchId: 'r16-3' },
+    away: { kind: 'winner', matchId: 'r16-4' }
+  },
+  {
+    id: 'qf-3',
+    stage: 'QF',
+    kickoff: '2026-07-11T19:00:00Z',
+    home: { kind: 'winner', matchId: 'r16-5' },
+    away: { kind: 'winner', matchId: 'r16-6' }
+  },
+  {
+    id: 'qf-4',
+    stage: 'QF',
+    kickoff: '2026-07-11T22:00:00Z',
+    home: { kind: 'winner', matchId: 'r16-7' },
+    away: { kind: 'winner', matchId: 'r16-8' }
+  },
+  {
+    id: 'sf-1',
+    stage: 'SF',
+    kickoff: '2026-07-14T19:00:00Z',
+    home: { kind: 'winner', matchId: 'qf-1' },
+    away: { kind: 'winner', matchId: 'qf-2' }
+  },
+  {
+    id: 'sf-2',
+    stage: 'SF',
+    kickoff: '2026-07-15T19:00:00Z',
+    home: { kind: 'winner', matchId: 'qf-3' },
+    away: { kind: 'winner', matchId: 'qf-4' }
+  },
+  {
+    id: 'third-place',
+    stage: 'THIRD_PLACE',
+    kickoff: '2026-07-18T19:00:00Z',
+    home: { kind: 'loser', matchId: 'sf-1' },
+    away: { kind: 'loser', matchId: 'sf-2' }
+  },
+  {
+    id: 'final',
+    stage: 'FINAL',
+    kickoff: '2026-07-19T19:00:00Z',
+    home: { kind: 'winner', matchId: 'sf-1' },
+    away: { kind: 'winner', matchId: 'sf-2' }
+  }
 ];
 
 export const KNOCKOUT_TEMPLATES: KoTemplate[] = [...R32_TEMPLATES, ...LATER_KO_TEMPLATES];
 
-function buildThirdPlaceQualifier(groupId: string, picks: Record<string, Pick>): GroupQualifier | null {
+function buildThirdPlaceQualifier(
+  groupId: string,
+  picks: Record<string, Pick>
+): GroupQualifier | null {
   if (!isGroupFullyPlayedInPicks(groupId, picks)) return null;
   const standings = computeGroupStandings(groupId, picks);
   if (standings.length < 3) return null;
   const third = standings[2];
-  return { group: groupId, position: 3, teamId: third.teamId, pts: third.pts, gd: third.gd, gf: third.gf };
+  return {
+    group: groupId,
+    position: 3,
+    teamId: third.teamId,
+    pts: third.pts,
+    gd: third.gd,
+    gf: third.gf
+  };
 }
 
 export function rankThirdPlaceTeams(picks: Record<string, Pick>): GroupQualifier[] {
-  const thirds = GROUPS.map((g) => buildThirdPlaceQualifier(g, picks)).filter((q): q is GroupQualifier => q !== null);
+  const thirds = GROUPS.map((g) => buildThirdPlaceQualifier(g, picks)).filter(
+    (q): q is GroupQualifier => q !== null
+  );
   return thirds.sort((a, b) => b.pts - a.pts || b.gd - a.gd || b.gf - a.gf);
 }
 
@@ -88,7 +292,10 @@ export function thirdPlaceCombinationKey(qualifiers: GroupQualifier[]): string {
     .join('');
 }
 
-export function resolveThirdPlaceTeam(slot: ThirdPlaceSlot, picks: Record<string, Pick>): string | null {
+export function resolveThirdPlaceTeam(
+  slot: ThirdPlaceSlot,
+  picks: Record<string, Pick>
+): string | null {
   const allGroupsPlayed = GROUPS.every((groupId) => isGroupFullyPlayedInPicks(groupId, picks));
   if (!allGroupsPlayed) return null;
   const ranked = rankThirdPlaceTeams(picks);
@@ -197,9 +404,14 @@ export function deriveFinalPlacings(
   if (!champion || champion === 'tbd') return undefined;
   const runnerUp = champion === final.homeTeamId ? final.awayTeamId : final.homeTeamId;
 
-  const bronzeWinner = resolveKnockoutWinner(thirdPlace, picks['third-place'], actuals['third-place']);
+  const bronzeWinner = resolveKnockoutWinner(
+    thirdPlace,
+    picks['third-place'],
+    actuals['third-place']
+  );
   if (!bronzeWinner || bronzeWinner === 'tbd') return undefined;
-  const fourth = bronzeWinner === thirdPlace.homeTeamId ? thirdPlace.awayTeamId : thirdPlace.homeTeamId;
+  const fourth =
+    bronzeWinner === thirdPlace.homeTeamId ? thirdPlace.awayTeamId : thirdPlace.homeTeamId;
 
   if (runnerUp === 'tbd' || fourth === 'tbd') return undefined;
 

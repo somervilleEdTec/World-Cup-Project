@@ -28,15 +28,21 @@ describe('knockoutStagePointsMultiplier', () => {
 
 describe('scaled match points', () => {
   it('scales QF exact to 9 points (3+6)', () => {
-    expect(scaledMatchPointsForStage('QF', { correctResult: true, exactScore: true }).total).toBe(9);
+    expect(scaledMatchPointsForStage('QF', { correctResult: true, exactScore: true }).total).toBe(
+      9
+    );
   });
 
   it('scales SF result-only to 4 points', () => {
-    expect(scaledMatchPointsForStage('SF', { correctResult: true, exactScore: false }).total).toBe(4);
+    expect(scaledMatchPointsForStage('SF', { correctResult: true, exactScore: false }).total).toBe(
+      4
+    );
   });
 
   it('scales final exact to 18 points (6+12)', () => {
-    expect(scaledMatchPointsForStage('FINAL', { correctResult: true, exactScore: true }).total).toBe(18);
+    expect(
+      scaledMatchPointsForStage('FINAL', { correctResult: true, exactScore: true }).total
+    ).toBe(18);
   });
 });
 

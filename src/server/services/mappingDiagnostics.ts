@@ -43,7 +43,9 @@ function isGroupStageFixture(stage: string | undefined, group: string | undefine
   return stage === 'GROUP_STAGE' || Boolean(group?.startsWith('GROUP_'));
 }
 
-export async function buildMappingDiagnostics(apiToken?: string): Promise<MappingDiagnosticsReport> {
+export async function buildMappingDiagnostics(
+  apiToken?: string
+): Promise<MappingDiagnosticsReport> {
   const token = apiToken ?? process.env.FOOTBALL_DATA_TOKEN;
   if (!token) {
     throw new Error('FOOTBALL_DATA_TOKEN missing');
@@ -51,7 +53,9 @@ export async function buildMappingDiagnostics(apiToken?: string): Promise<Mappin
 
   const db = getDb();
   const fixtures = await fetchCompetitionFixtures(token);
-  const kickoffRow = await db.get<{ count: number }>(`SELECT COUNT(*) as count FROM match_kickoffs`);
+  const kickoffRow = await db.get<{ count: number }>(
+    `SELECT COUNT(*) as count FROM match_kickoffs`
+  );
   const mappingRow = await db.get<{ count: number }>(
     `SELECT COUNT(*) as count FROM match_external_ids WHERE provider = ?`,
     [PROVIDER]

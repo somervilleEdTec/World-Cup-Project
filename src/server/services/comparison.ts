@@ -158,7 +158,10 @@ export async function getMatchComparison(
   };
 }
 
-export async function getNextMatchComparison(currentUserId: string, nowIso = new Date().toISOString()) {
+export async function getNextMatchComparison(
+  currentUserId: string,
+  nowIso = new Date().toISOString()
+) {
   const results = await getResultsMap();
   const allMatches = getMatches({}, results).filter(
     (m) => m.homeTeamId !== 'tbd' && m.awayTeamId !== 'tbd'

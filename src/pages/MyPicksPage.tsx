@@ -162,7 +162,9 @@ export function MyPicksPage() {
   const actualPicksForGroup = useMemo(() => {
     const fromActuals = picksFromActuals(officialResults);
     return Object.fromEntries(
-      activeGroupMatches.filter((match) => fromActuals[match.id]).map((match) => [match.id, fromActuals[match.id]])
+      activeGroupMatches
+        .filter((match) => fromActuals[match.id])
+        .map((match) => [match.id, fromActuals[match.id]])
     );
   }, [activeGroupMatches, officialResults]);
 
@@ -171,7 +173,9 @@ export function MyPicksPage() {
     [activeGroup, actualPicksForGroup]
   );
 
-  const hasActualGroupResults = activeGroupMatches.some((match) => officialResults[match.id] !== undefined);
+  const hasActualGroupResults = activeGroupMatches.some(
+    (match) => officialResults[match.id] !== undefined
+  );
   const groupResultsLocked = groupHasOfficialResults(activeGroup, officialResults);
 
   const missingPicks = useMemo(
@@ -193,41 +197,46 @@ export function MyPicksPage() {
     return counts;
   }, [confirmedKnockoutFixtures]);
 
-  const activeKoPhase = isKnockoutPhase(phase) ? KNOCKOUT_PHASES.find((entry) => entry.id === phase) : undefined;
+  const activeKoPhase = isKnockoutPhase(phase)
+    ? KNOCKOUT_PHASES.find((entry) => entry.id === phase)
+    : undefined;
   const activeKoFixtures = activeKoPhase
     ? knockoutFixturesForPhase(activeKoPhase.id, confirmedKnockoutFixtures)
     : [];
 
-  const saveMatchPick = useCallback(async (pick: Pick) => {
-    try {
-      await saveDraftPick(pick);
-      setPendingGroupPicks((current) => {
-        const next = { ...current };
-        delete next[pick.matchId];
-        return next;
-      });
-      setState((prev) => {
-        const committedPicks = { ...prev.committedPicks, [pick.matchId]: pick };
-        return {
-          ...prev,
-          committedPicks,
-          draftPicks: Object.fromEntries(
-            Object.entries(prev.draftPicks).filter(([id]) => id !== pick.matchId)
-          ),
-          groupPicksCommittedCount: countCommittedGroupPicks(committedPicks),
-          allGroupPicksCommitted: computeAllGroupPicksCommitted(committedPicks)
-        };
-      });
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Could not save prediction';
-      if (isAuthErrorMessage(message)) {
-        handleAuthFailure();
-        return;
+  const saveMatchPick = useCallback(
+    async (pick: Pick) => {
+      try {
+        await saveDraftPick(pick);
+        setPendingGroupPicks((current) => {
+          const next = { ...current };
+          delete next[pick.matchId];
+          return next;
+        });
+        setState((prev) => {
+          const committedPicks = { ...prev.committedPicks, [pick.matchId]: pick };
+          return {
+            ...prev,
+            committedPicks,
+            draftPicks: Object.fromEntries(
+              Object.entries(prev.draftPicks).filter(([id]) => id !== pick.matchId)
+            ),
+            groupPicksCommittedCount: countCommittedGroupPicks(committedPicks),
+            allGroupPicksCommitted: computeAllGroupPicksCommitted(committedPicks)
+          };
+        });
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Could not save prediction';
+        if (isAuthErrorMessage(message)) {
+          handleAuthFailure();
+          return;
+        }
+        const visible = userFacingError(err, 'Could not save prediction');
+        if (visible) setGroupMessage(visible);
       }
-      const visible = userFacingError(err, 'Could not save prediction');
-      if (visible) setGroupMessage(visible);
-    }
-  }, [handleAuthFailure]);
+    },
+    [handleAuthFailure]
+  );
 
   const handleGroupScoreChange = useCallback((matchId: string, updated: Pick) => {
     setPendingGroupPicks((current) => ({ ...current, [matchId]: updated }));
@@ -316,10 +325,18 @@ export function MyPicksPage() {
           )}
         </div>
         <div className="picks-phase-tabs">
-          <button type="button" className={phase === 'bonus' ? 'active-tab' : ''} onClick={() => changePhase('bonus')}>
+          <button
+            type="button"
+            className={phase === 'bonus' ? 'active-tab' : ''}
+            onClick={() => changePhase('bonus')}
+          >
             Tournament Results
           </button>
-          <button type="button" className={phase === 'group' ? 'active-tab' : ''} onClick={() => changePhase('group')}>
+          <button
+            type="button"
+            className={phase === 'group' ? 'active-tab' : ''}
+            onClick={() => changePhase('group')}
+          >
             Group Stage
           </button>
           {KNOCKOUT_PHASES.map((entry) => {
@@ -343,15 +360,20 @@ export function MyPicksPage() {
         <article className="card">
           <h3>Group {activeGroup} predictions</h3>
           {userGroupLocked && !tournamentLocked && !groupResultsLocked && (
-            <p className="success">Group {activeGroup} is locked. Scores are shown as text until you unlock.</p>
+            <p className="success">
+              Group {activeGroup} is locked. Scores are shown as text until you unlock.
+            </p>
           )}
           {userGroupLocked && groupResultsLocked && (
             <p className="warning">
-              Group {activeGroup} is locked. Official results are in — predictions cannot be changed or unlocked.
+              Group {activeGroup} is locked. Official results are in — predictions cannot be changed
+              or unlocked.
             </p>
           )}
           {tournamentLocked && userGroupLocked && !groupResultsLocked && (
-            <p className="warning">Group {activeGroup} is locked (tournament lock is active; cannot unlock).</p>
+            <p className="warning">
+              Group {activeGroup} is locked (tournament lock is active; cannot unlock).
+            </p>
           )}
           {activeGroupMatches.map((match) => {
             const matchKickoffLocked = kickoffReached(match.kickoff, nowIso);
@@ -427,7 +449,11 @@ export function MyPicksPage() {
             >
               {userGroupLocked ? 'Unlock group' : 'Lock group'}
             </button>
-            <button type="button" disabled={groupIndex === 0} onClick={() => changeGroupIndex(groupIndex - 1)}>
+            <button
+              type="button"
+              disabled={groupIndex === 0}
+              onClick={() => changeGroupIndex(groupIndex - 1)}
+            >
               Previous Group
             </button>
             <button
@@ -439,7 +465,9 @@ export function MyPicksPage() {
             </button>
           </div>
           {groupMessage && shouldShowUserError(groupMessage) && (
-            <p className={groupMessage.includes('locked') ? 'success' : 'warning'}>{groupMessage}</p>
+            <p className={groupMessage.includes('locked') ? 'success' : 'warning'}>
+              {groupMessage}
+            </p>
           )}
         </article>
       )}
@@ -447,7 +475,10 @@ export function MyPicksPage() {
       {phase === 'bonus' && (
         <article className="card">
           <h3>Tournament result predictions</h3>
-          <p>Choose the top four teams. These lock at the first match kickoff — no group predictions required.</p>
+          <p>
+            Choose the top four teams. These lock at the first match kickoff — no group predictions
+            required.
+          </p>
           {tournamentLocked && <p className="warning">Tournament result predictions are locked.</p>}
           {state.bonusCommitted && !tournamentLocked && (
             <p className="success">Your tournament result predictions are saved.</p>
@@ -477,13 +508,25 @@ export function MyPicksPage() {
                 value={bonus.runnerUpTeamId}
                 disabled={tournamentLocked}
               />
-              <TeamSelect label="Third" name="thirdTeamId" value={bonus.thirdTeamId} disabled={tournamentLocked} />
-              <TeamSelect label="Fourth" name="fourthTeamId" value={bonus.fourthTeamId} disabled={tournamentLocked} />
+              <TeamSelect
+                label="Third"
+                name="thirdTeamId"
+                value={bonus.thirdTeamId}
+                disabled={tournamentLocked}
+              />
+              <TeamSelect
+                label="Fourth"
+                name="fourthTeamId"
+                value={bonus.fourthTeamId}
+                disabled={tournamentLocked}
+              />
               <button type="submit" disabled={tournamentLocked}>
                 Save tournament predictions
               </button>
               {bonusMessage && (
-                <p className={bonusMessage.includes('saved') ? 'success' : 'warning'}>{bonusMessage}</p>
+                <p className={bonusMessage.includes('saved') ? 'success' : 'warning'}>
+                  {bonusMessage}
+                </p>
               )}
             </form>
           )}
@@ -493,11 +536,14 @@ export function MyPicksPage() {
       {activeKoPhase && (
         <article className="card">
           <h3>{activeKoPhase.label}</h3>
-          <p>Only officially confirmed fixtures are listed — not projected from your group predictions.</p>
+          <p>
+            Only officially confirmed fixtures are listed — not projected from your group
+            predictions.
+          </p>
           {!koPicksAllowed && (
             <p className="warning">
-              Complete and save all 72 group-stage match scores before knockout predictions can be saved (
-              {state.groupPicksCommittedCount ?? 0}/{state.groupPicksRequired ?? 72} saved).
+              Complete and save all 72 group-stage match scores before knockout predictions can be
+              saved ({state.groupPicksCommittedCount ?? 0}/{state.groupPicksRequired ?? 72} saved).
             </p>
           )}
           {activeKoFixtures.length === 0 ? (
@@ -517,7 +563,9 @@ export function MyPicksPage() {
                   showLockedSummary={koFixtureLocked}
                   onSave={saveMatchPick}
                   kickoffHint={
-                    koFixtureLocked ? undefined : `Locks in: ${formatCountdown(match.kickoff, nowIso)}`
+                    koFixtureLocked
+                      ? undefined
+                      : `Locks in: ${formatCountdown(match.kickoff, nowIso)}`
                   }
                 />
               );

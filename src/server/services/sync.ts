@@ -86,7 +86,9 @@ export async function syncFootballData(apiToken: string) {
       }
     });
 
-    await db.run(`UPDATE sync_status SET last_success_at = ?, last_error = NULL WHERE id = 1`, [now]);
+    await db.run(`UPDATE sync_status SET last_success_at = ?, last_error = NULL WHERE id = 1`, [
+      now
+    ]);
     return { ok: true, updated, skipped };
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown sync error';

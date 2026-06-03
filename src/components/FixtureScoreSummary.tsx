@@ -13,20 +13,12 @@ export function formatFixtureScore(
   return `${homeScore}–${awayScore}`;
 }
 
-export function FixtureScoreSummary({
-  pick,
-  actual
-}: {
-  pick?: Pick;
-  actual?: ActualResult;
-}) {
+export function FixtureScoreSummary({ pick, actual }: { pick?: Pick; actual?: ActualResult }) {
   return (
     <div className="fixture-scores-summary">
       <p>
         <strong>Your prediction:</strong>{' '}
-        {pick
-          ? formatFixtureScore(pick.homeScore, pick.awayScore, pick.progressingTeamId)
-          : '—'}
+        {pick ? formatFixtureScore(pick.homeScore, pick.awayScore, pick.progressingTeamId) : '—'}
       </p>
       {actual && (
         <p className="fixture-actual">

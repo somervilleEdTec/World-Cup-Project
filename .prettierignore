@@ -1,0 +1,6 @@
+node_modules
+dist
+public/flags
+coverage
+data.db
+*.md

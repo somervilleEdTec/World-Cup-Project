@@ -37,7 +37,11 @@ export function isGroupFixtureLocked(
   actual?: ActualResult
 ): boolean {
   if (!isGroupStage(match)) return false;
-  return isGroupLocked(metaGroupLocked, nowIso) || kickoffReached(match.kickoff, nowIso) || actual !== undefined;
+  return (
+    isGroupLocked(metaGroupLocked, nowIso) ||
+    kickoffReached(match.kickoff, nowIso) ||
+    actual !== undefined
+  );
 }
 
 export function groupHasOfficialResults(
@@ -47,7 +51,10 @@ export function groupHasOfficialResults(
   return groupMatches.filter((m) => m.group === groupId).some((m) => results[m.id] !== undefined);
 }
 
-export function assertGroupUnlockAllowed(groupId: string, results: Record<string, ActualResult>): void {
+export function assertGroupUnlockAllowed(
+  groupId: string,
+  results: Record<string, ActualResult>
+): void {
   if (groupHasOfficialResults(groupId, results)) {
     throw new Error(`Group ${groupId} cannot be unlocked — official results are in.`);
   }
@@ -57,7 +64,10 @@ export function shouldLockGroup(nowIso = new Date().toISOString()): boolean {
   return kickoffReached(getFirstMatchKickoff(), nowIso);
 }
 
-export function isGroupLocked(metaGroupLocked: boolean, nowIso = new Date().toISOString()): boolean {
+export function isGroupLocked(
+  metaGroupLocked: boolean,
+  nowIso = new Date().toISOString()
+): boolean {
   return metaGroupLocked || shouldLockGroup(nowIso);
 }
 
@@ -92,7 +102,10 @@ export function isMatchEditable(
   }
 }
 
-export function assertBonusEditable(metaGroupLocked: boolean, nowIso = new Date().toISOString()): void {
+export function assertBonusEditable(
+  metaGroupLocked: boolean,
+  nowIso = new Date().toISOString()
+): void {
   if (isGroupLocked(metaGroupLocked, nowIso)) {
     throw new Error('Tournament bonus predictions are locked.');
   }

@@ -16,7 +16,10 @@ import {
   shouldLockGroup
 } from '../../lib/pickLocks';
 import { Pick, TournamentBonusPick } from '../../types';
-import { assertKnockoutFixtureConfirmed, buildConfirmedKnockoutFixtures } from '../../lib/knockoutFixtureAvailability';
+import {
+  assertKnockoutFixtureConfirmed,
+  buildConfirmedKnockoutFixtures
+} from '../../lib/knockoutFixtureAvailability';
 import { getResultsMap } from './leaderboard';
 
 const VALID_GROUPS = new Set(['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L']);
@@ -56,9 +59,10 @@ export async function getUserPredictionState(userId: string) {
     away_score: number;
     progressing_team_id: string | null;
     reviewed: number;
-  }>(`SELECT match_id, state, home_score, away_score, progressing_team_id, reviewed FROM predictions WHERE user_id = ?`, [
-    userId
-  ]);
+  }>(
+    `SELECT match_id, state, home_score, away_score, progressing_team_id, reviewed FROM predictions WHERE user_id = ?`,
+    [userId]
+  );
 
   const committedPicks: Record<string, Pick> = {};
   const draftPicks: Record<string, Pick> = {};
@@ -95,7 +99,9 @@ export async function getUserPredictionState(userId: string) {
       committedAt: meta?.committed_at ?? new Date().toISOString(),
       groupLocked: (meta?.group_locked ?? 0) === 1
     },
-    bonusDraft: meta?.bonus_draft ? (JSON.parse(meta.bonus_draft) as TournamentBonusPick) : undefined,
+    bonusDraft: meta?.bonus_draft
+      ? (JSON.parse(meta.bonus_draft) as TournamentBonusPick)
+      : undefined,
     bonusCommitted: meta?.bonus_committed
       ? (JSON.parse(meta.bonus_committed) as TournamentBonusPick)
       : undefined
@@ -143,7 +149,11 @@ export async function saveDraftPick(userId: string, pick: Pick, nowIso = new Dat
   ]);
 }
 
-export async function setBonusDraft(userId: string, bonus: TournamentBonusPick, nowIso = new Date().toISOString()) {
+export async function setBonusDraft(
+  userId: string,
+  bonus: TournamentBonusPick,
+  nowIso = new Date().toISOString()
+) {
   const db = getDb();
   const meta = await getMeta(userId);
   const groupLocked = (meta?.group_locked ?? 0) === 1;
@@ -200,19 +210,26 @@ export async function setGroupAccepted(
         `INSERT INTO predictions (user_id, match_id, state, home_score, away_score, progressing_team_id, reviewed, updated_at)
          VALUES (?, ?, 'committed', ?, ?, ?, 1, ?)
          ON CONFLICT(user_id, match_id, state) DO UPDATE SET home_score=excluded.home_score, away_score=excluded.away_score, progressing_team_id=excluded.progressing_team_id, reviewed=1, updated_at=excluded.updated_at`,
-        [userId, pick.matchId, pick.homeScore, pick.awayScore, pick.progressingTeamId ?? null, nowIso]
+        [
+          userId,
+          pick.matchId,
+          pick.homeScore,
+          pick.awayScore,
+          pick.progressingTeamId ?? null,
+          nowIso
+        ]
       );
-      await tx.run(`DELETE FROM predictions WHERE user_id = ? AND match_id = ? AND state = 'draft'`, [
-        userId,
-        pick.matchId
-      ]);
+      await tx.run(
+        `DELETE FROM predictions WHERE user_id = ? AND match_id = ? AND state = 'draft'`,
+        [userId, pick.matchId]
+      );
     }
 
     const next = [...new Set([...lockedGroups, groupId])];
-    await tx.run(`UPDATE prediction_meta SET accepted_groups = ?, affected_matches = '[]' WHERE user_id = ?`, [
-      JSON.stringify(next),
-      userId
-    ]);
+    await tx.run(
+      `UPDATE prediction_meta SET accepted_groups = ?, affected_matches = '[]' WHERE user_id = ?`,
+      [JSON.stringify(next), userId]
+    );
   });
 }
 
@@ -246,10 +263,10 @@ export async function unlockGroupAccepted(
 
 export async function markReviewed(userId: string, matchId: string) {
   const db = getDb();
-  await db.run(`UPDATE predictions SET reviewed = 1 WHERE user_id = ? AND match_id = ? AND state = 'draft'`, [
-    userId,
-    matchId
-  ]);
+  await db.run(
+    `UPDATE predictions SET reviewed = 1 WHERE user_id = ? AND match_id = ? AND state = 'draft'`,
+    [userId, matchId]
+  );
   const current = await getMeta(userId);
   const existing = current ? (JSON.parse(current.affected_matches) as string[]) : [];
   const updated = existing.filter((id) => id !== matchId);
@@ -294,7 +311,14 @@ export async function commitDraft(userId: string, nowIso: string) {
         `INSERT INTO predictions (user_id, match_id, state, home_score, away_score, progressing_team_id, reviewed, updated_at)
          VALUES (?, ?, 'committed', ?, ?, ?, 1, ?)
          ON CONFLICT(user_id, match_id, state) DO UPDATE SET home_score=excluded.home_score, away_score=excluded.away_score, progressing_team_id=excluded.progressing_team_id, reviewed=1, updated_at=excluded.updated_at`,
-        [userId, pick.matchId, pick.homeScore, pick.awayScore, pick.progressingTeamId ?? null, nowIso]
+        [
+          userId,
+          pick.matchId,
+          pick.homeScore,
+          pick.awayScore,
+          pick.progressingTeamId ?? null,
+          nowIso
+        ]
       );
     }
 
@@ -325,10 +349,14 @@ export async function runAutoLocks(nowIso: string) {
 
   const results = await getResultsMap();
   const lockable = getMatches({}, results)
-    .filter((m) => m.stage !== 'GROUP' && new Date(nowIso).getTime() >= new Date(m.kickoff).getTime())
+    .filter(
+      (m) => m.stage !== 'GROUP' && new Date(nowIso).getTime() >= new Date(m.kickoff).getTime()
+    )
     .map((m) => m.id);
 
   for (const matchId of lockable) {
-    await db.run(`UPDATE predictions SET reviewed = 1 WHERE match_id = ? AND state = 'committed'`, [matchId]);
+    await db.run(`UPDATE predictions SET reviewed = 1 WHERE match_id = ? AND state = 'committed'`, [
+      matchId
+    ]);
   }
 }

@@ -34,13 +34,20 @@ export const teams: Team[] = Object.entries(groupTeamNames).flatMap(([group, nam
 function groupMatchesForGroup(group: string, teamIds: string[], offsetDays: number): Match[] {
   const [a, b, c, d] = teamIds;
   const pairs: Array<[string, string]> = [
-    [a, b], [c, d], [a, c], [b, d], [a, d], [b, c]
+    [a, b],
+    [c, d],
+    [a, c],
+    [b, d],
+    [a, d],
+    [b, c]
   ];
   return pairs.map(([homeTeamId, awayTeamId], idx) => ({
     id: `g-${group.toLowerCase()}-${idx + 1}`,
     stage: 'GROUP',
     group,
-    kickoff: new Date(Date.UTC(2026, 5, 11 + offsetDays + Math.floor(idx / 2), (idx % 2) * 3 + 16, 0, 0)).toISOString(),
+    kickoff: new Date(
+      Date.UTC(2026, 5, 11 + offsetDays + Math.floor(idx / 2), (idx % 2) * 3 + 16, 0, 0)
+    ).toISOString(),
     homeTeamId,
     awayTeamId
   }));

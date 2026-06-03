@@ -19,7 +19,10 @@ async function main() {
       await bootstrapFootballData(footballToken);
     } catch (error) {
       // eslint-disable-next-line no-console
-      console.warn('football-data.org bootstrap skipped:', error instanceof Error ? error.message : error);
+      console.warn(
+        'football-data.org bootstrap skipped:',
+        error instanceof Error ? error.message : error
+      );
     }
     await warnIfNonLiveResultsPresent();
   } else if (process.env.NODE_ENV === 'production') {

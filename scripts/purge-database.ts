@@ -34,7 +34,9 @@ async function main() {
 
   await resetDatabase(db);
   // eslint-disable-next-line no-console
-  console.log(`Database purged and schema recreated (${dialect}${dialect === 'sqlite' ? `, file: ${sqlitePath}` : ''}).`);
+  console.log(
+    `Database purged and schema recreated (${dialect}${dialect === 'sqlite' ? `, file: ${sqlitePath}` : ''}).`
+  );
   // eslint-disable-next-line no-console
   console.log(
     'After restart, football-data.org sync may re-import kickoffs and finished results if FOOTBALL_DATA_TOKEN is set.'

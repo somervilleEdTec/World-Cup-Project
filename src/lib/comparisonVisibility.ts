@@ -18,7 +18,10 @@ export function canViewOthersPicks(
   return false;
 }
 
-export function getNextUpcomingMatchId(nowIso = new Date().toISOString(), matchIds: { id: string; kickoff: string }[]): string | null {
+export function getNextUpcomingMatchId(
+  nowIso = new Date().toISOString(),
+  matchIds: { id: string; kickoff: string }[]
+): string | null {
   const upcoming = matchIds
     .filter((m) => new Date(m.kickoff).getTime() > new Date(nowIso).getTime())
     .sort((a, b) => new Date(a.kickoff).getTime() - new Date(b.kickoff).getTime());

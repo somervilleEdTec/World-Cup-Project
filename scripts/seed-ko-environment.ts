@@ -95,11 +95,7 @@ async function insertResult(
   awayTeamId: string
 ): Promise<ActualResult> {
   const progressingTeamId =
-    homeScore === awayScore
-      ? Math.random() < 0.5
-        ? homeTeamId
-        : awayTeamId
-      : undefined;
+    homeScore === awayScore ? (Math.random() < 0.5 ? homeTeamId : awayTeamId) : undefined;
   const now = new Date().toISOString();
   const db = getDb();
   await db.run(
@@ -123,7 +119,9 @@ async function insertResult(
 }
 
 /** Retry until third-place mapping resolves and all 16 R32 fixtures have both teams. */
-async function generateOfficialGroupResults(maxAttempts = 80): Promise<Record<string, ActualResult>> {
+async function generateOfficialGroupResults(
+  maxAttempts = 80
+): Promise<Record<string, ActualResult>> {
   for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
     const actuals: Record<string, ActualResult> = {};
     for (const match of groupMatches) {
@@ -144,7 +142,9 @@ async function generateOfficialGroupResults(maxAttempts = 80): Promise<Record<st
       return actuals;
     }
   }
-  throw new Error('Could not generate valid third-place mapping after max attempts; re-run the seed script.');
+  throw new Error(
+    'Could not generate valid third-place mapping after max attempts; re-run the seed script.'
+  );
 }
 
 async function generateOfficialKnockoutResults(
@@ -211,7 +211,11 @@ async function seedTestUsers(options: {
 
   for (let i = 1; i <= TEST_USER_COUNT; i += 1) {
     const displayName = displayNameForIndex(options.userPrefix, i);
-    const user = await register(displayName, options.password, process.env.JOIN_PASSWORD ?? 'MadSlags1');
+    const user = await register(
+      displayName,
+      options.password,
+      process.env.JOIN_PASSWORD ?? 'MadSlags1'
+    );
     userIds.set(displayName, user.id);
     // eslint-disable-next-line no-console
     console.log(`Registered ${displayName}`);
@@ -232,11 +236,7 @@ async function seedTestUsers(options: {
 function randomKnockoutPick(matchId: string, homeTeamId: string, awayTeamId: string): Pick {
   const { homeScore, awayScore } = randomScorePair();
   const progressingTeamId =
-    homeScore === awayScore
-      ? Math.random() < 0.5
-        ? homeTeamId
-        : awayTeamId
-      : undefined;
+    homeScore === awayScore ? (Math.random() < 0.5 ? homeTeamId : awayTeamId) : undefined;
   return { matchId, homeScore, awayScore, progressingTeamId };
 }
 
@@ -266,7 +266,9 @@ async function seedUserKnockoutPredictions(
     );
   }
   // eslint-disable-next-line no-console
-  console.log(`  KO predictions for ${displayName}: ${fixtures.length} saved (excluded: ${excludeMatchIds.join(', ') || 'none'}).`);
+  console.log(
+    `  KO predictions for ${displayName}: ${fixtures.length} saved (excluded: ${excludeMatchIds.join(', ') || 'none'}).`
+  );
   return fixtures.length;
 }
 
@@ -276,7 +278,10 @@ async function main() {
   maxGoalsPerTeam = parseMaxGoals();
   const testPassword = parseArgValue('--password') ?? DEFAULT_TEST_PASSWORD;
   const userPrefix = parseArgValue('--user-prefix') ?? DEFAULT_USER_PREFIX;
-  const adminIndex = Number.parseInt(parseArgValue('--admin-index') ?? String(DEFAULT_ADMIN_INDEX), 10);
+  const adminIndex = Number.parseInt(
+    parseArgValue('--admin-index') ?? String(DEFAULT_ADMIN_INDEX),
+    10
+  );
 
   const skipPurge = process.argv.includes('--no-purge');
   const beforeFinal = process.argv.includes('--before-final');
@@ -315,10 +320,14 @@ async function main() {
       excludeResultMatchIds: [FINAL_MATCH_ID]
     });
     // eslint-disable-next-line no-console
-    console.log(`Official KO results through third-place; final (${FINAL_MATCH_ID}) has teams but no score.`);
+    console.log(
+      `Official KO results through third-place; final (${FINAL_MATCH_ID}) has teams but no score.`
+    );
   } else if (beforeFinal) {
     // eslint-disable-next-line no-console
-    console.log('\nSeeding KO predictions then official results (through third-place; final teams only)…');
+    console.log(
+      '\nSeeding KO predictions then official results (through third-place; final teams only)…'
+    );
     allActuals = await generateOfficialKnockoutResultsWithPredictions(groupActuals, userIds, {
       excludeResultMatchIds: [FINAL_MATCH_ID],
       excludePredictionMatchIds: [FINAL_MATCH_ID]
@@ -355,7 +364,9 @@ async function main() {
   // eslint-disable-next-line no-console
   console.log(`Scenario: ${scenarioLabel}`);
   // eslint-disable-next-line no-console
-  console.log(`Users: ${TEST_USER_COUNT} (password: ${testPassword}, max goals per team: ${maxGoalsPerTeam})`);
+  console.log(
+    `Users: ${TEST_USER_COUNT} (password: ${testPassword}, max goals per team: ${maxGoalsPerTeam})`
+  );
   // eslint-disable-next-line no-console
   console.log(`Admin login: ${adminDisplayName} / ${testPassword}`);
   // eslint-disable-next-line no-console

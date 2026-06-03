@@ -11,7 +11,9 @@ export async function getResultsMap(): Promise<Record<string, ActualResult>> {
     home_score: number;
     away_score: number;
     progressing_team_id: string | null;
-  }>(`SELECT match_id, home_score, away_score, progressing_team_id FROM results WHERE status = 'FINISHED'`);
+  }>(
+    `SELECT match_id, home_score, away_score, progressing_team_id FROM results WHERE status = 'FINISHED'`
+  );
 
   return Object.fromEntries(
     rows.map((row) => [

@@ -2,7 +2,7 @@
 
 Verified against [FINAL_PLAN.md](./FINAL_PLAN.md). **Last reviewed:** 2026-06-03 (Debug — per-group lock, results lock). See [LOCKING.md](./LOCKING.md).
 
-> **Note:** UI no longer uses a draft/commit panel. Match picks are written **committed** on save; tournament picks use **bonus_committed**. See [STRESS_TEST_HANDOVER.md](./STRESS_TEST_HANDOVER.md) for current behaviour.
+> **Note:** UI no longer uses a draft/commit panel. Match picks are written **committed** on save; tournament picks use **bonus_committed**. See [UI_HANDOVER.md](./UI_HANDOVER.md) for current behaviour.
 
 | Criterion | Status | Implementation |
 |-----------|--------|----------------|

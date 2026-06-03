@@ -41,7 +41,9 @@ export function lockableKnockoutMatchIds(
 
 export function affectedFutureMatches(changedMatchId: string): string[] {
   if (changedMatchId.startsWith('g-')) {
-    return getMatches().filter((m) => isKnockout(m)).map((m) => m.id);
+    return getMatches()
+      .filter((m) => isKnockout(m))
+      .map((m) => m.id);
   }
   return getDownstreamKnockoutMatchIds(changedMatchId);
 }
@@ -78,7 +80,8 @@ export function computeScore(
     if (!pick) return;
 
     const stage = matchesById[actual.matchId]?.stage ?? 'GROUP';
-    const correctResult = resultKey(pick.homeScore, pick.awayScore) === resultKey(actual.homeScore, actual.awayScore);
+    const correctResult =
+      resultKey(pick.homeScore, pick.awayScore) === resultKey(actual.homeScore, actual.awayScore);
     const exactScore = pick.homeScore === actual.homeScore && pick.awayScore === actual.awayScore;
     const scaled = scaledMatchPointsForStage(stage, { correctResult, exactScore });
 

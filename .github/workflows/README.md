@@ -1,8 +1,8 @@
 # GitHub Actions
 
-| Workflow | Branches | Effect |
-|----------|----------|--------|
-| **deploy-main.yml** | `main` only (push + manual dispatch on `main`) | Runs tests, then deploys to the **live** server via SSH |
-| *(none)* | `Debug` | **No workflows** — test on your PC only (`npm test`, `Test-LocalSite.ps1`) |
+| Workflow | Branch | Purpose |
+|----------|--------|---------|
+| **deploy-main.yml** | **`main`** only | Test, build, SSH deploy to production |
+| **wipe-live-database.yml** | Manual | Wipe live DB (`confirm` = `WIPE_LIVE_DATABASE`) |
 
-Pushing to **`Debug` never updates the live website.**
+**`Debug`** has no workflows — local testing only. See [docs/BRANCHING.md](../../docs/BRANCHING.md).

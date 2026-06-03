@@ -14,8 +14,16 @@ import {
 } from './services/predictions';
 import { computeLeaderboard } from './services/leaderboard';
 import { buildMappingDiagnostics } from './services/mappingDiagnostics';
-import { getSyncStatus, runFullFootballDataSync, syncKickoffsFromFootballData } from './services/sync';
-import { getMatchComparison, getNextMatchComparison, listComparisonFixtures } from './services/comparison';
+import {
+  getSyncStatus,
+  runFullFootballDataSync,
+  syncKickoffsFromFootballData
+} from './services/sync';
+import {
+  getMatchComparison,
+  getNextMatchComparison,
+  listComparisonFixtures
+} from './services/comparison';
 import { getDb } from './database';
 
 function authToken(req: express.Request): string | undefined {
@@ -50,7 +58,10 @@ export function createApp(): Express {
 
   app.post('/api/auth/login', async (req: Request, res: Response) => {
     try {
-      const schema = z.object({ displayName: z.string().min(1), password: z.string().min(1).max(6) });
+      const schema = z.object({
+        displayName: z.string().min(1),
+        password: z.string().min(1).max(6)
+      });
       const payload = schema.parse(req.body);
       const response = await login(payload.displayName, payload.password);
       res.json(response);
@@ -110,7 +121,9 @@ export function createApp(): Express {
       await unlockGroupAccepted(user.id, String(req.params.groupId).toUpperCase());
       res.json({ ok: true });
     } catch (error) {
-      res.status(400).json({ error: error instanceof Error ? error.message : 'Group unlock failed' });
+      res
+        .status(400)
+        .json({ error: error instanceof Error ? error.message : 'Group unlock failed' });
     }
   });
 
@@ -122,7 +135,9 @@ export function createApp(): Express {
       await setGroupAccepted(user.id, String(req.params.groupId).toUpperCase(), true);
       res.json({ ok: true });
     } catch (error) {
-      res.status(400).json({ error: error instanceof Error ? error.message : 'Group accept failed' });
+      res
+        .status(400)
+        .json({ error: error instanceof Error ? error.message : 'Group accept failed' });
     }
   });
 
@@ -138,7 +153,9 @@ export function createApp(): Express {
       await setBonusDraft(user.id, schema.parse(req.body));
       res.json({ ok: true });
     } catch (error) {
-      res.status(400).json({ error: error instanceof Error ? error.message : 'Invalid bonus predictions' });
+      res
+        .status(400)
+        .json({ error: error instanceof Error ? error.message : 'Invalid bonus predictions' });
     }
   });
 
@@ -162,7 +179,9 @@ export function createApp(): Express {
       await requireUser(authToken(req));
       return res.json(await listComparisonFixtures());
     } catch (error) {
-      return res.status(401).json({ error: error instanceof Error ? error.message : 'Unauthorized' });
+      return res
+        .status(401)
+        .json({ error: error instanceof Error ? error.message : 'Unauthorized' });
     }
   });
 
@@ -173,18 +192,26 @@ export function createApp(): Express {
       if (!data) return res.status(404).json({ error: 'No upcoming matches' });
       return res.json(data);
     } catch (error) {
-      return res.status(401).json({ error: error instanceof Error ? error.message : 'Unauthorized' });
+      return res
+        .status(401)
+        .json({ error: error instanceof Error ? error.message : 'Unauthorized' });
     }
   });
 
   app.get('/api/comparison/:matchId', async (req: Request, res: Response) => {
     try {
       const user = await requireUser(authToken(req));
-      const data = await getMatchComparison(String(req.params.matchId), user.id, new Date().toISOString());
+      const data = await getMatchComparison(
+        String(req.params.matchId),
+        user.id,
+        new Date().toISOString()
+      );
       if (!data) return res.status(404).json({ error: 'Match not found' });
       return res.json(data);
     } catch (error) {
-      return res.status(401).json({ error: error instanceof Error ? error.message : 'Unauthorized' });
+      return res
+        .status(401)
+        .json({ error: error instanceof Error ? error.message : 'Unauthorized' });
     }
   });
 
@@ -198,7 +225,9 @@ export function createApp(): Express {
       if (!user.isAdmin) return res.status(403).json({ error: 'Admin only' });
       return res.json(await getSyncStatus());
     } catch (error) {
-      return res.status(401).json({ error: error instanceof Error ? error.message : 'Unauthorized' });
+      return res
+        .status(401)
+        .json({ error: error instanceof Error ? error.message : 'Unauthorized' });
     }
   });
 
@@ -211,7 +240,9 @@ export function createApp(): Express {
       const result = await runFullFootballDataSync(apiToken);
       return res.json(result);
     } catch (error) {
-      return res.status(401).json({ error: error instanceof Error ? error.message : 'Unauthorized' });
+      return res
+        .status(401)
+        .json({ error: error instanceof Error ? error.message : 'Unauthorized' });
     }
   });
 
@@ -223,7 +254,9 @@ export function createApp(): Express {
       if (!apiToken) return res.status(400).json({ error: 'FOOTBALL_DATA_TOKEN missing' });
       return res.json(await buildMappingDiagnostics(apiToken));
     } catch (error) {
-      return res.status(400).json({ error: error instanceof Error ? error.message : 'Diagnostics failed' });
+      return res
+        .status(400)
+        .json({ error: error instanceof Error ? error.message : 'Diagnostics failed' });
     }
   });
 
@@ -236,7 +269,9 @@ export function createApp(): Express {
       const result = await syncKickoffsFromFootballData(apiToken);
       return res.json(result);
     } catch (error) {
-      return res.status(401).json({ error: error instanceof Error ? error.message : 'Unauthorized' });
+      return res
+        .status(401)
+        .json({ error: error instanceof Error ? error.message : 'Unauthorized' });
     }
   });
 
@@ -274,7 +309,9 @@ export function createApp(): Express {
       );
       return res.json({ ok: true });
     } catch (error) {
-      return res.status(400).json({ error: error instanceof Error ? error.message : 'Override failed' });
+      return res
+        .status(400)
+        .json({ error: error instanceof Error ? error.message : 'Override failed' });
     }
   });
 
@@ -284,7 +321,9 @@ export function createApp(): Express {
       if (!user.isAdmin) return res.status(403).json({ error: 'Admin only' });
       return res.json({ ok: true, leaderboard: await computeLeaderboard() });
     } catch (error) {
-      return res.status(401).json({ error: error instanceof Error ? error.message : 'Unauthorized' });
+      return res
+        .status(401)
+        .json({ error: error instanceof Error ? error.message : 'Unauthorized' });
     }
   });
 

@@ -6,13 +6,15 @@ import { getDb } from './database';
 const FALLBACK_FIRST_KICKOFF = '2026-06-11T19:00:00Z';
 
 export async function refreshKickoffCache(db?: DatabaseClient): Promise<void> {
-  const client = db ?? (() => {
-    try {
-      return getDb();
-    } catch {
-      return undefined;
-    }
-  })();
+  const client =
+    db ??
+    (() => {
+      try {
+        return getDb();
+      } catch {
+        return undefined;
+      }
+    })();
 
   if (!client) {
     setKickoffState({}, FALLBACK_FIRST_KICKOFF);

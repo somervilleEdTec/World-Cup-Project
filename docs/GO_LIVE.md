@@ -2,7 +2,7 @@
 
 **Production is live:** https://worldcup.dosums.uk (Oracle VM, auto-deploy from **`main`** — [PRODUCTION.md](./PRODUCTION.md)).
 
-Use this checklist before inviting your group (~10 friends). For stress testing, see [STRESS_TEST_HANDOVER.md](./STRESS_TEST_HANDOVER.md).
+Use this checklist before inviting your group (~10 friends). Work on **`Debug`** locally; release via **`main`** ([BRANCHING.md](./BRANCHING.md)).
 
 ## 1. Environment
 
@@ -99,7 +99,7 @@ sqlite3 data.db "UPDATE users SET is_admin = 1 WHERE display_name = 'YourName';"
 - [ ] Rules visible on **Welcome** (no Rules tab)
 - [ ] **Unlock group** works before results; blocked after any official result in that group
 - [ ] League table shows category columns; **Points** column last
-- [ ] Optional local regression on **Debug** only: `ALLOW_KO_SEED=1 npm run seed:complete-teams` (Team1/bender) or `seed:ko-environment` — see [KO_ENVIRONMENT.md](./KO_ENVIRONMENT.md), [AGENT_PROMPT_STRESS_TEST.md](./AGENT_PROMPT_STRESS_TEST.md)
+- [ ] Optional local regression on **Debug** only: `ALLOW_KO_SEED=1 npm run seed:complete-teams` or `seed:ko-environment` — see [KO_ENVIRONMENT.md](./KO_ENVIRONMENT.md)
 
 ## 6. During tournament
 

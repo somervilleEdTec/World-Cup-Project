@@ -29,12 +29,20 @@ interface DiagnosticsReport {
 
 export function AdminPage() {
   const [message, setMessage] = useState<string>('');
-  const [status, setStatus] = useState<{ last_success_at?: string | null; last_error?: string | null; last_attempt_at?: string | null } | null>(null);
+  const [status, setStatus] = useState<{
+    last_success_at?: string | null;
+    last_error?: string | null;
+    last_attempt_at?: string | null;
+  } | null>(null);
   const [diagnostics, setDiagnostics] = useState<DiagnosticsReport | null>(null);
 
   const loadStatus = async () => {
     try {
-      const response = (await fetchSyncStatus()) as { last_success_at?: string | null; last_error?: string | null; last_attempt_at?: string | null };
+      const response = (await fetchSyncStatus()) as {
+        last_success_at?: string | null;
+        last_error?: string | null;
+        last_attempt_at?: string | null;
+      };
       setStatus(response);
       setMessage('Sync status loaded.');
     } catch (err) {
@@ -106,13 +114,25 @@ export function AdminPage() {
     <section className="stack">
       <article className="card">
         <h2>Admin</h2>
-        <p>Sync monitoring, mapping diagnostics, manual result override, and leaderboard recompute.</p>
+        <p>
+          Sync monitoring, mapping diagnostics, manual result override, and leaderboard recompute.
+        </p>
         <div className="button-row">
-          <button type="button" onClick={loadStatus}>Load Sync Status</button>
-          <button type="button" onClick={loadDiagnostics}>Mapping diagnostics</button>
-          <button type="button" onClick={triggerSync}>Run full football-data sync</button>
-          <button type="button" onClick={triggerFixtureSync}>Import kickoffs only</button>
-          <button type="button" onClick={recompute}>Recompute leaderboard</button>
+          <button type="button" onClick={loadStatus}>
+            Load Sync Status
+          </button>
+          <button type="button" onClick={loadDiagnostics}>
+            Mapping diagnostics
+          </button>
+          <button type="button" onClick={triggerSync}>
+            Run full football-data sync
+          </button>
+          <button type="button" onClick={triggerFixtureSync}>
+            Import kickoffs only
+          </button>
+          <button type="button" onClick={recompute}>
+            Recompute leaderboard
+          </button>
         </div>
         {status && (
           <ul>
@@ -126,10 +146,12 @@ export function AdminPage() {
             <h3>Mapping diagnostics</h3>
             <ul>
               <li>
-                Group stage mapped: {diagnostics.summary.groupStageMapped}/{diagnostics.summary.groupStageTotal}
+                Group stage mapped: {diagnostics.summary.groupStageMapped}/
+                {diagnostics.summary.groupStageTotal}
               </li>
               <li>
-                Knockout mapped: {diagnostics.summary.knockoutMapped}/{diagnostics.summary.knockoutTotal}
+                Knockout mapped: {diagnostics.summary.knockoutMapped}/
+                {diagnostics.summary.knockoutTotal}
               </li>
               <li>
                 Overall: {diagnostics.summary.mapped} mapped, {diagnostics.summary.skipped} skipped

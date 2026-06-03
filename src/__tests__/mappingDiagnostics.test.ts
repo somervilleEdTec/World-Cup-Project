@@ -9,9 +9,7 @@ describe('mapping diagnostics', () => {
   });
 
   it('maps known group fixture teams', () => {
-    expect(
-      classifyFixtureLocally('Mexico', 'South Africa', null)
-    ).toBe('mappable');
+    expect(classifyFixtureLocally('Mexico', 'South Africa', null)).toBe('mappable');
   });
 
   it('reports unmapped provider names', () => {

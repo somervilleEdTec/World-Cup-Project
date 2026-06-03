@@ -41,7 +41,11 @@ function blockNonIntegerScoreKeys(event: KeyboardEvent<HTMLInputElement>) {
 function formatPickLine(pick: Pick | undefined, match: Match): string {
   if (!pick) return '—';
   const showAdvance = isKnockout(match);
-  return formatFixtureScore(pick.homeScore, pick.awayScore, showAdvance ? pick.progressingTeamId : undefined);
+  return formatFixtureScore(
+    pick.homeScore,
+    pick.awayScore,
+    showAdvance ? pick.progressingTeamId : undefined
+  );
 }
 
 function formatActualLine(actual: ActualResult, match: Match): string {

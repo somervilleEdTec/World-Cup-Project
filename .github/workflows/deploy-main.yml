@@ -1,5 +1,5 @@
 # LIVE SITE ONLY — runs on push to `main` (never on `Debug`).
-# Setup: docs/DEPLOY_AUTOMATION.md
+# Setup: docs/PRODUCTION.md
 
 name: Deploy main (production)
 
@@ -56,7 +56,7 @@ jobs:
           if [ "${missing}" -ne 0 ]; then
             echo ""
             echo "Add repository secrets: GitHub → Settings → Secrets and variables → Actions"
-            echo "Guide: docs/DEPLOY_AUTOMATION.md"
+            echo "Guide: docs/PRODUCTION.md"
             exit 1
           fi
 
@@ -73,7 +73,7 @@ jobs:
             echo "  • Use the private key (ssh-key-2026-06-02.key), NOT the .pub file or a Windows path"
             echo "  • Do not wrap the key in extra quotes"
             echo "  • PuTTY .ppk keys must be converted to OpenSSH format first"
-            echo "Guide: docs/DEPLOY_AUTOMATION.md § SSH key for GitHub Actions"
+            echo "Guide: docs/PRODUCTION.md § Auto-deploy"
             exit 1
           fi
           if ! printf '%s' "$DEPLOY_SSH_KEY" | grep -q 'PRIVATE KEY-----'; then
