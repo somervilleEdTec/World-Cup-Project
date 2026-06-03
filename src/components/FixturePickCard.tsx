@@ -235,9 +235,13 @@ export function FixturePickCard({
 
       {showLockedSummary ? (
         <div className="fixture-scores-summary fixture-scores-locked">
-          <p>
-            <strong>Your prediction:</strong> {formatPickLine(pick, match)}
-          </p>
+          {match.stage === 'GROUP' && !actual ? (
+            <p className="fixture-score-plain">{formatPickLine(pick, match)}</p>
+          ) : (
+            <p>
+              <strong>Your prediction:</strong> {formatPickLine(pick, match)}
+            </p>
+          )}
           {actual && (
             <p className="fixture-actual">
               <strong>Official result:</strong> {formatActualLine(actual, match)}

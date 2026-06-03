@@ -251,6 +251,12 @@ select {
   margin: 0.35rem 0;
 }
 
+.fixture-score-plain {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin: 0.35rem 0;
+}
+
 .bonus-readonly p {
   display: flex;
   align-items: center;
@@ -263,17 +269,6 @@ select {
   grid-template-columns: repeat(2, minmax(0, 90px));
   gap: 0.5rem;
   margin-bottom: 0.5rem;
-}
-
-.score-inputs input[type='number'] {
-  -moz-appearance: textfield;
-  appearance: textfield;
-}
-
-.score-inputs input[type='number']::-webkit-outer-spin-button,
-.score-inputs input[type='number']::-webkit-inner-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
 }
 
 .success {

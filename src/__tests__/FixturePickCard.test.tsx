@@ -51,7 +51,31 @@ describe('FixturePickCard', () => {
     expect(screen.queryByRole('spinbutton')).toBeNull();
   });
 
-  it('shows editable inputs before kickoff when not locked', () => {
+  it('shows plain score text when group is user-locked before kickoff', () => {
+    const groupMatch: Match = {
+      id: 'g-a-1',
+      stage: 'GROUP',
+      group: 'A',
+      kickoff: '2026-06-11T19:00:00Z',
+      homeTeamId: 'mexico',
+      awayTeamId: 'canada'
+    };
+    render(
+      <FixturePickCard
+        match={groupMatch}
+        pick={{ matchId: 'g-a-1', homeScore: 2, awayScore: 1 }}
+        nowIso="2026-06-01T00:00:00Z"
+        inputsDisabled
+        showLockedSummary
+        onSave={vi.fn()}
+      />
+    );
+    expect(screen.getByText('2–1')).toBeTruthy();
+    expect(screen.queryByRole('spinbutton')).toBeNull();
+    expect(screen.queryByText(/Your prediction:/)).toBeNull();
+  });
+
+  it('shows editable inputs with spinners before kickoff when not locked', () => {
     render(
       <FixturePickCard
         match={koMatch}

@@ -278,7 +278,7 @@ export function MyPicksPage() {
         <article className="card">
           <h3>Group {activeGroup} predictions</h3>
           {userGroupLocked && !tournamentLocked && (
-            <p className="success">Group {activeGroup} is locked — use Unlock group to edit again.</p>
+            <p className="success">Group {activeGroup} is locked. Scores are shown as text until you unlock.</p>
           )}
           {tournamentLocked && userGroupLocked && (
             <p className="warning">Group {activeGroup} is locked (tournament lock is active; cannot unlock).</p>
@@ -318,39 +318,35 @@ export function MyPicksPage() {
           )}
 
           <div className="button-row">
-            {userGroupLocked && !tournamentLocked ? (
-              <button
-                type="button"
-                onClick={async () => {
-                  try {
+            <button
+              type="button"
+              disabled={
+                tournamentLocked
+                  ? true
+                  : userGroupLocked
+                    ? false
+                    : !groupComplete
+              }
+              onClick={async () => {
+                try {
+                  if (userGroupLocked && !tournamentLocked) {
                     await unlockGroup(activeGroup);
                     setGroupMessage(`Group ${activeGroup} unlocked.`);
-                    await refresh();
-                  } catch (err) {
-                    setGroupMessage(err instanceof Error ? err.message : 'Could not unlock group');
-                  }
-                }}
-              >
-                Unlock group
-              </button>
-            ) : (
-              <button
-                type="button"
-                disabled={!groupComplete || groupIsLocked}
-                onClick={async () => {
-                  try {
+                  } else {
                     await flushPendingForGroup();
                     await lockGroup(activeGroup);
                     setGroupMessage(`Group ${activeGroup} locked.`);
-                    await refresh();
-                  } catch (err) {
-                    setGroupMessage(err instanceof Error ? err.message : 'Could not lock group');
                   }
-                }}
-              >
-                Lock group
-              </button>
-            )}
+                  await refresh();
+                } catch (err) {
+                  setGroupMessage(
+                    err instanceof Error ? err.message : 'Could not update group lock'
+                  );
+                }
+              }}
+            >
+              {userGroupLocked && !tournamentLocked ? 'Unlock group' : 'Lock group'}
+            </button>
             <button type="button" disabled={groupIndex === 0} onClick={() => changeGroupIndex(groupIndex - 1)}>
               Previous Group
             </button>
