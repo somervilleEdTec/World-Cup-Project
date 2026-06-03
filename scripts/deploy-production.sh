@@ -38,8 +38,9 @@ git fetch origin main
 git checkout main
 git pull --ff-only origin main
 
-echo "==> npm ci"
-npm ci
+echo "==> npm ci (include dev — migrate/build/server need tsx, vite, typescript)"
+# NODE_ENV=production omits devDependencies; runtime still uses tsx via npm run server/jobs.
+npm ci --include=dev
 
 echo "==> migrate"
 npm run migrate
