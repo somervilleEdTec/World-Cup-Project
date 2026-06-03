@@ -20,6 +20,7 @@
     "db:purge": "tsx scripts/purge-database.ts",
     "seed:ko-environment": "tsx scripts/seed-ko-environment.ts",
     "seed:before-final": "tsx scripts/seed-ko-environment.ts -- --before-final",
+    "seed:complete-teams": "tsx scripts/seed-ko-environment.ts -- --complete-tournament --user-prefix Team --password bender --max-goals 4",
     "copy:flags": "node scripts/copy-flag-assets.mjs",
     "postinstall": "node scripts/copy-flag-assets.mjs",
     "seed:fixtures": "tsx scripts/seed-from-football-data.ts",

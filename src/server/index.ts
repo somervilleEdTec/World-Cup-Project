@@ -45,9 +45,10 @@ async function main() {
   });
 
   const port = Number(process.env.PORT ?? 8787);
-  const server = app.listen(port, () => {
+  const host = process.env.HOST ?? '0.0.0.0';
+  const server = app.listen(port, host, () => {
     // eslint-disable-next-line no-console
-    console.log(`API server listening on :${port}`);
+    console.log(`API server listening on http://${host}:${port}`);
   });
 
   const shutdown = async () => {

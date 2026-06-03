@@ -77,7 +77,9 @@ Friends-and-family prediction app for **FIFA World Cup 2026** (48 teams, 12 grou
 | [TODO.md](./TODO.md) | Backlog |
 | [DEPLOY.md](./DEPLOY.md) | Production |
 | [GO_LIVE.md](./GO_LIVE.md) | Pre-launch checklist |
-| [COMPLIANCE.md](./COMPLIANCE.md) | Plan compliance (partially lags UX) |
+| [COMPLIANCE.md](./COMPLIANCE.md) | Plan compliance checklist |
+| [LOCKING.md](./LOCKING.md) | Lock triggers mapped to FINAL_PLAN |
+| [AGENT_PROMPT_LOCKING.md](./AGENT_PROMPT_LOCKING.md) | Agent prompt for locking sessions |
 
 ---
 

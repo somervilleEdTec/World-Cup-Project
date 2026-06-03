@@ -78,6 +78,7 @@ npm run seed:ko-environment -- --no-purge
 - **Comparison** lists all fixtures with known teams; group predictions after lock; **knockout after kickoff**.
 - Optional: seed every knockout result (all 32 fixtures unlocked) with `npm run seed:ko-environment -- --full-bracket`
 - **One final prediction left per user** (all other results + picks): see [FINAL_PREDICTION_HANDOVER.md](./FINAL_PREDICTION_HANDOVER.md) — `npm run seed:before-final`
+- **Tournament finished** (all results + all predictions, 10 teams): `npm run seed:complete-teams` — logins **`Team1`** … **`Team10`**, password **`bender`**, admin **`Team1`**; scores 0–4 per team; no `FOOTBALL_DATA_TOKEN`
 
 ## Bug evaluation (environment vs product)
 

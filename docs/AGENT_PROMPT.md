@@ -20,6 +20,8 @@ You are helping with **World Cup Boys** (“Welcome to the Shiva Bowl”) — FI
 4. [docs/KO_ENVIRONMENT.md](./KO_ENVIRONMENT.md) — optional local KO test seed only
 5. **[docs/FINAL_PREDICTION_HANDOVER.md](./FINAL_PREDICTION_HANDOVER.md)** — if debugging “one final prediction left” scenario
 
+For **locking / comparison visibility** work, use [docs/AGENT_PROMPT_LOCKING.md](./AGENT_PROMPT_LOCKING.md) and [docs/LOCKING.md](./LOCKING.md) instead of re-deriving rules from code.
+
 ## Local setup (Windows — owner)
 
 ```powershell
