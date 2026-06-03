@@ -60,6 +60,33 @@ jobs:
             exit 1
           fi
 
+      - name: Validate DEPLOY_SSH_KEY format
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+        run: |
+          set -euo pipefail
+          if ! printf '%s' "$DEPLOY_SSH_KEY" | grep -q '^-----BEGIN '; then
+            echo "ERROR: DEPLOY_SSH_KEY is not a valid private key (ssh-action: ssh: no key found)."
+            echo ""
+            echo "Update the secret: Settings → Secrets and variables → Actions → DEPLOY_SSH_KEY"
+            echo "  • Paste the ENTIRE private key file — all lines from -----BEGIN through -----END"
+            echo "  • Use the private key (ssh-key-2026-06-02.key), NOT the .pub file or a Windows path"
+            echo "  • Do not wrap the key in extra quotes"
+            echo "  • PuTTY .ppk keys must be converted to OpenSSH format first"
+            echo "Guide: docs/DEPLOY_AUTOMATION.md § SSH key for GitHub Actions"
+            exit 1
+          fi
+          if ! printf '%s' "$DEPLOY_SSH_KEY" | grep -q 'PRIVATE KEY-----'; then
+            echo "ERROR: DEPLOY_SSH_KEY is missing -----END ... PRIVATE KEY----- — copy the full file."
+            exit 1
+          fi
+          key_bytes="$(printf '%s' "$DEPLOY_SSH_KEY" | wc -c | tr -d ' ')"
+          if [ "${key_bytes}" -lt 200 ]; then
+            echo "ERROR: DEPLOY_SSH_KEY is too short (${key_bytes} bytes) — likely truncated or wrong value."
+            exit 1
+          fi
+          echo "OK: DEPLOY_SSH_KEY looks like a private key (${key_bytes} bytes)."
+
       - name: Deploy over SSH
         uses: appleboy/ssh-action@v1.2.2
         env:

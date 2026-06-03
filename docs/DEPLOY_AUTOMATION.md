@@ -59,7 +59,26 @@ sudo chmod 440 /etc/sudoers.d/worldcup-deploy
 **Owner:** use the Oracle launch private key (already works for SSH):
 
 - File: `C:\Users\tomso\Desktop\ssh-key-2026-06-02.key`
-- Paste **entire file** into GitHub secret `DEPLOY_SSH_KEY`
+- Paste **entire file** into GitHub secret `DEPLOY_SSH_KEY` (every line, including `-----BEGIN` and `-----END`)
+
+**How to paste correctly (Windows):**
+
+1. Open the `.key` file in Notepad (not the `.pub` file).
+2. Select all (`Ctrl+A`), copy (`Ctrl+C`).
+3. GitHub → **Settings → Secrets and variables → Actions** → **DEPLOY_SSH_KEY** → **Update** (or New).
+4. Paste once into the value box — do **not** add quotes around the key.
+5. Save, then re-run **Deploy main (production)**.
+
+The private key should look like:
+
+```
+-----BEGIN RSA PRIVATE KEY-----
+MIIE...
+...
+-----END RSA PRIVATE KEY-----
+```
+
+(or `BEGIN OPENSSH PRIVATE KEY` — both are fine.)
 
 Optional extra key: generate `worldcup-deploy`, append `.pub` to `~/.ssh/authorized_keys` on the server, use that private key in `DEPLOY_SSH_KEY` instead.
 
@@ -128,6 +147,7 @@ View runs: GitHub → **Actions** → **Deploy main (production)**.
 | Symptom | Check |
 |---------|--------|
 | Deploy job skipped / fails immediately | Run **Check deploy secrets** step — set all four required secrets |
+| `ssh.ParsePrivateKey: ssh: no key found` | **DEPLOY_SSH_KEY** is wrong: empty, truncated, public `.pub` key, file path, or PuTTY `.ppk` without conversion. Re-paste full private key (see §3 above). Workflow step **Validate DEPLOY_SSH_KEY format** explains this before SSH. |
 | `missing server host` (old runs) | `DEPLOY_HOST` secret empty or not created |
 | Permission denied (publickey) | `DEPLOY_SSH_KEY` is the **private** key; public key in `~/.ssh/authorized_keys` on server |
 | `sudo: a password is required` | sudoers snippet for `systemctl restart` |

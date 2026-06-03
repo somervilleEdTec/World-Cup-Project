@@ -39,6 +39,17 @@ jobs:
           check "${{ secrets.DEPLOY_PATH }}" "DEPLOY_PATH"
           if [ "${missing}" -ne 0 ]; then exit 1; fi
 
+      - name: Validate DEPLOY_SSH_KEY format
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+        run: |
+          set -euo pipefail
+          if ! printf '%s' "$DEPLOY_SSH_KEY" | grep -q '^-----BEGIN '; then
+            echo "ERROR: DEPLOY_SSH_KEY is not a valid private key. Fix before wipe — see docs/DEPLOY_AUTOMATION.md"
+            exit 1
+          fi
+          echo "OK: DEPLOY_SSH_KEY format."
+
       - name: Wipe live database over SSH
         uses: appleboy/ssh-action@v1.2.2
         env:
