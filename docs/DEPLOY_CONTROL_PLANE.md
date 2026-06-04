@@ -96,7 +96,7 @@ If verify fails, the SSH step fails → the **whole workflow is red** → the pu
 
 Common fixes (push to `main` after code fix, or re-run workflow):
 
-- **`better-sqlite3` / `sqlite3.o.d.raw`** — bootstrap `build-essential`; deploy retries clean `node_modules`.
+- **`better-sqlite3` / `sqlite3.o.d.raw` / `better_sqlite3.cpp: No such file`** — corrupt `node_modules`. On VM: `bash scripts/repair-npm-on-server.sh` (after `build-essential`). Deploy also deep-cleans npm cache on retry.
 - **`sudo: a password is required`** — run `bootstrap-production-host.sh` for sudoers.
 - **Health commit mismatch** — deploy finished but service not restarted; check `systemctl status worldcup`.
 - **Missing `FOOTBALL_DATA_TOKEN` in .env`** — SSH once to edit `.env` (not in GitHub secrets by design).

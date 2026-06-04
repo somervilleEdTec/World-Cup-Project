@@ -89,9 +89,21 @@ run_npm_ci() {
 echo "==> npm ci (install devDependencies — tsx/vite needed for migrate, build, server)"
 verify_native_build_prereqs
 if ! run_npm_ci; then
-  echo "==> npm ci failed — removing node_modules and retrying once"
+  echo "==> npm ci failed — deep clean and retry"
   rm -rf node_modules
-  run_npm_ci
+  rm -rf "${HOME}/.cache/node-gyp" 2>/dev/null || true
+  npm cache clean --force
+  if ! run_npm_ci; then
+    echo "ERROR: npm ci failed after clean retry."
+    echo "  On the VM run: bash scripts/repair-npm-on-server.sh"
+    echo "  Ensure: sudo apt-get install -y build-essential python3 && df -h ."
+    exit 1
+  fi
+fi
+
+if [[ ! -f node_modules/better-sqlite3/src/better_sqlite3.cpp ]]; then
+  echo "ERROR: better-sqlite3 install incomplete (missing src). Run scripts/repair-npm-on-server.sh"
+  exit 1
 fi
 
 if [[ -f "${SQLITE_PATH:-data.db}" ]] || [[ -n "${DATABASE_URL:-}" ]]; then

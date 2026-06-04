@@ -122,7 +122,7 @@ ssh -i "C:\Users\tomso\Desktop\ssh-key-2026-06-02.key" -o HostKeyAlgorithms=+ssh
 | `sudo: a password is required` | Install sudoers snippet below |
 | Health check fails | `systemctl status worldcup`; nginx → `127.0.0.1:8787` |
 | Old UI after deploy | Fix `VITE_API_BASE_URL` in `.env` and redeploy |
-| `better-sqlite3` / `sqlite3.o.d.raw` on `npm ci` | Corrupt or parallel native build. On VM: `rm -rf node_modules && bash scripts/deploy-production.sh`. Ensure `build-essential` and `python3` are installed (see below). |
+| `better-sqlite3` / missing `better_sqlite3.cpp` on `npm ci` | Corrupt install. On VM: `bash scripts/repair-npm-on-server.sh` then `npm run migrate && npm run build`. Ensure `build-essential` is installed. |
 
 ---
 
