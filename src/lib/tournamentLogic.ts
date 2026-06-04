@@ -4,7 +4,7 @@ import { computeGroupPositions } from './groupStandings';
 import { getMatches } from './matchResolver';
 import { scaledMatchPointsForStage } from './knockoutStageMultiplier';
 import { picksFromActuals } from './pickUtils';
-import { isKnockout, kickoffReached } from './pickLocks';
+import { isKnockout, predictionLockReached } from './pickLocks';
 import { ActualResult, Match, Pick, TournamentBonusPick } from '../types';
 
 export {
@@ -12,6 +12,8 @@ export {
   isKnockout,
   isKnockoutFixtureLocked,
   kickoffReached,
+  predictionLockReached,
+  predictionLockTimeIso,
   shouldLockGroup
 } from './pickLocks';
 
@@ -67,7 +69,9 @@ export function lockableKnockoutMatchIds(
   actuals: Record<string, ActualResult> = {}
 ): string[] {
   const matches = getMatches(picks, actuals);
-  return matches.filter((m) => isKnockout(m) && kickoffReached(m.kickoff, nowIso)).map((m) => m.id);
+  return matches
+    .filter((m) => isKnockout(m) && predictionLockReached(m.kickoff, nowIso))
+    .map((m) => m.id);
 }
 
 export function affectedFutureMatches(changedMatchId: string): string[] {

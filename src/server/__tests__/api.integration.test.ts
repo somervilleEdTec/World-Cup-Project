@@ -2,9 +2,8 @@
 import { describe, it, expect, afterAll, beforeEach } from 'vitest';
 import request from 'supertest';
 import { setupTestServer, teardownTestServer } from '../testHarness';
+import { adminToken, createPlayer, loginPlayerReady } from './authHelpers';
 import type { Express } from 'express';
-
-const JOIN_PASSWORD = 'MadSlags1';
 
 let app: Express;
 
@@ -16,21 +15,10 @@ afterAll(async () => {
   await teardownTestServer();
 });
 
-function registerPayload(displayName: string, password = 'abc') {
-  return { displayName, password, joinPassword: JOIN_PASSWORD };
-}
-
 describe('API integration', () => {
-  it('registers, logs in, saves draft, commits, and reads leaderboard', async () => {
-    const register = await request(app).post('/api/auth/register').send(registerPayload('Alice'));
-    expect(register.status).toBe(200);
-
-    const login = await request(app)
-      .post('/api/auth/login')
-      .send({ displayName: 'Alice', password: 'abc' });
-    expect(login.status).toBe(200);
-    const token = login.body.token as string;
-    expect(token).toBeTruthy();
+  it('admin creates player, player changes password, saves picks, leaderboard', async () => {
+    await createPlayer(app, 'Alice', 'abc');
+    const token = await loginPlayerReady(app, 'Alice', 'abc', 'xyz');
 
     const draft = await request(app)
       .post('/api/predictions/draft')
@@ -50,12 +38,19 @@ describe('API integration', () => {
     expect(leaderboard.body[0].name).toBe('Alice');
   });
 
-  it('rejects registration without valid join password', async () => {
-    const res = await request(app)
-      .post('/api/auth/register')
-      .send({ displayName: 'Bob', password: 'bob', joinPassword: 'wrong' });
-    expect(res.status).toBe(400);
-    expect(String(res.body.error)).toMatch(/sign-up password/i);
+  it('blocks predictions until forced password change', async () => {
+    await createPlayer(app, 'Newbie', 'tmp');
+    const login = await request(app)
+      .post('/api/auth/login')
+      .send({ displayName: 'Newbie', password: 'tmp' });
+    const token = login.body.token as string;
+
+    const blocked = await request(app)
+      .post('/api/predictions/draft')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ matchId: 'g-a-1', homeScore: 1, awayScore: 0 });
+    expect(blocked.status).toBe(403);
+    expect(String(blocked.body.error)).toMatch(/PASSWORD_CHANGE_REQUIRED/i);
   });
 
   it('rejects unauthenticated prediction access', async () => {
@@ -64,12 +59,8 @@ describe('API integration', () => {
   });
 
   it('rejects knockout draft until fixture is officially confirmed', async () => {
-    await request(app).post('/api/auth/register').send(registerPayload('KO Fixture'));
-
-    const login = await request(app)
-      .post('/api/auth/login')
-      .send({ displayName: 'KO Fixture', password: 'abc' });
-    const token = login.body.token as string;
+    await createPlayer(app, 'KO Fixture');
+    const token = await loginPlayerReady(app, 'KO Fixture');
 
     const { groupMatches } = await import('../../data/tournament');
     for (const match of groupMatches) {
@@ -93,12 +84,8 @@ describe('API integration', () => {
   });
 
   it('rejects knockout draft until all group picks are committed', async () => {
-    await request(app).post('/api/auth/register').send(registerPayload('KO Gate'));
-
-    const login = await request(app)
-      .post('/api/auth/login')
-      .send({ displayName: 'KO Gate', password: 'abc' });
-    const token = login.body.token as string;
+    await createPlayer(app, 'KO Gate');
+    const token = await loginPlayerReady(app, 'KO Gate');
 
     const koDraft = await request(app)
       .post('/api/predictions/draft')
@@ -109,12 +96,8 @@ describe('API integration', () => {
   });
 
   it('locks and unlocks a group so per-group edits are blocked then restored', async () => {
-    await request(app).post('/api/auth/register').send(registerPayload('GroupLock'));
-
-    const login = await request(app)
-      .post('/api/auth/login')
-      .send({ displayName: 'GroupLock', password: 'abc' });
-    const token = login.body.token as string;
+    await createPlayer(app, 'GroupLock');
+    const token = await loginPlayerReady(app, 'GroupLock');
 
     const { groupMatches } = await import('../../data/tournament');
     const groupAMatches = groupMatches.filter((m) => m.group === 'A');
@@ -156,12 +139,8 @@ describe('API integration', () => {
   });
 
   it('rejects group unlock and edits when official results exist', async () => {
-    await request(app).post('/api/auth/register').send(registerPayload('ResultLock'));
-
-    const login = await request(app)
-      .post('/api/auth/login')
-      .send({ displayName: 'ResultLock', password: 'abc' });
-    const token = login.body.token as string;
+    await createPlayer(app, 'ResultLock');
+    const token = await loginPlayerReady(app, 'ResultLock');
 
     const { groupMatches } = await import('../../data/tournament');
     const groupAMatches = groupMatches.filter((m) => m.group === 'A');
@@ -200,12 +179,8 @@ describe('API integration', () => {
   });
 
   it('rejects group draft saves after group lock time', async () => {
-    await request(app).post('/api/auth/register').send(registerPayload('Locked'));
-
-    const login = await request(app)
-      .post('/api/auth/login')
-      .send({ displayName: 'Locked', password: 'abc' });
-    const token = login.body.token as string;
+    await createPlayer(app, 'Locked');
+    const token = await loginPlayerReady(app, 'Locked');
 
     const { runAutoLocks } = await import('../services/predictions');
     await runAutoLocks('2026-06-12T00:00:00Z');
@@ -218,16 +193,8 @@ describe('API integration', () => {
     expect(String(draft.body.error)).toMatch(/locked/i);
   });
 
-  it('returns mapping diagnostics for admin', async () => {
-    await request(app).post('/api/auth/register').send(registerPayload('Diag'));
-
-    const { getDb } = await import('../database');
-    await getDb().run(`UPDATE users SET is_admin = 1 WHERE display_name = ?`, ['Diag']);
-
-    const login = await request(app)
-      .post('/api/auth/login')
-      .send({ displayName: 'Diag', password: 'abc' });
-    const token = login.body.token as string;
+  it('returns mapping diagnostics for bootstrap admin', async () => {
+    const token = await adminToken(app);
 
     const res = await request(app)
       .get('/api/admin/mapping-diagnostics')
@@ -243,12 +210,8 @@ describe('API integration', () => {
   });
 
   it('saves tournament bonus picks before group stage is complete', async () => {
-    await request(app).post('/api/auth/register').send(registerPayload('Bonus Early'));
-
-    const login = await request(app)
-      .post('/api/auth/login')
-      .send({ displayName: 'Bonus Early', password: 'abc' });
-    const token = login.body.token as string;
+    await createPlayer(app, 'Bonus Early');
+    const token = await loginPlayerReady(app, 'Bonus Early');
 
     const { teams } = await import('../../data/tournament');
     const bonus = await request(app)
@@ -275,16 +238,8 @@ describe('API integration', () => {
     expect(res.body.ok).toBe(true);
   });
 
-  it('allows admin result override when is_admin set', async () => {
-    await request(app).post('/api/auth/register').send(registerPayload('Admin'));
-
-    const { getDb } = await import('../database');
-    await getDb().run(`UPDATE users SET is_admin = 1 WHERE display_name = ?`, ['Admin']);
-
-    const login = await request(app)
-      .post('/api/auth/login')
-      .send({ displayName: 'Admin', password: 'abc' });
-    const token = login.body.token as string;
+  it('allows bootstrap admin result override', async () => {
+    const token = await adminToken(app);
 
     const override = await request(app)
       .post('/api/admin/results/override')

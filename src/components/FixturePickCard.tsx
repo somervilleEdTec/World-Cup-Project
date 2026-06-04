@@ -9,16 +9,18 @@ import {
 import { teams } from '../data/tournament';
 import { knockoutStageHeading, knockoutStageMultiplierLabel } from '../lib/knockoutStageMultiplier';
 import { computeMatchPoints } from '../lib/matchScoring';
-import { isKnockout, kickoffReached } from '../lib/tournamentLogic';
+import { isKnockout, predictionLockReached } from '../lib/tournamentLogic';
 import { ActualResult, Match, Pick } from '../types';
 import { TeamLabel } from './TeamLabel';
 import { formatFixtureScore } from './FixtureScoreSummary';
 
 const AUTOSAVE_MS = 450;
 
+const MAX_SCORE = 20;
+
 function clampScore(value: number): number {
   if (!Number.isFinite(value)) return 0;
-  return Math.max(0, Math.floor(value));
+  return Math.min(MAX_SCORE, Math.max(0, Math.floor(value)));
 }
 
 function parseScoreInput(raw: string): number {
@@ -160,6 +162,7 @@ function EditableScoreInputs({
         <input
           type="number"
           min="0"
+          max={MAX_SCORE}
           step="1"
           inputMode="numeric"
           pattern="[0-9]*"
@@ -178,6 +181,7 @@ function EditableScoreInputs({
         <input
           type="number"
           min="0"
+          max={MAX_SCORE}
           step="1"
           inputMode="numeric"
           pattern="[0-9]*"
@@ -249,7 +253,7 @@ export function FixturePickCard({
   const awayTeam = teams.find((team) => team.id === match.awayTeamId);
   const homeOk = homeTeam && homeTeam.id !== 'tbd';
   const awayOk = awayTeam && awayTeam.id !== 'tbd';
-  const kickoffLocked = kickoffReached(match.kickoff, nowIso);
+  const kickoffLocked = predictionLockReached(match.kickoff, nowIso);
   const inputsSaveDisabled = inputsDisabled || kickoffLocked;
   const points = computeMatchPoints(pick, actual, match.stage);
   const multiplierLabel = knockoutStageMultiplierLabel(match.stage);

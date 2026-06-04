@@ -45,15 +45,20 @@ export function WelcomePage() {
           <li>Third place (bronze match winner): +4</li>
           <li>Fourth place (bronze match loser): +3</li>
         </ul>
-        <p>Enter these on the Tournament Results tab. They lock at the first match kickoff.</p>
+        <p>
+          Enter these on the Tournament Results tab. They lock 15 minutes before the first match
+          kickoff.
+        </p>
       </article>
 
       <article className="card">
         <h3>Locks</h3>
         <ul>
-          <li>Tournament result predictions lock at the first match kickoff.</li>
-          <li>Group-stage predictions lock at the first match kickoff.</li>
-          <li>Each knockout fixture locks at its own kickoff (rolling lock).</li>
+          <li>
+            Tournament result predictions and all group-stage predictions lock 15 minutes before
+            the first match kickoff.
+          </li>
+          <li>Each knockout fixture locks 15 minutes before that fixture&apos;s kickoff.</li>
           <li>Knockout draws require choosing which team progresses (extra time / penalties).</li>
         </ul>
       </article>

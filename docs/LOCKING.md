@@ -22,12 +22,12 @@ Saves use **committed** picks only (UI auto-saves as `committed`). Draft rows ar
 
 | Trigger | FINAL_PLAN | Edit lock | Comparison (others’ picks) |
 |---------|------------|-----------|----------------------------|
-| **First tournament kickoff** | Group stage + bonus lock at first kickoff | All group + bonus for everyone (`group_locked` / `shouldLockGroup`) | Group picks visible after global lock |
+| **15 min before first kickoff** | Group stage + bonus lock | All group + bonus for everyone (`group_locked` / `shouldLockGroup`) | Group picks visible after global lock |
 | **Per-group Lock group** | Owner UX (not in original plan text) | That user cannot edit matches in that letter | Unchanged — still hidden until global group lock |
 | **Per-group Unlock group** | Owner UX | Removes letter from `accepted_groups` if no official results in group | — |
 | **Official result (one match)** | Implied integrity | That **fixture** cannot be edited; **unlock group** blocked if **any** match in group has a result | Group comparison still global-lock timing |
 | **Group fixture kickoff** | Rolling per match in plan spirit | **Not enforced on save today** — only global first kickoff + result row per fixture (`isGroupFixtureLocked` exists for UI helpers but save path uses `assertMatchEditable` without per-group kickoff) | — |
-| **KO fixture kickoff** | Per-fixture KO lock | That KO fixture for everyone | Others’ KO picks visible after that kickoff |
+| **15 min before KO kickoff** | Per-fixture KO lock | That KO fixture for everyone | Others’ KO picks visible from that lock time |
 | **KO official result** | — | That fixture locked even before kickoff (sync/seed edge case) | Still kickoff-based for visibility |
 | **72 group picks** | Completeness before KO | Blocks KO **saves** only until global lock | — |
 | **KO fixture confirmed** | Real qualifiers | Blocks KO save until both teams known | — |

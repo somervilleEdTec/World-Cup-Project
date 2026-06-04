@@ -1,7 +1,10 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
+import { AdminRoute } from './components/AdminRoute';
 import { AppLayout } from './components/AppLayout';
+import { PasswordChangeGate } from './components/PasswordChangeGate';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { AdminPage } from './pages/AdminPage';
+import { ChangePasswordPage } from './pages/ChangePasswordPage';
 import { ComparisonPage } from './pages/ComparisonPage';
 import { LeagueTablePage } from './pages/LeagueTablePage';
 import { LoginPage } from './pages/LoginPage';
@@ -13,18 +16,35 @@ export function App() {
     <Routes>
       <Route path="/login" element={<LoginPage />} />
       <Route
+        path="/change-password"
+        element={
+          <ProtectedRoute>
+            <ChangePasswordPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/"
         element={
           <ProtectedRoute>
-            <AppLayout />
+            <PasswordChangeGate />
           </ProtectedRoute>
         }
       >
-        <Route index element={<WelcomePage />} />
-        <Route path="my-picks" element={<MyPicksPage />} />
-        <Route path="league-table" element={<LeagueTablePage />} />
-        <Route path="comparison" element={<ComparisonPage />} />
-        <Route path="admin" element={<AdminPage />} />
+        <Route element={<AppLayout />}>
+          <Route index element={<WelcomePage />} />
+          <Route path="my-picks" element={<MyPicksPage />} />
+          <Route path="league-table" element={<LeagueTablePage />} />
+          <Route path="comparison" element={<ComparisonPage />} />
+          <Route
+            path="admin"
+            element={
+              <AdminRoute>
+                <AdminPage />
+              </AdminRoute>
+            }
+          />
+        </Route>
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

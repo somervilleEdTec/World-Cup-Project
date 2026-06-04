@@ -16,6 +16,13 @@ export function clearToken() {
   localStorage.removeItem(TOKEN_KEY);
 }
 
+export interface AuthUserResponse {
+  id: string;
+  displayName: string;
+  isAdmin: boolean;
+  mustChangePassword: boolean;
+}
+
 export function isAuthErrorMessage(message: string): boolean {
   return /unauthor/i.test(message);
 }
@@ -74,21 +81,40 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return data as T;
 }
 
-export async function register(displayName: string, password: string, joinPassword: string) {
-  return request<{ user: { id: string; displayName: string } }>('/api/auth/register', {
+export async function login(displayName: string, password: string) {
+  return request<{ token: string; user: AuthUserResponse }>('/api/auth/login', {
     method: 'POST',
-    body: JSON.stringify({ displayName, password, joinPassword })
+    body: JSON.stringify({ displayName, password })
   });
 }
 
-export async function login(displayName: string, password: string) {
-  return request<{ token: string; user: { id: string; displayName: string; isAdmin: boolean } }>(
-    '/api/auth/login',
-    {
-      method: 'POST',
-      body: JSON.stringify({ displayName, password })
-    }
-  );
+export async function fetchAuthMe() {
+  return request<{ user: AuthUserResponse }>('/api/auth/me');
+}
+
+export async function changePassword(currentPassword: string, newPassword: string) {
+  return request('/api/auth/change-password', {
+    method: 'POST',
+    body: JSON.stringify({ currentPassword, newPassword })
+  });
+}
+
+export async function createPlayer(displayName: string, initialPassword: string) {
+  return request<{ user: AuthUserResponse }>('/api/admin/players', {
+    method: 'POST',
+    body: JSON.stringify({ displayName, initialPassword })
+  });
+}
+
+export async function listPlayers() {
+  return request<{
+    players: Array<{
+      id: string;
+      displayName: string;
+      mustChangePassword: boolean;
+      createdAt: string;
+    }>;
+  }>('/api/admin/players');
 }
 
 export async function fetchPredictionState() {

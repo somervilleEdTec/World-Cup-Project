@@ -8,6 +8,9 @@ export const ALL_GROUP_IDS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 
 
 const KO_STAGES = new Set(['R32', 'R16', 'QF', 'SF', 'THIRD_PLACE', 'FINAL']);
 
+/** Predictions lock this many milliseconds before scheduled kickoff. */
+export const PREDICTION_LOCK_BUFFER_MS = 15 * 60 * 1000;
+
 export function isGroupStage(match: Match): boolean {
   return match.stage === 'GROUP';
 }
@@ -16,17 +19,32 @@ export function isKnockout(match: Match): boolean {
   return KO_STAGES.has(match.stage);
 }
 
+/** True when the ball has kicked off (actual match start). */
 export function kickoffReached(isoKickoff: string, nowIso = new Date().toISOString()): boolean {
   return new Date(nowIso).getTime() >= new Date(isoKickoff).getTime();
 }
 
-/** Knockout picks lock at fixture kickoff; also when an official result exists (match played). */
+/** True when predictions lock (15 minutes before scheduled kickoff). */
+export function predictionLockReached(
+  isoKickoff: string,
+  nowIso = new Date().toISOString()
+): boolean {
+  return (
+    new Date(nowIso).getTime() >= new Date(isoKickoff).getTime() - PREDICTION_LOCK_BUFFER_MS
+  );
+}
+
+export function predictionLockTimeIso(isoKickoff: string): string {
+  return new Date(new Date(isoKickoff).getTime() - PREDICTION_LOCK_BUFFER_MS).toISOString();
+}
+
+/** Knockout picks lock 15 minutes before kickoff; also when an official result exists. */
 export function isKnockoutFixtureLocked(
   match: Match,
   nowIso = new Date().toISOString(),
   actual?: ActualResult
 ): boolean {
-  return kickoffReached(match.kickoff, nowIso) || actual !== undefined;
+  return predictionLockReached(match.kickoff, nowIso) || actual !== undefined;
 }
 
 /** Group fixture is locked after kickoff or once an official result is recorded. */
@@ -61,7 +79,7 @@ export function assertGroupUnlockAllowed(
 }
 
 export function shouldLockGroup(nowIso = new Date().toISOString()): boolean {
-  return kickoffReached(getFirstMatchKickoff(), nowIso);
+  return predictionLockReached(getFirstMatchKickoff(), nowIso);
 }
 
 export function isGroupLocked(
@@ -141,7 +159,7 @@ export function assertAllGroupPicksCommitted(
   const count = countCommittedGroupPicks(committedPicks);
   if (!allGroupPicksCommitted(committedPicks)) {
     throw new Error(
-      `All ${GROUP_MATCH_COUNT} group-stage predictions must be saved before first kickoff (currently ${count}/${GROUP_MATCH_COUNT}).`
+      `All ${GROUP_MATCH_COUNT} group-stage predictions must be saved before the tournament lock (15 minutes before the first kickoff; currently ${count}/${GROUP_MATCH_COUNT}).`
     );
   }
 }

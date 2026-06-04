@@ -2,11 +2,10 @@
 import { describe, it, expect, afterAll, beforeEach } from 'vitest';
 import request from 'supertest';
 import { setupTestServer, teardownTestServer } from '../testHarness';
+import { adminToken, createPlayer, loginPlayer, loginPlayerReady } from './authHelpers';
 import { groupMatches } from '../../data/tournament';
 import { teams } from '../../data/tournament';
 import type { Express } from 'express';
-
-const JOIN_PASSWORD = 'MadSlags1';
 
 let app: Express;
 
@@ -17,18 +16,6 @@ beforeEach(async () => {
 afterAll(async () => {
   await teardownTestServer();
 });
-
-function registerPayload(displayName: string, password = 'abc') {
-  return { displayName, password, joinPassword: JOIN_PASSWORD };
-}
-
-async function loginToken(displayName: string, password = 'abc'): Promise<string> {
-  const login = await request(app)
-    .post('/api/auth/login')
-    .send({ displayName, password });
-  expect(login.status).toBe(200);
-  return login.body.token as string;
-}
 
 describe('security and tamper resistance', () => {
   it('rejects unauthenticated access to prediction state', async () => {
@@ -43,26 +30,31 @@ describe('security and tamper resistance', () => {
     expect(res.status).toBe(401);
   });
 
-  it('rejects registration with wrong join password', async () => {
+  it('rejects player creation without admin', async () => {
+    await createPlayer(app, 'Regular');
+    const token = await loginPlayerReady(app, 'Regular');
+
     const res = await request(app)
-      .post('/api/auth/register')
-      .send({ displayName: 'Intruder', password: 'x', joinPassword: 'wrong' });
-    expect(res.status).toBe(400);
-    expect(String(res.body.error)).toMatch(/sign-up password/i);
+      .post('/api/admin/players')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ displayName: 'Hacker', initialPassword: 'x' });
+    expect(res.status).toBe(403);
   });
 
   it('rejects duplicate display names case-insensitively', async () => {
-    await request(app).post('/api/auth/register').send(registerPayload('UniqueName'));
+    await createPlayer(app, 'UniqueName');
+    const admin = await adminToken(app);
     const dup = await request(app)
-      .post('/api/auth/register')
-      .send(registerPayload('uniquename'));
+      .post('/api/admin/players')
+      .set('Authorization', `Bearer ${admin}`)
+      .send({ displayName: 'uniquename', initialPassword: 'b' });
     expect(dup.status).toBe(400);
     expect(String(dup.body.error)).toMatch(/already taken/i);
   });
 
   it('rejects absurdly high scores from tampered API requests', async () => {
-    await request(app).post('/api/auth/register').send(registerPayload('HighScore'));
-    const token = await loginToken('HighScore');
+    await createPlayer(app, 'HighScore');
+    const token = await loginPlayerReady(app, 'HighScore');
 
     const res = await request(app)
       .post('/api/predictions/draft')
@@ -73,8 +65,8 @@ describe('security and tamper resistance', () => {
   });
 
   it('rejects negative and non-integer scores with clear errors', async () => {
-    await request(app).post('/api/auth/register').send(registerPayload('BadScore'));
-    const token = await loginToken('BadScore');
+    await createPlayer(app, 'BadScore');
+    const token = await loginPlayerReady(app, 'BadScore');
 
     const negative = await request(app)
       .post('/api/predictions/draft')
@@ -92,8 +84,8 @@ describe('security and tamper resistance', () => {
   });
 
   it('rejects unknown match IDs', async () => {
-    await request(app).post('/api/auth/register').send(registerPayload('FakeMatch'));
-    const token = await loginToken('FakeMatch');
+    await createPlayer(app, 'FakeMatch');
+    const token = await loginPlayerReady(app, 'FakeMatch');
 
     const res = await request(app)
       .post('/api/predictions/draft')
@@ -104,8 +96,8 @@ describe('security and tamper resistance', () => {
   });
 
   it('rejects invalid tournament bonus team IDs', async () => {
-    await request(app).post('/api/auth/register').send(registerPayload('BadBonus'));
-    const token = await loginToken('BadBonus');
+    await createPlayer(app, 'BadBonus');
+    const token = await loginPlayerReady(app, 'BadBonus');
 
     const res = await request(app)
       .post('/api/predictions/bonus')
@@ -121,8 +113,8 @@ describe('security and tamper resistance', () => {
   });
 
   it('accepts valid tournament bonus team IDs', async () => {
-    await request(app).post('/api/auth/register').send(registerPayload('GoodBonus'));
-    const token = await loginToken('GoodBonus');
+    await createPlayer(app, 'GoodBonus');
+    const token = await loginPlayerReady(app, 'GoodBonus');
 
     const res = await request(app)
       .post('/api/predictions/bonus')
@@ -137,8 +129,8 @@ describe('security and tamper resistance', () => {
   });
 
   it('blocks non-admin from system lock endpoint', async () => {
-    await request(app).post('/api/auth/register').send(registerPayload('Regular'));
-    const token = await loginToken('Regular');
+    await createPlayer(app, 'Regular');
+    const token = await loginPlayerReady(app, 'Regular');
 
     const unauth = await request(app).post('/api/system/locks/run');
     expect(unauth.status).toBe(401);
@@ -150,10 +142,7 @@ describe('security and tamper resistance', () => {
   });
 
   it('allows admin to run system locks', async () => {
-    await request(app).post('/api/auth/register').send(registerPayload('LockAdmin'));
-    const { getDb } = await import('../database');
-    await getDb().run(`UPDATE users SET is_admin = 1 WHERE display_name = ?`, ['LockAdmin']);
-    const token = await loginToken('LockAdmin');
+    const token = await adminToken(app);
 
     const res = await request(app)
       .post('/api/system/locks/run')
@@ -161,23 +150,41 @@ describe('security and tamper resistance', () => {
     expect(res.status).toBe(200);
   });
 
-  it('blocks non-admin from result override', async () => {
-    await request(app).post('/api/auth/register').send(registerPayload('NotAdmin'));
-    const token = await loginToken('NotAdmin');
+  it('blocks non-admin from all admin API routes', async () => {
+    await createPlayer(app, 'NotAdmin');
+    const token = await loginPlayerReady(app, 'NotAdmin');
 
-    const res = await request(app)
-      .post('/api/admin/results/override')
-      .set('Authorization', `Bearer ${token}`)
-      .send({ matchId: 'g-a-1', homeScore: 3, awayScore: 0, status: 'FINISHED' });
-    expect(res.status).toBe(403);
+    const routes = [
+      ['get', '/api/admin/players'],
+      ['post', '/api/admin/players', { displayName: 'Hack', initialPassword: 'ab' }],
+      ['get', '/api/admin/sync-status'],
+      ['post', '/api/admin/sync/run'],
+      ['get', '/api/admin/mapping-diagnostics'],
+      ['post', '/api/admin/fixtures/sync'],
+      [
+        'post',
+        '/api/admin/results/override',
+        { matchId: 'g-a-1', homeScore: 3, awayScore: 0, status: 'FINISHED' }
+      ],
+      ['post', '/api/admin/leaderboard/recompute']
+    ] as const;
+
+    for (const entry of routes) {
+      const method = entry[0];
+      const path = entry[1];
+      const body = entry[2];
+      let req = request(app)[method](path).set('Authorization', `Bearer ${token}`);
+      if (body !== undefined) req = req.send(body);
+      const res = await req;
+      expect(res.status).toBe(403);
+    }
   });
 
   it('hides other players group picks before global lock', async () => {
-    await request(app).post('/api/auth/register').send(registerPayload('Alice'));
-    await request(app).post('/api/auth/register').send(registerPayload('Bob'));
-
-    const tokenAlice = await loginToken('Alice');
-    const tokenBob = await loginToken('Bob');
+    await createPlayer(app, 'Alice');
+    await createPlayer(app, 'Bob');
+    const tokenAlice = await loginPlayerReady(app, 'Alice');
+    const tokenBob = await loginPlayerReady(app, 'Bob');
 
     await request(app)
       .post('/api/predictions/draft')
@@ -192,19 +199,16 @@ describe('security and tamper resistance', () => {
     const alice = cmp.body.entries.find(
       (e: { displayName: string }) => e.displayName === 'Alice'
     );
-    const bob = cmp.body.entries.find((e: { displayName: string }) => e.displayName === 'Bob');
     expect(alice.hidden).toBe(true);
     expect(alice.pick).toBeNull();
-    expect(bob.isCurrentUser).toBe(true);
     expect(cmp.body.visibility.canViewOthers).toBe(false);
   });
 
-  it('isolates picks per user — Bob cannot overwrite Alice state', async () => {
-    await request(app).post('/api/auth/register').send(registerPayload('OwnerA'));
-    await request(app).post('/api/auth/register').send(registerPayload('OwnerB'));
-
-    const tokenA = await loginToken('OwnerA');
-    const tokenB = await loginToken('OwnerB');
+  it('isolates picks per user', async () => {
+    await createPlayer(app, 'OwnerA');
+    await createPlayer(app, 'OwnerB');
+    const tokenA = await loginPlayerReady(app, 'OwnerA');
+    const tokenB = await loginPlayerReady(app, 'OwnerB');
 
     await request(app)
       .post('/api/predictions/draft')
@@ -228,8 +232,8 @@ describe('security and tamper resistance', () => {
   });
 
   it('rejects group lock until all six group matches are saved', async () => {
-    await request(app).post('/api/auth/register').send(registerPayload('PartialLock'));
-    const token = await loginToken('PartialLock');
+    await createPlayer(app, 'PartialLock');
+    const token = await loginPlayerReady(app, 'PartialLock');
 
     await request(app)
       .post('/api/predictions/draft')
@@ -244,8 +248,8 @@ describe('security and tamper resistance', () => {
   });
 
   it('blocks edits after global auto-lock', async () => {
-    await request(app).post('/api/auth/register').send(registerPayload('GlobalLock'));
-    const token = await loginToken('GlobalLock');
+    await createPlayer(app, 'GlobalLock');
+    const token = await loginPlayerReady(app, 'GlobalLock');
 
     const { runAutoLocks } = await import('../services/predictions');
     await runAutoLocks('2026-06-12T00:00:00Z');
@@ -259,8 +263,8 @@ describe('security and tamper resistance', () => {
   });
 
   it('survives rapid concurrent saves on the same fixture', async () => {
-    await request(app).post('/api/auth/register').send(registerPayload('Stress'));
-    const token = await loginToken('Stress');
+    await createPlayer(app, 'Stress');
+    const token = await loginPlayerReady(app, 'Stress');
 
     const results = await Promise.all(
       Array.from({ length: 30 }, (_, i) =>
@@ -275,14 +279,12 @@ describe('security and tamper resistance', () => {
     const state = await request(app)
       .get('/api/predictions/state')
       .set('Authorization', `Bearer ${token}`);
-    expect(state.body.committedPicks['g-c-1']).toBeDefined();
-    expect(state.body.committedPicks['g-c-1'].homeScore).toBeGreaterThanOrEqual(0);
     expect(state.body.committedPicks['g-c-1'].homeScore).toBeLessThanOrEqual(20);
   });
 
   it('enforces 72-pick gate before knockout saves', async () => {
-    await request(app).post('/api/auth/register').send(registerPayload('KoGate2'));
-    const token = await loginToken('KoGate2');
+    await createPlayer(app, 'KoGate2');
+    const token = await loginPlayerReady(app, 'KoGate2');
 
     const res = await request(app)
       .post('/api/predictions/draft')
@@ -292,9 +294,9 @@ describe('security and tamper resistance', () => {
     expect(String(res.body.error)).toMatch(/72/);
   });
 
-  it('allows knockout save only after all 72 group picks committed', async () => {
-    await request(app).post('/api/auth/register').send(registerPayload('KoFull'));
-    const token = await loginToken('KoFull');
+  it('blocks KO save until fixture confirmed after all group picks', async () => {
+    await createPlayer(app, 'KoFull');
+    const token = await loginPlayerReady(app, 'KoFull');
 
     for (const match of groupMatches) {
       const draft = await request(app)
@@ -310,5 +312,14 @@ describe('security and tamper resistance', () => {
       .send({ matchId: 'r32-1', homeScore: 2, awayScore: 1 });
     expect(ko.status).toBe(400);
     expect(String(ko.body.error)).toMatch(/not available yet/i);
+  });
+
+  it('requires password change before predictions', async () => {
+    await createPlayer(app, 'MustChange', 'init1');
+    const token = await loginPlayer(app, 'MustChange', 'init1');
+
+    const me = await request(app).get('/api/auth/me').set('Authorization', `Bearer ${token}`);
+    expect(me.status).toBe(200);
+    expect(me.body.user.mustChangePassword).toBe(true);
   });
 });

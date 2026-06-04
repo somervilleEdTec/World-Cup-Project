@@ -36,9 +36,9 @@ describe('pick locks', () => {
     expect(isMatchEditable(groupMatch, false, '2026-06-11T18:00:00Z')).toBe(true);
   });
 
-  it('blocks knockout picks after fixture kickoff', () => {
-    expect(() => assertMatchEditable(koMatch, false, '2026-06-28T20:00:00Z')).toThrow(/locked/i);
-    expect(isMatchEditable(koMatch, false, '2026-06-28T18:00:00Z')).toBe(true);
+  it('blocks knockout picks 15 minutes before fixture kickoff', () => {
+    expect(() => assertMatchEditable(koMatch, false, '2026-06-28T18:45:00Z')).toThrow(/locked/i);
+    expect(isMatchEditable(koMatch, false, '2026-06-28T18:44:00Z')).toBe(true);
   });
 
   it('blocks knockout picks when an official result exists', () => {

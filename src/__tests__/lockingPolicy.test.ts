@@ -40,8 +40,9 @@ describe('locking policy (LOCKING.md)', () => {
     expect(canViewOthersPicks(koMatch, '2026-06-27T12:00:00Z')).toBe(false);
   });
 
-  it('reveals others KO picks at kickoff regardless of results', () => {
-    expect(canViewOthersPicks(koMatch, '2026-06-28T17:00:00Z')).toBe(true);
+  it('reveals others KO picks 15 minutes before kickoff', () => {
+    expect(canViewOthersPicks(koMatch, '2026-06-28T15:45:00Z')).toBe(true);
+    expect(canViewOthersPicks(koMatch, '2026-06-28T15:44:00Z')).toBe(false);
   });
 
   it('voluntary group lock in DB does not alone reveal group picks before first kickoff', () => {

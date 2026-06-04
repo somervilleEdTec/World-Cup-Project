@@ -1,8 +1,10 @@
-import { FormEvent, useState } from 'react';
+import { FormEvent, useEffect, useState } from 'react';
 import { formatOptionalKickoffBst } from '../lib/formatDateTime';
 import {
+  createPlayer,
   fetchMappingDiagnostics,
   fetchSyncStatus,
+  listPlayers,
   manualOverride,
   recomputeLeaderboard,
   runFixtureSync,
@@ -29,6 +31,9 @@ interface DiagnosticsReport {
 
 export function AdminPage() {
   const [message, setMessage] = useState<string>('');
+  const [players, setPlayers] = useState<
+    Array<{ id: string; displayName: string; mustChangePassword: boolean; createdAt: string }>
+  >([]);
   const [status, setStatus] = useState<{
     last_success_at?: string | null;
     last_error?: string | null;
@@ -110,10 +115,71 @@ export function AdminPage() {
     }
   };
 
+  const loadPlayers = async () => {
+    try {
+      const response = await listPlayers();
+      setPlayers(response.players);
+    } catch (err) {
+      setMessage(err instanceof Error ? err.message : 'Failed to load players');
+    }
+  };
+
+  useEffect(() => {
+    void loadPlayers();
+  }, []);
+
+  const addPlayer = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const data = new FormData(event.currentTarget);
+    try {
+      const displayName = String(data.get('displayName'));
+      const initialPassword = String(data.get('initialPassword'));
+      await createPlayer(displayName, initialPassword);
+      setMessage(`Player ${displayName} created. They must change password on first login.`);
+      event.currentTarget.reset();
+      await loadPlayers();
+    } catch (err) {
+      setMessage(err instanceof Error ? err.message : 'Could not create player');
+    }
+  };
+
   return (
     <section className="stack">
       <article className="card">
-        <h2>Admin</h2>
+        <h2>Players</h2>
+        <p>Add league members here. Give them the username and temporary password below.</p>
+        <form onSubmit={addPlayer} className="form-grid">
+          <label>
+            Username
+            <input name="displayName" required minLength={2} maxLength={40} placeholder="Shiva XI" />
+          </label>
+          <label>
+            Temporary password (1–6 characters)
+            <input
+              name="initialPassword"
+              required
+              minLength={1}
+              maxLength={6}
+              type="text"
+              autoComplete="off"
+            />
+          </label>
+          <button type="submit">Add player</button>
+        </form>
+        {players.length > 0 && (
+          <ul>
+            {players.map((player) => (
+              <li key={player.id}>
+                {player.displayName}
+                {player.mustChangePassword ? ' — awaiting first login' : ' — active'}
+              </li>
+            ))}
+          </ul>
+        )}
+      </article>
+
+      <article className="card">
+        <h2>Operations</h2>
         <p>
           Sync monitoring, mapping diagnostics, manual result override, and leaderboard recompute.
         </p>

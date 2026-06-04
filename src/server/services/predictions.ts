@@ -13,6 +13,7 @@ import {
   isGroupStage,
   isKnockout,
   isMatchEditable,
+  predictionLockReached,
   shouldLockGroup
 } from '../../lib/pickLocks';
 import { Pick, TournamentBonusPick } from '../../types';
@@ -352,9 +353,7 @@ export async function runAutoLocks(nowIso: string) {
 
   const results = await getResultsMap();
   const lockable = getMatches({}, results)
-    .filter(
-      (m) => m.stage !== 'GROUP' && new Date(nowIso).getTime() >= new Date(m.kickoff).getTime()
-    )
+    .filter((m) => m.stage !== 'GROUP' && predictionLockReached(m.kickoff, nowIso))
     .map((m) => m.id);
 
   for (const matchId of lockable) {

@@ -64,9 +64,9 @@ describe('tournament logic', () => {
     expect(errors[0]).toContain('Draw selected');
   });
 
-  it('locks group stage after first kickoff', () => {
-    expect(shouldLockGroup('2026-06-11T19:01:00Z')).toBe(true);
-    expect(shouldLockGroup('2026-06-11T18:59:00Z')).toBe(false);
+  it('locks group stage 15 minutes before first kickoff', () => {
+    expect(shouldLockGroup('2026-06-11T18:45:00Z')).toBe(true);
+    expect(shouldLockGroup('2026-06-11T18:44:59Z')).toBe(false);
   });
 
   it('locks knockout fixtures at own kickoff', () => {

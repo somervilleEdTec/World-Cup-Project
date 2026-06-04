@@ -1,5 +1,5 @@
 import { Match } from '../types';
-import { isGroupLocked, kickoffReached } from './pickLocks';
+import { isGroupLocked, predictionLockReached } from './pickLocks';
 import { isGroupStage, isKnockout } from './tournamentLogic';
 
 /** Whether other players' predictions for this fixture may be shown. */
@@ -13,7 +13,7 @@ export function canViewOthersPicks(
     return isGroupLocked(groupPhaseLocked, nowIso);
   }
   if (isKnockout(match)) {
-    return kickoffReached(match.kickoff, nowIso);
+    return predictionLockReached(match.kickoff, nowIso);
   }
   return false;
 }
