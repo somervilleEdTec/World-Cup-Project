@@ -56,6 +56,7 @@ export interface ActualResult {
 }
 
 export interface LeaderboardEntry {
+  rank: number;
   userId: string;
   name: string;
   points: number;
@@ -63,6 +64,30 @@ export interface LeaderboardEntry {
   exactScorePoints: number;
   groupPositionPoints: number;
   bonusPoints: number;
+  coinFlip?: {
+    outcome: 'heads' | 'tails';
+    priority: number;
+    wonTieBreak?: boolean;
+  };
+}
+
+export interface LeaderboardResponse {
+  entries: LeaderboardEntry[];
+  meta: {
+    tournamentFinalComplete: boolean;
+    coinFlip: {
+      applied: boolean;
+      winnerUserId?: string;
+      winnerName?: string;
+      tiedUserIds?: string[];
+      outcomes?: Array<{
+        userId: string;
+        name: string;
+        outcome: 'heads' | 'tails';
+        priority: number;
+      }>;
+    };
+  };
 }
 
 export interface ComparisonPickView {

@@ -3,6 +3,13 @@ import { TournamentBonusPick, ActualResult } from '../../types';
 import { computeScore } from '../../lib/tournamentLogic';
 import { deriveFinalPlacings } from '../../lib/bracketEngine';
 import { picksFromActuals } from '../../lib/pickUtils';
+import {
+  compareFinalTieBreak,
+  isTournamentFinalComplete,
+  resolveCoinFlipAmongTied,
+  virtualCoinFlipOutcome,
+  virtualCoinFlipPriority
+} from '../../lib/tieBreakCoinFlip';
 
 export async function getResultsMap(): Promise<Record<string, ActualResult>> {
   const db = getDb();
@@ -35,6 +42,7 @@ export async function computeLeaderboard() {
   );
   const results = await getResultsMap();
   const finalPlacings = deriveFinalPlacings(picksFromActuals(results), results);
+  const finalComplete = isTournamentFinalComplete(results);
 
   const entries = await Promise.all(
     users.map(async (user) => {
@@ -75,7 +83,6 @@ export async function computeLeaderboard() {
       return {
         userId: user.id,
         name: user.display_name,
-        committedAt: meta?.committed_at ?? '',
         points: summary.points,
         correctResultPoints: summary.correctResultPoints,
         exactScorePoints: summary.exactScorePoints,
@@ -91,15 +98,50 @@ export async function computeLeaderboard() {
     })
   );
 
-  return entries
-    .sort(
-      (a, b) =>
-        b.points - a.points ||
-        b.tieBreak.exactScores - a.tieBreak.exactScores ||
-        b.tieBreak.correctResults - a.tieBreak.correctResults ||
-        b.tieBreak.exactGroupPositions - a.tieBreak.exactGroupPositions ||
-        b.tieBreak.bonusHits - a.tieBreak.bonusHits ||
-        a.committedAt.localeCompare(b.committedAt)
-    )
-    .map(({ tieBreak: _tieBreak, committedAt: _committedAt, ...entry }) => entry);
+  const sorted = [...entries].sort(
+    (a, b) =>
+      b.points - a.points ||
+      b.tieBreak.exactScores - a.tieBreak.exactScores ||
+      b.tieBreak.correctResults - a.tieBreak.correctResults ||
+      b.tieBreak.exactGroupPositions - a.tieBreak.exactGroupPositions ||
+      b.tieBreak.bonusHits - a.tieBreak.bonusHits ||
+      compareFinalTieBreak(a, b, finalComplete)
+  );
+
+  const coinFlipResolution = resolveCoinFlipAmongTied(sorted, finalComplete);
+  const winnerId = coinFlipResolution?.winnerUserId;
+
+  const ranked = sorted.map((entry, index) => ({
+    rank: index + 1,
+    userId: entry.userId,
+    name: entry.name,
+    points: entry.points,
+    correctResultPoints: entry.correctResultPoints,
+    exactScorePoints: entry.exactScorePoints,
+    groupPositionPoints: entry.groupPositionPoints,
+    bonusPoints: entry.bonusPoints,
+    coinFlip: finalComplete
+      ? {
+          outcome: virtualCoinFlipOutcome(entry.userId),
+          priority: virtualCoinFlipPriority(entry.userId),
+          wonTieBreak: winnerId === entry.userId && (coinFlipResolution?.userIds.length ?? 0) > 1
+        }
+      : undefined
+  }));
+
+  return {
+    entries: ranked,
+    meta: {
+      tournamentFinalComplete: finalComplete,
+      coinFlip: coinFlipResolution
+        ? {
+            applied: true,
+            winnerUserId: coinFlipResolution.winnerUserId,
+            winnerName: coinFlipResolution.winnerName,
+            tiedUserIds: coinFlipResolution.userIds,
+            outcomes: coinFlipResolution.outcomes
+          }
+        : { applied: false }
+    }
+  };
 }

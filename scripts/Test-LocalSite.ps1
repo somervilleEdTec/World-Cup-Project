@@ -182,8 +182,8 @@ function Invoke-SmokeApi([string] $BaseUrl) {
   Write-Host '  /api/predictions/state OK' -ForegroundColor Green
 
   $leaderboard = Invoke-RestMethod -Uri "$BaseUrl/api/leaderboard" -Method Get
-  if ($leaderboard -isnot [Array]) {
-    throw 'Leaderboard response was not an array'
+  if ($null -eq $leaderboard.entries) {
+    throw 'Leaderboard response missing entries'
   }
   Write-Host '  /api/leaderboard OK' -ForegroundColor Green
 }

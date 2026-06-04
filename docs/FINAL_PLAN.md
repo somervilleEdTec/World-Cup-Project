@@ -82,7 +82,7 @@ Rules:
 2. Most correct results
 3. Most exact group-position calls
 4. Most correct tournament preselection bonuses
-5. Earliest valid commit timestamp
+5. Virtual coin flip (deterministic, applied after the tournament final result is in)
 
 ## Commit and Lock Model
 

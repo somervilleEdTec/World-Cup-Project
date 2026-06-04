@@ -34,8 +34,8 @@ describe('API integration', () => {
 
     const leaderboard = await request(app).get('/api/leaderboard');
     expect(leaderboard.status).toBe(200);
-    expect(leaderboard.body).toHaveLength(1);
-    expect(leaderboard.body[0].name).toBe('Alice');
+    expect(leaderboard.body.entries).toHaveLength(1);
+    expect(leaderboard.body.entries[0].name).toBe('Alice');
   });
 
   it('blocks predictions until forced password change', async () => {

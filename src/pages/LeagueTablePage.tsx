@@ -1,14 +1,28 @@
 import { useEffect, useState } from 'react';
 import { fetchLeaderboard, userFacingError } from '../services/apiClient';
-import { LeaderboardEntry } from '../types';
+import { LeaderboardEntry, LeaderboardResponse } from '../types';
 
 export function LeagueTablePage() {
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
+  const [coinFlipNote, setCoinFlipNote] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchLeaderboard()
-      .then((response) => setEntries(response as LeaderboardEntry[]))
+      .then((response: LeaderboardResponse) => {
+        setEntries(response.entries);
+        const cf = response.meta.coinFlip;
+        if (cf.applied && cf.winnerName && (cf.tiedUserIds?.length ?? 0) > 1) {
+          const lines = cf.outcomes
+            ?.map((o) => `${o.name}: ${o.outcome}`)
+            .join(' · ');
+          setCoinFlipNote(
+            `Tie on all tie-breakers resolved by virtual coin flip. Winner: ${cf.winnerName}.${lines ? ` (${lines})` : ''}`
+          );
+        } else {
+          setCoinFlipNote(null);
+        }
+      })
       .catch((err) => setError(userFacingError(err, 'Unable to load leaderboard')));
   }, []);
 
@@ -16,6 +30,7 @@ export function LeagueTablePage() {
     <section className="card">
       <h2>League Table</h2>
       {error && <p className="warning">{error}</p>}
+      {coinFlipNote && <p className="kicker">{coinFlipNote}</p>}
       <table className="league-table-page">
         <thead>
           <tr>
@@ -29,9 +44,9 @@ export function LeagueTablePage() {
           </tr>
         </thead>
         <tbody>
-          {entries.map((entry, index) => (
+          {entries.map((entry) => (
             <tr key={entry.userId}>
-              <td>{index + 1}</td>
+              <td>{entry.rank}</td>
               <td>{entry.name}</td>
               <td>{entry.correctResultPoints}</td>
               <td>{entry.exactScorePoints}</td>

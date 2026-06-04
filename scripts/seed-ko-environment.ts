@@ -383,7 +383,9 @@ async function main() {
 
   const confirmed = buildConfirmedKnockoutFixtures(allActuals);
   const finalFixture = confirmed.find((m) => m.id === FINAL_MATCH_ID);
-  const leaderboard = seedResults || seedPredictions ? await computeLeaderboard() : [];
+  const leaderboardResult =
+    seedResults || seedPredictions ? await computeLeaderboard() : { entries: [], meta: {} };
+  const leaderboard = leaderboardResult.entries ?? [];
 
   const testUserCount = parseUserCount();
   const scenarioLabel =
