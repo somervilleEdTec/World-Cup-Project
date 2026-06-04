@@ -7,8 +7,12 @@ PORT="${PORT:-8787}"
 
 echo "==> restart-production-services.sh (repo $(git rev-parse --short HEAD 2>/dev/null || echo unknown))"
 
-if [[ ! -x node_modules/.bin/tsx ]]; then
-  echo "ERROR: node_modules/.bin/tsx missing. Run: unset NODE_ENV && npm ci"
+if [[ ! -f node_modules/tsx/dist/cli.mjs ]]; then
+  echo "ERROR: node_modules/tsx missing. Run: unset NODE_ENV && npm ci"
+  exit 1
+fi
+if ! /usr/bin/node node_modules/tsx/dist/cli.mjs --version >/dev/null 2>&1; then
+  echo "ERROR: /usr/bin/node cannot run tsx. Run: unset NODE_ENV && npm ci"
   exit 1
 fi
 
@@ -22,14 +26,20 @@ if command -v lsof >/dev/null 2>&1; then
   fi
 fi
 
-echo "==> Install systemd units from repo (tsx direct — not npm run)"
+echo "==> Install systemd units (node + tsx/cli.mjs — not npm run)"
 sudo cp deploy/systemd/worldcup.service deploy/systemd/worldcup-jobs.service /etc/systemd/system/
 sudo systemctl daemon-reload
+sudo systemctl reset-failed worldcup.service worldcup-jobs.service 2>/dev/null || true
 sudo systemctl enable worldcup-jobs worldcup 2>/dev/null || true
-sudo systemctl restart worldcup-jobs
-sudo systemctl restart worldcup
+sudo systemctl stop worldcup worldcup-jobs 2>/dev/null || true
+sleep 1
+sudo systemctl start worldcup-jobs
+sudo systemctl start worldcup
 
-sleep 3
+echo "==> Effective unit:"
+systemctl show worldcup.service -p ExecStart --no-pager
+
+sleep 5
 for u in worldcup worldcup-jobs; do
   printf '%s: ' "${u}"
   systemctl is-active "${u}.service" 2>/dev/null || true
