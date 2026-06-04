@@ -50,22 +50,19 @@ jobs:
           fi
           echo "OK: DEPLOY_SSH_KEY format."
 
-      - name: Wipe live database over SSH
-        uses: appleboy/ssh-action@v1.2.2
+      - name: Configure SSH
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
+        run: bash scripts/ci-ssh-setup.sh
+
+      - name: Wipe live database over SSH (retry)
         env:
           DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
-        with:
-          host: ${{ secrets.DEPLOY_HOST }}
-          username: ${{ secrets.DEPLOY_USER }}
-          key: ${{ secrets.DEPLOY_SSH_KEY }}
-          port: ${{ secrets.DEPLOY_PORT }}
-          command_timeout: 15m
-          envs: DEPLOY_PATH
-          script: |
-            set -euo pipefail
-            cd "${DEPLOY_PATH}"
-            git fetch origin main
-            git checkout main
-            git pull --ff-only origin main
-            chmod +x scripts/wipe-live-database.sh
-            bash scripts/wipe-live-database.sh
+          SSH_MAX_ATTEMPTS: 3
+          SSH_RETRY_WAIT_SEC: 30
+        timeout-minutes: 20
+        run: |
+          bash scripts/ci-ssh-exec.sh "cd '${DEPLOY_PATH}' && git fetch origin main && git checkout main && git pull --ff-only origin main && chmod +x scripts/wipe-live-database.sh && bash scripts/wipe-live-database.sh"

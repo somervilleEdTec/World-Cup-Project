@@ -1,7 +1,7 @@
 # Production environment — World Cup Boys (live)
 
 **Last updated:** 2026-06-04  
-**Status:** **Live and operational** — https://worldcup.dosums.uk  
+**Status:** Deploy pipeline on **`main`** is automated via GitHub Actions; if https://worldcup.dosums.uk returns **HTTP 530/502**, the Oracle VM origin is down — re-run **Deploy main** or on the VM run `bash scripts/restart-production-services.sh`.  
 **Automated deploy:** **Active** — every push to **`main`** runs [deploy-main.yml](../.github/workflows/deploy-main.yml) (see § Auto-deploy below)
 
 ---
@@ -116,6 +116,8 @@ ssh -i "C:\Users\tomso\Desktop\ssh-key-2026-06-02.key" -o HostKeyAlgorithms=+ssh
 
 | Symptom | Fix |
 |---------|-----|
+| **`ssh: handshake failed: EOF`** (deploy fails in ~3 min) | Transient VM/network or sshd load. **Re-run** Deploy main; workflow retries SSH 3× with keepalive. If persistent: Oracle console → verify VM running, port 22 open, `sudo systemctl status ssh`. |
+| **Cloudflare HTTP 530 / 1033** on public URL | Origin not reachable — `worldcup.service` down or nothing on `:8787`. VM: `bash scripts/restart-production-services.sh`; then green **Deploy main**. |
 | `ssh.ParsePrivateKey: ssh: no key found` | Re-paste full private key into `DEPLOY_SSH_KEY` |
 | Permission denied (publickey) | Private key in secret; matching public key on server |
 | `tsx: not found` | `deploy-production.sh` unsets `NODE_ENV` during `npm ci` / build |
@@ -154,7 +156,7 @@ sudo systemctl daemon-reload
 sudo systemctl enable --now worldcup-jobs worldcup
 ```
 
-Units use **`node_modules/.bin/tsx`** directly (not `npm run server`) so production starts reliably under systemd.
+Units use **`/usr/bin/node`** + **`node_modules/tsx/dist/cli.mjs`** (not `npm run server`) so production starts reliably under systemd.
 
 Passwordless **systemctl / cp / kill / lsof / apt-get** for GitHub deploy (required):
 

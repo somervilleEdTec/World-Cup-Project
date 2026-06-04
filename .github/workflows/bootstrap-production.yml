@@ -36,18 +36,19 @@ jobs:
           check "${{ secrets.DEPLOY_PATH }}" "DEPLOY_PATH"
           if [ "${missing}" -ne 0 ]; then exit 1; fi
 
-      - name: Run bootstrap on server
-        uses: appleboy/ssh-action@v1.2.2
-        with:
-          host: ${{ secrets.DEPLOY_HOST }}
-          username: ${{ secrets.DEPLOY_USER }}
-          key: ${{ secrets.DEPLOY_SSH_KEY }}
-          port: ${{ secrets.DEPLOY_PORT }}
-          command_timeout: 15m
-          script: |
-            set -euo pipefail
-            cd "${{ secrets.DEPLOY_PATH }}"
-            git fetch origin main
-            git checkout main
-            git pull --ff-only origin main
-            bash scripts/bootstrap-production-host.sh
+      - name: Configure SSH
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
+        run: bash scripts/ci-ssh-setup.sh
+
+      - name: Run bootstrap on server (SSH retry)
+        env:
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+          SSH_MAX_ATTEMPTS: 3
+          SSH_RETRY_WAIT_SEC: 30
+        timeout-minutes: 20
+        run: |
+          bash scripts/ci-ssh-exec.sh "cd '${DEPLOY_PATH}' && git fetch origin main && git checkout main && git pull --ff-only origin main && bash scripts/bootstrap-production-host.sh"

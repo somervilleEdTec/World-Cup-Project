@@ -104,6 +104,8 @@ If verify fails, the SSH step fails → the **whole workflow is red** → the pu
 
 Common fixes (push to `main` after code fix, or re-run workflow):
 
+- **`ssh: handshake failed: EOF`** — GitHub → VM SSH dropped before login. **Deploy main** now uses `scripts/ci-ssh-setup.sh` (Oracle `ssh-rsa` host keys + keepalive) and `scripts/ci-ssh-exec.sh` (3 retries). Re-run the workflow; if it persists, check the VM is up and port 22 reachable.
+- **Verify live site: HTTP 530/502** — Cloudflare cannot reach Node on `:8787`. SSH deploy may have failed, or `worldcup.service` is inactive. On VM once: `bash scripts/restart-production-services.sh`.
 - **`better-sqlite3` / `sqlite3.o.d.raw` / `better_sqlite3.cpp: No such file`** — corrupt `node_modules`. On VM: `bash scripts/repair-npm-on-server.sh` (after `build-essential`). Deploy also deep-cleans npm cache on retry.
 - **`sudo: a password is required`** — run `bootstrap-production-host.sh` for sudoers.
 - **Health commit mismatch** — deploy finished but service not restarted; check `systemctl status worldcup`.

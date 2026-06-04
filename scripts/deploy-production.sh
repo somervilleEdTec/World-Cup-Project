@@ -95,6 +95,10 @@ if [[ -f node_modules/tsx/dist/cli.mjs && -f .deploy-deps-hash ]]; then
   fi
 fi
 
+if [[ "${skip_ci}" -eq 1 ]]; then
+  echo "${lock_hash}" > .deploy-deps-hash
+fi
+
 if [[ "${skip_ci}" -eq 0 ]]; then
   echo "==> npm ci (install devDependencies — tsx/vite needed for migrate, build, server)"
   verify_native_build_prereqs
