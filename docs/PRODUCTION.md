@@ -121,7 +121,8 @@ ssh -i "C:\Users\tomso\Desktop\ssh-key-2026-06-02.key" -o HostKeyAlgorithms=+ssh
 | `tsx: not found` | `deploy-production.sh` unsets `NODE_ENV` during `npm ci` / build |
 | `sudo: a password is required` | Install sudoers snippet below |
 | Health check fails | `systemctl status worldcup`; nginx → `127.0.0.1:8787` |
-| Old UI after deploy | Fix `VITE_API_BASE_URL` in `.env` and redeploy |
+| Old UI after deploy | Public site shows old `index-*.js` but VM `dist/` is new → **nginx** serving stale static `root` instead of proxying to `:8787`. Run `bash scripts/diagnose-live-routing.sh`; use [deploy/nginx/worldcup.conf.example](../deploy/nginx/worldcup.conf.example). |
+| Health missing `commit` | Add `DEPLOY_COMMIT=$(git rev-parse HEAD)` to `.env`, `sudo systemctl restart worldcup`. Ensure code is current (`git pull`). |
 | `better-sqlite3` / missing `better_sqlite3.cpp` on `npm ci` | Corrupt install. On VM: `bash scripts/repair-npm-on-server.sh` then `npm run migrate && npm run build`. Ensure `build-essential` is installed. |
 
 ---
@@ -172,7 +173,7 @@ bash scripts/deploy-production.sh
 
 Public traffic: **https://worldcup.dosums.uk** → proxy to **http://127.0.0.1:8787**.
 
-TLS certificate must cover `worldcup.dosums.uk`. Typical nginx `proxy_pass http://127.0.0.1:8787;` for API and static assets.
+TLS certificate must cover `worldcup.dosums.uk`. **All** paths (`/` and `/api`) must `proxy_pass http://127.0.0.1:8787;` — Node serves `dist/` + API. Do **not** set `root /var/www/...` for the SPA or deploys will not update the public site. Example: [deploy/nginx/worldcup.conf.example](../deploy/nginx/worldcup.conf.example).
 
 **Login rate limit (recommended):** see `deploy/nginx/worldcup-rate-limit.conf.snippet` — limits `/api/auth/login` to ~10 requests/minute per IP.
 
