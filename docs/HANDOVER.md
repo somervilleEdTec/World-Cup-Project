@@ -1,6 +1,6 @@
 # Agent Handover — World Cup Boys
 
-**Last updated:** 2026-06-03  
+**Last updated:** 2026-06-04  
 **Repository:** https://github.com/somervilleEdTec/World-Cup-Project  
 **Branches:** **`main`** (live deploy) · **`Debug`** (PC only) — [BRANCHING.md](./BRANCHING.md)  
 **Live:** https://worldcup.dosums.uk — [PRODUCTION.md](./PRODUCTION.md) · [GO_LIVE.md](./GO_LIVE.md)  
@@ -25,7 +25,7 @@ This handover lets a new agent work without prior chat context:
 
 ## 2. Product summary
 
-**World Cup Boys** — **"Welcome to the Shiva Bowl"**
+**World Cup Boys** — tagline **"World Cup Predictions"**
 
 Friends-and-family prediction app for **FIFA World Cup 2026** (48 teams, 12 groups, 104 matches). Name/password auth, mobile-first UI, leaderboard from real results (football-data.org + admin override).
 
@@ -125,7 +125,7 @@ Historical docs: [archive/README.md](./archive/README.md)
 
 ### Ops / partial
 
-- [ ] Admin role — manual SQL after register (`display_name`, not email)
+- [ ] Bootstrap admin via `ADMIN_*` env or `npm run db:ensure-admin`
 - [x] Live football-data — `FOOTBALL_DATA_TOKEN` required on production; server + `npm run jobs` sync from api.football-data.org
 - [ ] Production — see [PRODUCTION.md](./PRODUCTION.md)
 - [ ] E2E browser tests — none
@@ -163,7 +163,7 @@ Jobs: src/server/jobs.ts (locks, sync poll)
 | `src/components/TeamSelect.tsx` | Flag + name picker |
 | `scripts/seed-ko-environment.ts` | `npm run seed:ko-environment` |
 | `src/server/services/predictions.ts` | Saves, locks, bonus |
-| `src/server/services/auth.ts` | Register / login |
+| `src/server/services/auth.ts` | Admin creates players; login; password change |
 | `src/lib/pickLocks.ts` | Lock rules, 72-group gate |
 | `src/lib/knockoutFixtureAvailability.ts` | Confirmed KO fixtures |
 | `scripts/purge-database.ts` | `npm run db:purge` |
@@ -178,8 +178,10 @@ Base: `http://localhost:8787` · Auth: `Authorization: Bearer <token>`
 
 | Method | Path | Notes |
 |--------|------|--------|
-| POST | `/api/auth/register` | `{ displayName, password, joinPassword }` |
 | POST | `/api/auth/login` | `{ displayName, password }` |
+| POST | `/api/auth/change-password` | Bearer — first-login password change |
+| GET | `/api/auth/me` | Bearer |
+| GET/POST | `/api/admin/players` | Admin — list / create players |
 | GET | `/api/predictions/state` | Bearer — includes `officialResults`, `confirmedKnockoutFixtures` |
 | POST | `/api/predictions/draft` | Saves **committed** match pick |
 | POST | `/api/predictions/bonus` | Saves **bonus_committed** |
@@ -225,7 +227,7 @@ sqlite3 data.db "UPDATE users SET is_admin = 1 WHERE display_name = 'YourName';"
 ### Quality gates
 
 ```bash
-npm test              # 66 tests
+npm test              # full Vitest suite (integration + unit)
 npm run seed:ko-environment   # optional local KO test DB (see KO_ENVIRONMENT.md)
 ALLOW_KO_SEED=1 npm run seed:complete-teams   # Team1–10 / bender, full tournament (Debug)
 npm run build
@@ -240,7 +242,7 @@ npm run db:purge      # reset local SQLite data
 |----------|---------|
 | `DATABASE_URL` | PostgreSQL (production) |
 | `SQLITE_PATH` | SQLite file (default `data.db`) |
-| `JOIN_PASSWORD` | Sign-up gate (default `MadSlags1`) |
+| `ADMIN_USERNAME` / `ADMIN_PASSWORD` | Bootstrap organiser account (created on migrate / server start) |
 | `FOOTBALL_DATA_TOKEN` | football-data.org |
 | `VITE_API_BASE_URL` | API base (default **same-origin** `/api`; Vite proxies to :8787 in dev) |
 | `PORT` | API port (default `8787`) |

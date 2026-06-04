@@ -43,7 +43,7 @@ export function AppLayout() {
       <header className="app-header">
         <div>
           <h1>World Cup Boys</h1>
-          <p className="tagline">World Cup / Euro predictions</p>
+          <p className="tagline">World Cup Predictions</p>
           {displayName && <p className="kicker">Signed in as {displayName}</p>}
         </div>
         <nav className="desktop-nav" aria-label="Primary navigation">

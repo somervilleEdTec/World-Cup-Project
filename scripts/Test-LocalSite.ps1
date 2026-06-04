@@ -154,19 +154,10 @@ function Invoke-SmokeApi([string] $BaseUrl) {
   }
   Write-Host '  /api/health OK' -ForegroundColor Green
 
-  $suffix = [Guid]::NewGuid().ToString('N').Substring(0, 8)
-  $email = "ps-smoke-$suffix@example.com"
-  $password = 'SmokeTest1!'
-  $displayName = 'PowerShell Smoke'
+  $displayName = if ($env:ADMIN_USERNAME) { $env:ADMIN_USERNAME } else { 'AdminTomsom' }
+  $password = if ($env:ADMIN_PASSWORD) { $env:ADMIN_PASSWORD } else { 'DickTits9' }
 
-  $registerBody = @{ email = $email; password = $password; displayName = $displayName } | ConvertTo-Json
-  $register = Invoke-RestMethod -Uri "$BaseUrl/api/auth/register" -Method Post -Body $registerBody -ContentType 'application/json'
-  if (-not $register.user.email) {
-    throw 'Register did not return user.email'
-  }
-  Write-Host "  /api/auth/register OK ($email)" -ForegroundColor Green
-
-  $loginBody = @{ email = $email; password = $password } | ConvertTo-Json
+  $loginBody = @{ displayName = $displayName; password = $password } | ConvertTo-Json
   $login = Invoke-RestMethod -Uri "$BaseUrl/api/auth/login" -Method Post -Body $loginBody -ContentType 'application/json'
   $token = $login.token
   if (-not $token) {
@@ -252,7 +243,7 @@ if ($Mode -eq 'Automated') {
 
     Write-Host ''
     Write-Host 'All automated checks passed.' -ForegroundColor Green
-    Write-Host "Manual check: open $apiBase/login and register a real account." -ForegroundColor DarkGray
+    Write-Host "Manual check: open $apiBase/login (organiser adds players via Admin; no public registration)." -ForegroundColor DarkGray
   } finally {
     Write-Step 'Stopping temporary API process'
     Stop-ProcessTree $serverProc

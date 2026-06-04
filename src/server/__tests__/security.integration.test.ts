@@ -196,9 +196,7 @@ describe('security and tamper resistance', () => {
       .set('Authorization', `Bearer ${tokenBob}`);
     expect(cmp.status).toBe(200);
 
-    const alice = cmp.body.entries.find(
-      (e: { displayName: string }) => e.displayName === 'Alice'
-    );
+    const alice = cmp.body.entries.find((e: { displayName: string }) => e.displayName === 'Alice');
     expect(alice.hidden).toBe(true);
     expect(alice.pick).toBeNull();
     expect(cmp.body.visibility.canViewOthers).toBe(false);

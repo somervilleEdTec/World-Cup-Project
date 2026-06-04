@@ -18,7 +18,7 @@ import { buildConfirmedKnockoutFixtures } from '../src/lib/knockoutFixtureAvaila
 import { picksFromActuals } from '../src/lib/pickUtils.js';
 import { closeDatabase, getDb, initDatabase } from '../src/server/database/index.js';
 import { resetDatabase } from '../src/server/database/migrate.js';
-import { register } from '../src/server/services/auth.js';
+import { createPlayerAccount } from '../src/server/services/auth.js';
 import { runAutoLocks, saveDraftPick, setBonusDraft } from '../src/server/services/predictions.js';
 import { computeLeaderboard } from '../src/server/services/leaderboard.js';
 import type { ActualResult, Pick, TournamentBonusPick } from '../src/types.js';
@@ -226,14 +226,11 @@ async function seedTestUsers(options: {
   const testUserCount = parseUserCount();
   for (let i = 1; i <= testUserCount; i += 1) {
     const displayName = displayNameForIndex(options.userPrefix, i);
-    const user = await register(
-      displayName,
-      options.password,
-      process.env.JOIN_PASSWORD ?? 'MadSlags1'
-    );
+    const user = await createPlayerAccount(displayName, options.password);
+    await getDb().run(`UPDATE users SET must_change_password = 0 WHERE id = ?`, [user.id]);
     userIds.set(displayName, user.id);
     // eslint-disable-next-line no-console
-    console.log(`Registered ${displayName}`);
+    console.log(`Created test user ${displayName}`);
   }
 
   const db = getDb();
@@ -307,10 +304,8 @@ async function main() {
     throw new Error('Use only one of --before-final, --full-bracket, or --complete-tournament.');
   }
 
-  const withPredictions =
-    process.argv.includes('--with-predictions') || scenarioFlags.length > 0;
-  const withResults =
-    process.argv.includes('--random-results') || scenarioFlags.length > 0;
+  const withPredictions = process.argv.includes('--with-predictions') || scenarioFlags.length > 0;
+  const withResults = process.argv.includes('--random-results') || scenarioFlags.length > 0;
   const seedPredictions = withPredictions;
   const seedResults = withResults;
 
@@ -394,12 +389,12 @@ async function main() {
       : !seedResults
         ? 'predictions only (no official results)'
         : beforeFinal
-      ? 'before-final (one prediction left per user)'
-      : completeTournament
-        ? 'complete tournament (all results + all predictions)'
-        : fullBracket
-          ? 'full bracket'
-          : 'group stage only';
+          ? 'before-final (one prediction left per user)'
+          : completeTournament
+            ? 'complete tournament (all results + all predictions)'
+            : fullBracket
+              ? 'full bracket'
+              : 'group stage only';
 
   // eslint-disable-next-line no-console
   console.log('\n--- KO environment summary ---');

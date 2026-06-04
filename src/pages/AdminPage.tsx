@@ -151,7 +151,13 @@ export function AdminPage() {
         <form onSubmit={addPlayer} className="form-grid">
           <label>
             Username
-            <input name="displayName" required minLength={2} maxLength={40} placeholder="Shiva XI" />
+            <input
+              name="displayName"
+              required
+              minLength={2}
+              maxLength={40}
+              placeholder="Player name"
+            />
           </label>
           <label>
             Temporary password (up to 30 characters)

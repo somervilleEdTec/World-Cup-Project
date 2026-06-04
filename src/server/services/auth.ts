@@ -7,10 +7,8 @@ const SESSION_TTL_HOURS = 24 * 90;
 /** Player-chosen passwords (after first login); no complexity rules. */
 export const PLAYER_PASSWORD_MAX_LENGTH = 30;
 
-export const BOOTSTRAP_ADMIN_USERNAME =
-  process.env.ADMIN_USERNAME?.trim() || 'AdminTomsom';
-export const BOOTSTRAP_ADMIN_PASSWORD =
-  process.env.ADMIN_PASSWORD?.trim() || 'DickTits9';
+export const BOOTSTRAP_ADMIN_USERNAME = process.env.ADMIN_USERNAME?.trim() || 'AdminTomsom';
+export const BOOTSTRAP_ADMIN_PASSWORD = process.env.ADMIN_PASSWORD?.trim() || 'DickTits9';
 
 function hashPassword(password: string): string {
   const salt = crypto.randomBytes(16).toString('hex');
@@ -170,10 +168,10 @@ export async function changePassword(
     throw new Error('Current password is incorrect');
   }
 
-  await db.run(
-    `UPDATE users SET password_hash = ?, must_change_password = 0 WHERE id = ?`,
-    [hashPassword(newPassword), userId]
-  );
+  await db.run(`UPDATE users SET password_hash = ?, must_change_password = 0 WHERE id = ?`, [
+    hashPassword(newPassword),
+    userId
+  ]);
 }
 
 export async function requireUser(

@@ -13,9 +13,7 @@ export function LeagueTablePage() {
         setEntries(response.entries);
         const cf = response.meta.coinFlip;
         if (cf.applied && cf.winnerName && (cf.tiedUserIds?.length ?? 0) > 1) {
-          const lines = cf.outcomes
-            ?.map((o) => `${o.name}: ${o.outcome}`)
-            .join(' · ');
+          const lines = cf.outcomes?.map((o) => `${o.name}: ${o.outcome}`).join(' · ');
           setCoinFlipNote(
             `Tie on all tie-breakers resolved by virtual coin flip. Winner: ${cf.winnerName}.${lines ? ` (${lines})` : ''}`
           );

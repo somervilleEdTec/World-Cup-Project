@@ -31,18 +31,13 @@ export function ChangePasswordPage() {
     <section className="card narrow">
       <h2>Choose your password</h2>
       <p>
-        Your organiser created your account with a temporary password. Choose your own password
-        (up to 30 characters; password managers are fine) before you continue.
+        Your organiser created your account with a temporary password. Choose your own password (up
+        to 30 characters; password managers are fine) before you continue.
       </p>
       <form onSubmit={onSubmit} className="form-grid">
         <label>
           Current password
-          <input
-            required
-            name="currentPassword"
-            type="password"
-            autoComplete="current-password"
-          />
+          <input required name="currentPassword" type="password" autoComplete="current-password" />
         </label>
         <label>
           New password

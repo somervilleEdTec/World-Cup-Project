@@ -24,8 +24,6 @@ export function assertDevSeedAllowed(scriptName: string): void {
   }
 
   if (process.env.ALLOW_KO_SEED !== '1') {
-    throw new Error(
-      `${scriptName} requires ALLOW_KO_SEED=1 in .env. See docs/DEBUG.md.`
-    );
+    throw new Error(`${scriptName} requires ALLOW_KO_SEED=1 in .env. See docs/DEBUG.md.`);
   }
 }

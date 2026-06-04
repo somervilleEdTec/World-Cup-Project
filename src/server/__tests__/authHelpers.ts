@@ -1,10 +1,7 @@
 // @vitest-environment node
 import request from 'supertest';
 import type { Express } from 'express';
-import {
-  BOOTSTRAP_ADMIN_PASSWORD,
-  BOOTSTRAP_ADMIN_USERNAME
-} from '../services/auth';
+import { BOOTSTRAP_ADMIN_PASSWORD, BOOTSTRAP_ADMIN_USERNAME } from '../services/auth';
 
 export async function adminToken(app: Express): Promise<string> {
   const login = await request(app)

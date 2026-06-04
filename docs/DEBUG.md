@@ -58,7 +58,7 @@ npm run seed:debug
 
 `npm run seed:debug` creates **Test1–Test20** with password **`guest`** only — **no** saved predictions and **no** official results.
 
-Browser: http://localhost:8787 — log in **Test1** / **guest** (sign-up password **MadSlags1** if needed).
+Browser: http://localhost:8787 — log in **Test1** / **guest** (organiser adds players on live via **Admin → Players**; no self-registration).
 
 Never point `VITE_API_BASE_URL` at production. `DEBUG_LOCAL=1` in `.env` blocks football-data.org sync.
 

@@ -4,10 +4,10 @@ export function WelcomePage() {
       <article className="card">
         <h2>Welcome</h2>
         <p>
-          This is a test for a World Cup / Euro prediction app. Pick tournament winners, predict
-          scores and don&apos;t finish last! Please read the rules carefully. All group stage games
-          MUST be predicted 15 minutes before the start of the tournament, and KO games will be
-          locked 15mins before kick off. If you have any further questions, you can fuck off.
+          World Cup Predictions for friends and family. Pick tournament winners, predict scores and
+          don&apos;t finish last! Please read the rules carefully. All group stage games MUST be
+          predicted 15 minutes before the start of the tournament, and KO games will be locked
+          15mins before kick off. If you have any further questions, you can fuck off.
         </p>
       </article>
 
@@ -56,8 +56,8 @@ export function WelcomePage() {
         <h3>Deadlines</h3>
         <ul>
           <li>
-            Tournament result predictions and all group-stage predictions lock 15 minutes before
-            the first match kickoff.
+            Tournament result predictions and all group-stage predictions lock 15 minutes before the
+            first match kickoff.
           </li>
           <li>Each knockout fixture locks 15 minutes before that fixture&apos;s kickoff.</li>
           <li>Knockout draws require choosing which team progresses (extra time / penalties).</li>

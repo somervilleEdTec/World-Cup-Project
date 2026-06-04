@@ -29,9 +29,7 @@ export function predictionLockReached(
   isoKickoff: string,
   nowIso = new Date().toISOString()
 ): boolean {
-  return (
-    new Date(nowIso).getTime() >= new Date(isoKickoff).getTime() - PREDICTION_LOCK_BUFFER_MS
-  );
+  return new Date(nowIso).getTime() >= new Date(isoKickoff).getTime() - PREDICTION_LOCK_BUFFER_MS;
 }
 
 export function predictionLockTimeIso(isoKickoff: string): string {

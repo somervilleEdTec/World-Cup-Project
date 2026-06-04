@@ -126,9 +126,7 @@ export function createApp(): Express {
       await changePassword(user.id, payload.currentPassword, payload.newPassword);
       return res.json({ ok: true });
     } catch (error) {
-      return res
-        .status(400)
-        .json({ error: apiErrorMessage(error, 'Password change failed') });
+      return res.status(400).json({ error: apiErrorMessage(error, 'Password change failed') });
     }
   });
 
@@ -181,7 +179,9 @@ export function createApp(): Express {
     } catch (error) {
       const status =
         error instanceof Error && error.message === 'PASSWORD_CHANGE_REQUIRED' ? 403 : 400;
-      res.status(status).json({ error: error instanceof Error ? error.message : 'Group lock failed' });
+      res
+        .status(status)
+        .json({ error: error instanceof Error ? error.message : 'Group lock failed' });
     }
   });
 

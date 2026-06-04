@@ -479,8 +479,7 @@ export function MyPicksPage() {
           <h3>Tournament result predictions</h3>
           <p>
             Choose the top four teams. These lock 15 minutes before the first match kickoff — no
-            group predictions
-            required.
+            group predictions required.
           </p>
           {tournamentLocked && <p className="warning">Tournament result predictions are locked.</p>}
           {state.bonusCommitted && !tournamentLocked && (

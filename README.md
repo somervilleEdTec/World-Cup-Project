@@ -1,6 +1,6 @@
 # World Cup Boys
 
-**Welcome to the Shiva Bowl** — friends-and-family predictions for FIFA World Cup 2026.
+**World Cup Predictions** — friends-and-family predictions for FIFA World Cup 2026.
 
 **Live site:** https://worldcup.dosums.uk  
 **Repository:** https://github.com/somervilleEdTec/World-Cup-Project
@@ -34,7 +34,7 @@ npm run seed:debug                          # Test1–Test20 / guest, no picks, 
 
 Run all commands **inside the repo** (not from Desktop). If the clone is elsewhere, `cd` to that folder instead.
 
-Sign-up gate: **`MadSlags1`**. Test logins: **Test1** … **Test20** / **`guest`**.
+Test logins (after `npm run seed:debug`): **Test1** … **Test20** / **`guest`** (password **`guest`**; change on first login if required). Organiser uses bootstrap admin — see [docs/DEBUG.md](docs/DEBUG.md).
 
 ### macOS / Linux
 
@@ -69,7 +69,7 @@ Ops: **[docs/PRODUCTION.md](docs/PRODUCTION.md)**
 | Variable | Purpose |
 |----------|---------|
 | `DATABASE_URL` | PostgreSQL (optional); omit for SQLite `data.db` |
-| `JOIN_PASSWORD` | Sign-up gate (default `MadSlags1`) |
+| `ADMIN_USERNAME` / `ADMIN_PASSWORD` | Bootstrap organiser account |
 | `FOOTBALL_DATA_TOKEN` | football-data.org API |
 | `VITE_API_BASE_URL` | Frontend API origin (production: `https://worldcup.dosums.uk`) |
 | `PORT` | API port (default `8787`) |

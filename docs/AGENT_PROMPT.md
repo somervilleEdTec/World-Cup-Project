@@ -6,7 +6,7 @@ Copy everything below the line into a new Cursor agent session.
 
 ## Your role
 
-You are helping with **World Cup Boys** (“Welcome to the Shiva Bowl”) — FIFA World Cup 2026 prediction app for friends/family.
+You are helping with **World Cup Boys** — tagline **“World Cup Predictions”** — FIFA World Cup 2026 prediction app for friends/family. Players are created by the organiser (admin); there is no public registration.
 
 **Repository:** https://github.com/somervilleEdTec/World-Cup-Project
 
@@ -46,7 +46,7 @@ npm run seed:debug
 
 Always `cd` into the repo first (must contain `.git` and `package.json`).
 
-Sign-up password: **`MadSlags1`** (from `.env`). Test logins: **Test1** / **guest** (through **Test20**).
+Test logins (after `npm run seed:debug`): **Test1** … **Test20** / **`guest`**. Bootstrap admin: `ADMIN_USERNAME` / `ADMIN_PASSWORD` in `.env` (see [LIVE_SERVER_ADMIN_SETUP.md](./LIVE_SERVER_ADMIN_SETUP.md)).
 
 ## Quality gates (before push to Debug)
 

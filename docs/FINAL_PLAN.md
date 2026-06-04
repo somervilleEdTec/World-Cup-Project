@@ -6,7 +6,7 @@
 ## Final Locked Rules
 
 - App name: **World Cup Boys**
-- Tagline: **"Welcome to the Shiva Bowl"**
+- Tagline: **"World Cup Predictions"**
 - Score source: **football-data.org**
 - Team display everywhere: **flag + country name**
 - Global pool only

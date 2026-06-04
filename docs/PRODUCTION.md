@@ -53,7 +53,8 @@ On the VM at `/home/ubuntu/World-Cup-Project/.env`:
 FOOTBALL_DATA_TOKEN=<your football-data.org token>
 NODE_ENV=production
 VITE_API_BASE_URL=https://worldcup.dosums.uk
-JOIN_PASSWORD=<shared sign-up password>
+ADMIN_USERNAME=AdminTomsom
+ADMIN_PASSWORD=<strong organiser password>
 PORT=8787
 ```
 
@@ -206,11 +207,13 @@ sqlite3 data.db "SELECT COUNT(*) FROM users;"
 # expect 0
 ```
 
-Promote yourself to admin again after re-registering:
+Recreate the bootstrap organiser after a wipe:
 
 ```bash
-sqlite3 data.db "UPDATE users SET is_admin = 1 WHERE display_name = 'YourName';"
+npm run db:ensure-admin
 ```
+
+Log in as `ADMIN_USERNAME`, then add players via **Admin → Players**.
 
 **Never** run `db:purge` / `db:purge:live` from CI/deploy scripts. **`Debug`** local DB: use `npm run db:purge` without `--confirm-live` when `NODE_ENV` is not `production`.
 
