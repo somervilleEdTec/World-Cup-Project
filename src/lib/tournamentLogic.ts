@@ -15,6 +15,11 @@ export {
   shouldLockGroup
 } from './pickLocks';
 
+/** Upper bound for match scores (API + UI); prevents absurd values from tampered requests. */
+export const MAX_MATCH_SCORE = 20;
+
+const VALID_TEAM_IDS = new Set(teams.map((team) => team.id));
+
 export function requiresProgressionPick(match: Match, pick: Pick): boolean {
   return isKnockout(match) && pick.homeScore === pick.awayScore;
 }
@@ -24,8 +29,34 @@ export function validatePick(match: Match, pick: Pick): string[] {
   if (pick.homeScore < 0 || pick.awayScore < 0) {
     errors.push('Scores cannot be negative.');
   }
+  if (pick.homeScore > MAX_MATCH_SCORE || pick.awayScore > MAX_MATCH_SCORE) {
+    errors.push(`Scores cannot exceed ${MAX_MATCH_SCORE}.`);
+  }
   if (requiresProgressionPick(match, pick) && !pick.progressingTeamId) {
     errors.push('Draw selected — choose the team that progresses.');
+  }
+  if (pick.progressingTeamId) {
+    const validIds = [match.homeTeamId, match.awayTeamId];
+    if (!validIds.includes(pick.progressingTeamId)) {
+      errors.push('Progressing team must be one of the teams in this fixture.');
+    }
+  }
+  return errors;
+}
+
+export function validateBonusPick(bonus: TournamentBonusPick): string[] {
+  const errors: string[] = [];
+  const slots: { key: keyof TournamentBonusPick; label: string }[] = [
+    { key: 'winnerTeamId', label: 'Winner' },
+    { key: 'runnerUpTeamId', label: 'Runner-up' },
+    { key: 'thirdTeamId', label: 'Third place' },
+    { key: 'fourthTeamId', label: 'Fourth place' }
+  ];
+  for (const { key, label } of slots) {
+    const id = bonus[key];
+    if (!VALID_TEAM_IDS.has(id)) {
+      errors.push(`${label}: unknown team.`);
+    }
   }
   return errors;
 }

@@ -32,6 +32,21 @@ function authToken(req: express.Request): string | undefined {
   return undefined;
 }
 
+function apiErrorMessage(error: unknown, fallback: string): string {
+  if (error instanceof z.ZodError) {
+    const issue = error.issues[0];
+    const path = issue?.path?.join('.') ?? '';
+    if (path.includes('homeScore') || path.includes('awayScore')) {
+      return 'Scores must be whole numbers between 0 and 20.';
+    }
+    if (path.includes('password')) {
+      return 'Password must be 1–6 characters.';
+    }
+    return fallback;
+  }
+  return error instanceof Error ? error.message : fallback;
+}
+
 export function createApp(): Express {
   const app = express();
   app.use(cors());
@@ -52,7 +67,7 @@ export function createApp(): Express {
       const user = await register(payload.displayName, payload.password, payload.joinPassword);
       res.json({ user });
     } catch (error) {
-      res.status(400).json({ error: error instanceof Error ? error.message : 'Bad request' });
+      res.status(400).json({ error: apiErrorMessage(error, 'Bad request') });
     }
   });
 
@@ -84,14 +99,14 @@ export function createApp(): Express {
       const user = await requireUser(authToken(req));
       const schema = z.object({
         matchId: z.string(),
-        homeScore: z.number().int().min(0),
-        awayScore: z.number().int().min(0),
+        homeScore: z.number().int().min(0).max(20),
+        awayScore: z.number().int().min(0).max(20),
         progressingTeamId: z.string().optional()
       });
       await saveDraftPick(user.id, schema.parse(req.body));
       res.json({ ok: true });
     } catch (error) {
-      res.status(400).json({ error: error instanceof Error ? error.message : 'Invalid draft' });
+      res.status(400).json({ error: apiErrorMessage(error, 'Invalid draft') });
     }
   });
 
@@ -169,9 +184,17 @@ export function createApp(): Express {
     }
   });
 
-  app.post('/api/system/locks/run', async (_req: Request, res: Response) => {
-    await runAutoLocks(new Date().toISOString());
-    res.json({ ok: true });
+  app.post('/api/system/locks/run', async (req: Request, res: Response) => {
+    try {
+      const user = await requireUser(authToken(req));
+      if (!user.isAdmin) return res.status(403).json({ error: 'Admin only' });
+      await runAutoLocks(new Date().toISOString());
+      return res.json({ ok: true });
+    } catch (error) {
+      return res
+        .status(401)
+        .json({ error: error instanceof Error ? error.message : 'Unauthorized' });
+    }
   });
 
   app.get('/api/comparison/fixtures', async (req: Request, res: Response) => {

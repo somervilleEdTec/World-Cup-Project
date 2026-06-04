@@ -3,12 +3,53 @@ import {
   computeScore,
   lockableKnockoutMatchIds,
   shouldLockGroup,
+  validateBonusPick,
   validatePick
 } from '../lib/tournamentLogic';
 import { picksFromActuals } from '../lib/pickUtils';
 import { Match, Pick, TournamentBonusPick } from '../types';
 
 describe('tournament logic', () => {
+  it('rejects scores above the maximum', () => {
+    const match: Match = {
+      id: 'g-a-1',
+      stage: 'GROUP',
+      group: 'A',
+      kickoff: '2026-06-11T19:00:00Z',
+      homeTeamId: 'mexico',
+      awayTeamId: 'south-africa'
+    };
+    const pick: Pick = { matchId: 'g-a-1', homeScore: 21, awayScore: 0 };
+    expect(validatePick(match, pick)[0]).toMatch(/20/);
+  });
+
+  it('rejects invalid progressing team on knockout draws', () => {
+    const match: Match = {
+      id: 'r32-1',
+      stage: 'R32',
+      kickoff: '2026-06-28T19:00:00Z',
+      homeTeamId: 'mexico',
+      awayTeamId: 'canada'
+    };
+    const pick: Pick = {
+      matchId: 'r32-1',
+      homeScore: 1,
+      awayScore: 1,
+      progressingTeamId: 'brazil'
+    };
+    expect(validatePick(match, pick)[0]).toMatch(/fixture/i);
+  });
+
+  it('rejects unknown teams in bonus picks', () => {
+    const errors = validateBonusPick({
+      winnerTeamId: 'not-a-team',
+      runnerUpTeamId: 'mexico',
+      thirdTeamId: 'canada',
+      fourthTeamId: 'switzerland'
+    });
+    expect(errors[0]).toMatch(/unknown team/i);
+  });
+
   it('requires team_to_progress for knockout draws', () => {
     const match: Match = {
       id: 'x',
