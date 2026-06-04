@@ -46,6 +46,8 @@ jobs:
     outputs:
       deploy_commit: ${{ github.sha }}
     steps:
+      - uses: actions/checkout@v4
+
       - name: Verify branch is main
         run: |
           if [ "${GITHUB_REF}" != "refs/heads/main" ]; then
