@@ -32,6 +32,16 @@ import {
   listComparisonFixtures
 } from './services/comparison';
 import { getDb } from './database';
+import { PLAYER_PASSWORD_MAX_LENGTH } from './services/auth';
+
+function configureCors(app: Express): void {
+  const origin = process.env.CORS_ORIGIN?.trim() || process.env.VITE_API_BASE_URL?.trim();
+  if (process.env.NODE_ENV === 'production' && origin) {
+    app.use(cors({ origin }));
+  } else {
+    app.use(cors());
+  }
+}
 
 function authToken(req: express.Request): string | undefined {
   const bearer = req.header('authorization');
@@ -63,8 +73,8 @@ function apiErrorMessage(error: unknown, fallback: string): string {
     if (path.includes('homeScore') || path.includes('awayScore')) {
       return 'Scores must be whole numbers between 0 and 20.';
     }
-    if (path.includes('password')) {
-      return 'Password must be 1–6 characters.';
+    if (/password/i.test(path)) {
+      return `Password must be up to ${PLAYER_PASSWORD_MAX_LENGTH} characters.`;
     }
     return fallback;
   }
@@ -73,7 +83,7 @@ function apiErrorMessage(error: unknown, fallback: string): string {
 
 export function createApp(): Express {
   const app = express();
-  app.use(cors());
+  configureCors(app);
   app.use(express.json());
 
   app.get('/api/health', (_req, res) => {
@@ -84,7 +94,7 @@ export function createApp(): Express {
     try {
       const schema = z.object({
         displayName: z.string().min(1),
-        password: z.string().min(1).max(32)
+        password: z.string().min(1).max(128)
       });
       const payload = schema.parse(req.body);
       const response = await login(payload.displayName, payload.password);
@@ -109,14 +119,16 @@ export function createApp(): Express {
     try {
       const user = await requireUser(authToken(req), { allowPasswordChange: true });
       const schema = z.object({
-        currentPassword: z.string().min(1).max(32),
-        newPassword: z.string().min(1).max(6)
+        currentPassword: z.string().min(1).max(128),
+        newPassword: z.string().min(1).max(PLAYER_PASSWORD_MAX_LENGTH)
       });
       const payload = schema.parse(req.body);
       await changePassword(user.id, payload.currentPassword, payload.newPassword);
       return res.json({ ok: true });
     } catch (error) {
-      return res.status(400).json({ error: apiErrorMessage(error, 'Password change failed') });
+      return res
+        .status(400)
+        .json({ error: apiErrorMessage(error, 'Password change failed') });
     }
   });
 
@@ -308,7 +320,7 @@ export function createApp(): Express {
       await requireAdmin(authToken(req));
       const schema = z.object({
         displayName: z.string().min(2),
-        initialPassword: z.string().min(1).max(6)
+        initialPassword: z.string().min(1).max(PLAYER_PASSWORD_MAX_LENGTH)
       });
       const payload = schema.parse(req.body);
       const user = await createPlayerAccount(payload.displayName, payload.initialPassword);

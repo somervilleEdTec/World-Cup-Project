@@ -41,7 +41,7 @@ export function LoginPage() {
           <input
             required
             name="password"
-            maxLength={32}
+            maxLength={128}
             type="password"
             autoComplete="current-password"
           />

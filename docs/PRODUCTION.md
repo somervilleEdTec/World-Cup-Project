@@ -168,6 +168,10 @@ Public traffic: **https://worldcup.dosums.uk** → proxy to **http://127.0.0.1:8
 
 TLS certificate must cover `worldcup.dosums.uk`. Typical nginx `proxy_pass http://127.0.0.1:8787;` for API and static assets.
 
+**Login rate limit (recommended):** see `deploy/nginx/worldcup-rate-limit.conf.snippet` — limits `/api/auth/login` to ~10 requests/minute per IP.
+
+**Database backups:** [DATABASE_BACKUP.md](./DATABASE_BACKUP.md) — `npm run db:backup`; runs automatically before each deploy.
+
 ---
 
 ## Wipe live database (empty start for friends)

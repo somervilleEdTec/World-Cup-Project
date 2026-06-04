@@ -32,7 +32,7 @@ export function ChangePasswordPage() {
       <h2>Choose your password</h2>
       <p>
         Your organiser created your account with a temporary password. Choose your own password
-        (1–6 characters) before you continue.
+        (up to 30 characters; password managers are fine) before you continue.
       </p>
       <form onSubmit={onSubmit} className="form-grid">
         <label>
@@ -49,10 +49,10 @@ export function ChangePasswordPage() {
           <input
             required
             name="newPassword"
-            maxLength={6}
+            maxLength={30}
             type="password"
             autoComplete="new-password"
-            placeholder="1–6 characters"
+            placeholder="Up to 30 characters"
           />
         </label>
         <label>
@@ -60,7 +60,7 @@ export function ChangePasswordPage() {
           <input
             required
             name="confirmPassword"
-            maxLength={6}
+            maxLength={30}
             type="password"
             autoComplete="new-password"
           />

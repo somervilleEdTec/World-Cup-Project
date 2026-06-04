@@ -1,7 +1,11 @@
 import crypto from 'node:crypto';
 import { getDb } from '../database';
 
-const SESSION_TTL_HOURS = 24 * 30;
+/** Player sessions stay valid 90 days on the same device (tournament length). */
+const SESSION_TTL_HOURS = 24 * 90;
+
+/** Player-chosen passwords (after first login); no complexity rules. */
+export const PLAYER_PASSWORD_MAX_LENGTH = 30;
 
 export const BOOTSTRAP_ADMIN_USERNAME =
   process.env.ADMIN_USERNAME?.trim() || 'AdminTomsom';
@@ -82,8 +86,8 @@ export async function createPlayerAccount(
   if (name.length < 2) {
     throw new Error('Name must be at least 2 characters');
   }
-  if (initialPassword.length < 1 || initialPassword.length > 6) {
-    throw new Error('Initial password must be 1–6 characters');
+  if (initialPassword.length < 1 || initialPassword.length > PLAYER_PASSWORD_MAX_LENGTH) {
+    throw new Error(`Temporary password must be 1–${PLAYER_PASSWORD_MAX_LENGTH} characters`);
   }
 
   const db = getDb();
@@ -150,8 +154,8 @@ export async function changePassword(
   currentPassword: string,
   newPassword: string
 ): Promise<void> {
-  if (newPassword.length < 1 || newPassword.length > 6) {
-    throw new Error('New password must be 1–6 characters');
+  if (newPassword.length < 1 || newPassword.length > PLAYER_PASSWORD_MAX_LENGTH) {
+    throw new Error(`Password must be up to ${PLAYER_PASSWORD_MAX_LENGTH} characters`);
   }
 
   const db = getDb();

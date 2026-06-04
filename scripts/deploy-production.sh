@@ -46,6 +46,13 @@ echo "==> npm ci (install devDependencies — tsx/vite needed for migrate, build
   npm ci
 )
 
+if [[ -f "${SQLITE_PATH:-data.db}" ]] || [[ -n "${DATABASE_URL:-}" ]]; then
+  echo "==> database backup (before migrate)"
+  npm run db:backup || echo "WARNING: backup failed — continuing deploy"
+else
+  echo "==> skip database backup (no database file yet)"
+fi
+
 echo "==> migrate"
 npm run migrate
 

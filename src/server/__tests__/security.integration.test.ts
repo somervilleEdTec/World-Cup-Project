@@ -314,6 +314,35 @@ describe('security and tamper resistance', () => {
     expect(String(ko.body.error)).toMatch(/not available yet/i);
   });
 
+  it('accepts player passwords up to 30 characters', async () => {
+    await createPlayer(app, 'LongPass', 'tmp1');
+    const token = await loginPlayer(app, 'LongPass', 'tmp1');
+    const longPassword = 'Mix3d!Pass'.padEnd(30, '0');
+    expect(longPassword.length).toBe(30);
+
+    const change = await request(app)
+      .post('/api/auth/change-password')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ currentPassword: 'tmp1', newPassword: longPassword });
+    expect(change.status).toBe(200);
+
+    const relogin = await request(app)
+      .post('/api/auth/login')
+      .send({ displayName: 'LongPass', password: longPassword });
+    expect(relogin.status).toBe(200);
+  });
+
+  it('rejects player passwords longer than 30 characters', async () => {
+    await createPlayer(app, 'TooLong', 'tmp2');
+    const token = await loginPlayer(app, 'TooLong', 'tmp2');
+    const res = await request(app)
+      .post('/api/auth/change-password')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ currentPassword: 'tmp2', newPassword: 'x'.repeat(31) });
+    expect(res.status).toBe(400);
+    expect(String(res.body.error)).toMatch(/30/);
+  });
+
   it('requires password change before predictions', async () => {
     await createPlayer(app, 'MustChange', 'init1');
     const token = await loginPlayer(app, 'MustChange', 'init1');

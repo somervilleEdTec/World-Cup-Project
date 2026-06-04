@@ -154,12 +154,12 @@ export function AdminPage() {
             <input name="displayName" required minLength={2} maxLength={40} placeholder="Shiva XI" />
           </label>
           <label>
-            Temporary password (1–6 characters)
+            Temporary password (up to 30 characters)
             <input
               name="initialPassword"
               required
               minLength={1}
-              maxLength={6}
+              maxLength={30}
               type="text"
               autoComplete="off"
             />
