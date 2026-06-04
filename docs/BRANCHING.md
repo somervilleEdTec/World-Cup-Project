@@ -1,6 +1,6 @@
 # Branches: `main` and `Debug`
 
-**Last updated:** 2026-06-03
+**Last updated:** 2026-06-04
 
 This repository uses **two branches only**. All other remote branches should be deleted.
 
@@ -8,8 +8,10 @@ This repository uses **two branches only**. All other remote branches should be 
 
 | Branch | Purpose | Live site | GitHub Actions |
 |--------|---------|-----------|----------------|
-| **`main`** | Production code | **Yes** — https://worldcup.dosums.uk | [deploy-main.yml](../.github/workflows/deploy-main.yml) on every push |
-| **`Debug`** | Development on your PC | **No** — never deploys | **None** |
+| **`main`** | Production code | **Yes** — https://worldcup.dosums.uk | [deploy-main.yml](../.github/workflows/deploy-main.yml) — deploy + verify |
+| **`Debug`** | Development | **No** | [ci-debug.yml](../.github/workflows/ci-debug.yml) — test + build only |
+
+See **[DEPLOY_CONTROL_PLANE.md](./DEPLOY_CONTROL_PLANE.md)** — GitHub owns deploys; SSH only for one-time bootstrap / `.env`.
 
 ---
 
@@ -19,7 +21,7 @@ This repository uses **two branches only**. All other remote branches should be 
 |------|-------------|
 | No live deploy | `deploy-main.yml` triggers only on **`main`** |
 | No production script on wrong branch | `scripts/deploy-production.sh` exits if not on **`main`** |
-| No CI on push | Pushing **`Debug`** does not run workflows |
+| CI on push | **`Debug`** runs [ci-debug.yml](../.github/workflows/ci-debug.yml) (no deploy) |
 | Test locally | `npm test`, `npm run build`, `.\scripts\Test-LocalSite.ps1` (Windows) |
 
 ### Daily workflow (PC)

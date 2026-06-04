@@ -1,11 +1,11 @@
 # LIVE SITE ONLY — runs on push to `main` (never on `Debug`).
-# Setup: docs/PRODUCTION.md
+# GitHub is the control plane: CI → SSH deploy → verify. See docs/DEPLOY_CONTROL_PLANE.md
 
 name: Deploy main (production)
 
-# GitHub Actions JS runtime: Node 20 EOL Sep 2026 — use Node 24 for action steps.
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  LIVE_SITE_URL: https://worldcup.dosums.uk
 
 on:
   push:
@@ -28,9 +28,12 @@ jobs:
           node-version: '22'
           cache: npm
 
-      - run: npm ci
-      - run: npm test
-      - run: npm run build
+      - name: Install and test
+        run: |
+          set -euo pipefail
+          npm ci
+          npm test
+          npm run build
         env:
           VITE_API_BASE_URL: https://ci-placeholder.local
 
@@ -38,9 +41,10 @@ jobs:
     name: Deploy to production host
     needs: ci
     runs-on: ubuntu-latest
-    # Hard gate: never deploy from Debug or other branches (including manual dispatch).
     if: github.ref == 'refs/heads/main'
     environment: production
+    outputs:
+      deploy_commit: ${{ github.sha }}
     steps:
       - name: Verify branch is main
         run: |
@@ -60,7 +64,7 @@ jobs:
           if [ "${missing}" -ne 0 ]; then
             echo ""
             echo "Add repository secrets: GitHub → Settings → Secrets and variables → Actions"
-            echo "Guide: docs/PRODUCTION.md"
+            echo "Guide: docs/DEPLOY_CONTROL_PLANE.md"
             exit 1
           fi
 
@@ -70,39 +74,72 @@ jobs:
         run: |
           set -euo pipefail
           if ! printf '%s' "$DEPLOY_SSH_KEY" | grep -q '^-----BEGIN '; then
-            echo "ERROR: DEPLOY_SSH_KEY is not a valid private key (ssh-action: ssh: no key found)."
-            echo ""
-            echo "Update the secret: Settings → Secrets and variables → Actions → DEPLOY_SSH_KEY"
-            echo "  • Paste the ENTIRE private key file — all lines from -----BEGIN through -----END"
-            echo "  • Use the private key (ssh-key-2026-06-02.key), NOT the .pub file or a Windows path"
-            echo "  • Do not wrap the key in extra quotes"
-            echo "  • PuTTY .ppk keys must be converted to OpenSSH format first"
-            echo "Guide: docs/PRODUCTION.md § Auto-deploy"
+            echo "ERROR: DEPLOY_SSH_KEY is not a valid private key."
             exit 1
           fi
           if ! printf '%s' "$DEPLOY_SSH_KEY" | grep -q 'PRIVATE KEY-----'; then
-            echo "ERROR: DEPLOY_SSH_KEY is missing -----END ... PRIVATE KEY----- — copy the full file."
+            echo "ERROR: DEPLOY_SSH_KEY is missing -----END ... PRIVATE KEY-----"
             exit 1
           fi
           key_bytes="$(printf '%s' "$DEPLOY_SSH_KEY" | wc -c | tr -d ' ')"
           if [ "${key_bytes}" -lt 200 ]; then
-            echo "ERROR: DEPLOY_SSH_KEY is too short (${key_bytes} bytes) — likely truncated or wrong value."
+            echo "ERROR: DEPLOY_SSH_KEY is too short (${key_bytes} bytes)."
             exit 1
           fi
-          echo "OK: DEPLOY_SSH_KEY looks like a private key (${key_bytes} bytes)."
+          echo "OK: DEPLOY_SSH_KEY looks valid (${key_bytes} bytes)."
 
       - name: Deploy over SSH
+        id: ssh_deploy
         uses: appleboy/ssh-action@v1.2.2
         env:
           DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+          EXPECTED_COMMIT: ${{ github.sha }}
         with:
           host: ${{ secrets.DEPLOY_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
           port: ${{ secrets.DEPLOY_PORT }}
-          command_timeout: 20m
-          envs: DEPLOY_PATH
+          command_timeout: 25m
+          envs: DEPLOY_PATH,EXPECTED_COMMIT
           script: |
             set -euo pipefail
             cd "${DEPLOY_PATH}"
+            export EXPECTED_COMMIT="${EXPECTED_COMMIT}"
+            echo "GITHUB_SHA=${EXPECTED_COMMIT}"
             bash scripts/deploy-production.sh
+
+      - name: Verify live site (public health)
+        run: |
+          set -euo pipefail
+          expected="${GITHUB_SHA}"
+          url="${LIVE_SITE_URL}/api/health"
+          echo "Checking ${url} for commit ${expected}"
+          for attempt in 1 2 3 4 5 6; do
+            body="$(curl -sf --max-time 15 "${url}" 2>/dev/null || true)"
+            if [ -n "${body}" ]; then
+              echo "Response: ${body}"
+              if printf '%s' "${body}" | grep -qF '"ok":true' && printf '%s' "${body}" | grep -qF "\"commit\":\"${expected}\""; then
+                echo "OK: live site reports deployed commit."
+                exit 0
+              fi
+            else
+              echo "Attempt ${attempt}: curl failed or empty body"
+            fi
+            sleep 10
+          done
+          echo "ERROR: ${url} did not return ok:true with commit ${expected} within ~60s."
+          echo "Check Actions SSH log above, systemd on VM, and nginx → :8787."
+          exit 1
+
+  report:
+    name: Deploy summary
+    needs: deploy
+    runs-on: ubuntu-latest
+    if: success()
+    steps:
+      - run: |
+          echo "## Production deploy succeeded" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **Commit:** \`${{ github.sha }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **Live:** ${{ env.LIVE_SITE_URL }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **Workflow:** Deploy main (production)" >> "$GITHUB_STEP_SUMMARY"

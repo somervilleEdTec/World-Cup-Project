@@ -49,18 +49,18 @@ npm run jobs      # locks only in debug mode
 
 ---
 
-## Release to production (explicit confirmation only)
+## Release to production (GitHub control plane)
 
-Do **not** push `main` unless the owner asks and confirms.
+Merge **`Debug` → `main`** and push — **GitHub Actions** runs tests, deploys to the VM, and verifies https://worldcup.dosums.uk/api/health matches the commit. **No SSH required** for normal releases.
+
+Guide: **[docs/DEPLOY_CONTROL_PLANE.md](docs/DEPLOY_CONTROL_PLANE.md)** · VM details: **[docs/PRODUCTION.md](docs/PRODUCTION.md)**
 
 ```bash
 git checkout main
 git merge Debug
-npm test && npm run build
 git push origin main
+# Watch: GitHub → Actions → "Deploy main (production)"
 ```
-
-Ops: **[docs/PRODUCTION.md](docs/PRODUCTION.md)**
 
 ---
 

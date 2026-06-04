@@ -55,9 +55,19 @@ verify_native_build_prereqs() {
     fi
   done
   if [[ "${missing}" -ne 0 ]]; then
+    echo "==> Attempting passwordless install of build-essential (bootstrap sudoers)"
+    if sudo -n true 2>/dev/null; then
+      if sudo -n apt-get update -qq && sudo -n DEBIAN_FRONTEND=noninteractive apt-get install -y -qq build-essential python3; then
+        echo "==> build-essential installed"
+        missing=0
+      fi
+    fi
+  fi
+  if [[ "${missing}" -ne 0 ]]; then
     echo ""
     echo "ERROR: better-sqlite3 needs native compile tools on the VM."
-    echo "  sudo apt-get update && sudo apt-get install -y build-essential python3"
+    echo "  Run once: bash scripts/bootstrap-production-host.sh"
+    echo "  Or: sudo apt-get update && sudo apt-get install -y build-essential python3"
     exit 1
   fi
   local free_kb
@@ -158,8 +168,10 @@ else
   echo "    npm run jobs &  &&  npm run server"
 fi
 
-echo "==> health check"
+expected_verify="${EXPECTED_COMMIT:-${deploy_head}}"
+echo "==> Verify deploy (commit ${expected_verify})"
 sleep 2
-curl -sf "http://127.0.0.1:${PORT}/api/health" | head -c 200
-echo ""
+bash scripts/verify-production-deploy.sh "${expected_verify}"
+
+echo "DEPLOY_OK commit=${expected_verify} asset=$(grep -o 'assets/index-[^"]*\.js' dist/index.html | head -1)"
 echo "==> Deploy finished at $(date -u +%Y-%m-%dT%H:%M:%SZ)"

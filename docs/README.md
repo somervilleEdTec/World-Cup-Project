@@ -12,6 +12,7 @@
 | Doc | Description |
 |-----|-------------|
 | [BRANCHING.md](./BRANCHING.md) | Merge Debug → main; what deploys live |
+| [DEPLOY_CONTROL_PLANE.md](./DEPLOY_CONTROL_PLANE.md) | **GitHub-only deploy** — CI, SSH, verify live health |
 | [PRODUCTION.md](./PRODUCTION.md) | Live URL, VM, `.env`, auto-deploy, systemd, wipe DB |
 | [LAUNCH_RULES.md](./LAUNCH_RULES.md) | **Mandatory** live launch: wipe DB, admin-only organiser |
 | [GO_LIVE.md](./GO_LIVE.md) | Smoke tests and in-tournament ops |

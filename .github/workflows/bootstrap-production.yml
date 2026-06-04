@@ -1,0 +1,53 @@
+# ONE-TIME VM prep — manual only. Does not wipe data. See docs/DEPLOY_CONTROL_PLANE.md
+
+name: Bootstrap production host (manual)
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type BOOTSTRAP_PRODUCTION to install build tools and systemd on the VM'
+        required: true
+        type: string
+
+jobs:
+  bootstrap:
+    name: Bootstrap VM over SSH
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Require confirmation phrase
+        run: |
+          if [ "${{ github.event.inputs.confirm }}" != "BOOTSTRAP_PRODUCTION" ]; then
+            echo "Refusing: input must be exactly BOOTSTRAP_PRODUCTION"
+            exit 1
+          fi
+
+      - name: Check deploy secrets
+        run: |
+          missing=0
+          check() { if [ -z "$1" ]; then echo "  MISSING: $2"; missing=1; else echo "  OK: $2"; fi; }
+          check "${{ secrets.DEPLOY_HOST }}" "DEPLOY_HOST"
+          check "${{ secrets.DEPLOY_USER }}" "DEPLOY_USER"
+          check "${{ secrets.DEPLOY_SSH_KEY }}" "DEPLOY_SSH_KEY"
+          check "${{ secrets.DEPLOY_PATH }}" "DEPLOY_PATH"
+          if [ "${missing}" -ne 0 ]; then exit 1; fi
+
+      - name: Run bootstrap on server
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          port: ${{ secrets.DEPLOY_PORT }}
+          command_timeout: 15m
+          script: |
+            set -euo pipefail
+            cd "${{ secrets.DEPLOY_PATH }}"
+            git fetch origin main
+            git checkout main
+            git pull --ff-only origin main
+            bash scripts/bootstrap-production-host.sh

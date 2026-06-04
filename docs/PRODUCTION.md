@@ -17,7 +17,7 @@
 | Auto-deploy | Push to **`main`** → CI → SSH → `deploy-production.sh` |
 | **`Debug` branch** | Local PC only — **never** updates production |
 
-**Day-to-day release:** merge to `main`, `git push origin main` — live site updates after a green Actions run.
+**Day-to-day release:** merge to `main`, `git push origin main` — live site updates after a green Actions run. **Full pipeline:** [DEPLOY_CONTROL_PLANE.md](./DEPLOY_CONTROL_PLANE.md) (no SSH required for normal deploys).
 
 **Local development:** work on **`Debug`**, test with `Test-LocalSite.ps1` / `npm test` — see [BRANCHING.md](./BRANCHING.md).
 
@@ -93,7 +93,7 @@ Each push to **`main`** triggers **Deploy main (production)** automatically afte
 | Branch | Workflow | Live site |
 |--------|----------|-----------|
 | **`main`** | [deploy-main.yml](../.github/workflows/deploy-main.yml) | Updates on each green run |
-| **`Debug`** | None | Never updated |
+| **`Debug`** | [ci-debug.yml](../.github/workflows/ci-debug.yml) — test/build only | Never updated |
 
 ### What runs on push to `main`
 
@@ -151,14 +151,13 @@ sudo systemctl daemon-reload
 sudo systemctl enable --now worldcup-jobs worldcup
 ```
 
-Passwordless restart for GitHub deploy:
+Passwordless restart (and optional `apt-get` during deploy) for GitHub Actions:
 
 ```bash
-sudo tee /etc/sudoers.d/worldcup-deploy <<'EOF'
-ubuntu ALL=(root) NOPASSWD: /bin/systemctl restart worldcup, /bin/systemctl restart worldcup-jobs
-EOF
-sudo chmod 440 /etc/sudoers.d/worldcup-deploy
+bash scripts/bootstrap-production-host.sh
 ```
+
+Or see `deploy/sudoers` snippet in that script — installs `/etc/sudoers.d/worldcup-deploy`.
 
 ### Manual deploy (same as CI)
 

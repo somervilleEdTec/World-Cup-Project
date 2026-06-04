@@ -50,11 +50,17 @@ Test logins (after `npm run seed:debug`): **Test1** … **Test20** / **`guest`**
 
 ## Quality gates (before push to Debug)
 
+Push to **`Debug`** → GitHub **CI Debug** runs `npm test` + build automatically.
+
+Locally (optional):
+
 ```powershell
 npm test
 npm run build
 npm run lint
 ```
+
+Production: merge to **`main`** and push — **Deploy main** deploys and verifies live health. See [DEPLOY_CONTROL_PLANE.md](./DEPLOY_CONTROL_PLANE.md). **Do not** ask the owner to SSH for routine releases.
 
 ## Rules
 
