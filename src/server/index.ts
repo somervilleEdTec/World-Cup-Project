@@ -10,6 +10,19 @@ import { seedGroupMatchMappings } from './services/matchMapping';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
+async function runFootballBootstrapInBackground(apiToken: string): Promise<void> {
+  try {
+    await bootstrapFootballData(apiToken);
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.warn(
+      'football-data.org bootstrap skipped:',
+      error instanceof Error ? error.message : error
+    );
+  }
+  await warnIfNonLiveResultsPresent();
+}
+
 async function main() {
   await initDatabase();
   await seedGroupMatchMappings();
@@ -21,30 +34,13 @@ async function main() {
     );
   }
 
-  const footballToken = process.env.FOOTBALL_DATA_TOKEN;
-  if (shouldSyncFootballData() && footballToken) {
-    try {
-      await bootstrapFootballData(footballToken);
-    } catch (error) {
-      // eslint-disable-next-line no-console
-      console.warn(
-        'football-data.org bootstrap skipped:',
-        error instanceof Error ? error.message : error
-      );
-    }
-    await warnIfNonLiveResultsPresent();
-  } else if (process.env.NODE_ENV === 'production') {
+  const footballToken = process.env.FOOTBALL_DATA_TOKEN?.trim();
+  if (process.env.NODE_ENV === 'production' && !isDebugLocalMode() && !footballToken) {
     // eslint-disable-next-line no-console
     console.error(
       'FOOTBALL_DATA_TOKEN is required in production for live results from football-data.org.'
     );
     process.exit(1);
-  } else if (!isDebugLocalMode()) {
-    // eslint-disable-next-line no-console
-    console.warn(
-      'No live results sync — set FOOTBALL_DATA_TOKEN for production or DEBUG_LOCAL=1 + seed:debug for local testing.'
-    );
-    await warnIfNonLiveResultsPresent();
   }
 
   const app = createApp();
@@ -71,6 +67,16 @@ async function main() {
     // eslint-disable-next-line no-console
     console.log(`API server listening on http://${host}:${port}`);
   });
+
+  if (shouldSyncFootballData() && footballToken) {
+    void runFootballBootstrapInBackground(footballToken);
+  } else if (!isDebugLocalMode()) {
+    // eslint-disable-next-line no-console
+    console.warn(
+      'No live results sync — set FOOTBALL_DATA_TOKEN for production or DEBUG_LOCAL=1 + seed:debug for local testing.'
+    );
+    void warnIfNonLiveResultsPresent();
+  }
 
   const shutdown = async () => {
     server.close();
