@@ -64,9 +64,17 @@ sudo systemctl start worldcup-jobs worldcup
 
 - Input confirm: `BOOTSTRAP_PRODUCTION`
 - Uses same `DEPLOY_*` secrets as deploy
-- Installs `build-essential`, systemd units, sudoers for passwordless restart (and optional `apt-get` during deploy)
+- Installs `build-essential`, systemd units, and **passwordless sudo** for deploy (`deploy/sudoers/worldcup-deploy`)
 
 Then create **`.env` on the VM once** (secrets stay off GitHub). See [PRODUCTION.md](./PRODUCTION.md).
+
+### C. Existing VM — one SSH command for sudoers (if deploy fails on sudo)
+
+```bash
+cd /home/ubuntu/World-Cup-Project && git pull origin main && bash scripts/ensure-deploy-sudoers.sh
+```
+
+(Enter sudo password once if prompted.) After that, GitHub deploys manage systemd automatically.
 
 ---
 
@@ -75,12 +83,12 @@ Then create **`.env` on the VM once** (secrets stay off GitHub). See [PRODUCTION
 | Step | Purpose |
 |------|---------|
 | `git pull origin main` | Match GitHub `main` |
-| `npm ci` (+ retry after `rm -rf node_modules`) | Install deps; `MAKEFLAGS=-j1` for `better-sqlite3` |
+| `npm ci` (+ retry after `rm -rf node_modules`) | Install deps; `MAKEFLAGS=-j1` for `better-sqlite3`; verifies **tsx** present |
 | `npm run migrate` | Schema |
 | `npm run build` | SPA → `dist/` |
 | `DEPLOY_COMMIT` in `.env` | `/api/health` reports commit |
-| `systemctl restart` | `worldcup`, `worldcup-jobs` |
-| `verify-production-deploy.sh` | Fails deploy if health/commit/dist wrong |
+| `restart-production-services.sh` | Kills stray :8787, installs systemd units (`node` + `tsx/cli.mjs`), starts services |
+| `verify-production-deploy.sh` | Fails deploy if health/commit/dist/systemd wrong |
 
 If verify fails, the SSH step fails → the **whole workflow is red** → the public health step does not pass.
 

@@ -156,13 +156,17 @@ sudo systemctl enable --now worldcup-jobs worldcup
 
 Units use **`node_modules/.bin/tsx`** directly (not `npm run server`) so production starts reliably under systemd.
 
-Passwordless restart (and optional `apt-get` during deploy) for GitHub Actions:
+Passwordless **systemctl / cp / kill / lsof / apt-get** for GitHub deploy (required):
 
 ```bash
 bash scripts/bootstrap-production-host.sh
+# or after git pull:
+bash scripts/ensure-deploy-sudoers.sh
 ```
 
-Or see `deploy/sudoers` snippet in that script — installs `/etc/sudoers.d/worldcup-deploy`.
+Snippet: [deploy/sudoers/worldcup-deploy](../deploy/sudoers/worldcup-deploy) → `/etc/sudoers.d/worldcup-deploy`.
+
+Each `deploy-production.sh` run also installs current systemd units and runs `restart-production-services.sh` (not `npm run server`).
 
 ### Manual deploy (same as CI)
 

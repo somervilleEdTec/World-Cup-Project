@@ -35,19 +35,8 @@ if [[ -f deploy/systemd/worldcup.service ]]; then
   echo "OK: units installed (start after .env and npm ci)"
 fi
 
-echo "==> Passwordless deploy sudoers (GitHub Actions restart + optional apt)"
-SUDOERS_FILE="/etc/sudoers.d/worldcup-deploy"
-if [[ ! -f "${SUDOERS_FILE}" ]]; then
-  sudo tee "${SUDOERS_FILE}" <<'EOF'
-# GitHub Actions deploy — ubuntu user
-ubuntu ALL=(root) NOPASSWD: /bin/systemctl restart worldcup, /bin/systemctl restart worldcup-jobs
-ubuntu ALL=(root) NOPASSWD: /usr/bin/apt-get update, /usr/bin/apt-get install *
-EOF
-  sudo chmod 440 "${SUDOERS_FILE}"
-  echo "OK: wrote ${SUDOERS_FILE}"
-else
-  echo "SKIP: ${SUDOERS_FILE} already exists"
-fi
+echo "==> Passwordless deploy sudoers (GitHub Actions)"
+bash scripts/ensure-deploy-sudoers.sh
 
 echo ""
 echo "Bootstrap complete. Next steps:"

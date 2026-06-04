@@ -106,6 +106,16 @@ if [[ ! -f node_modules/better-sqlite3/src/better_sqlite3.cpp ]]; then
   exit 1
 fi
 
+if [[ ! -f node_modules/tsx/dist/cli.mjs ]]; then
+  echo "ERROR: tsx missing after npm ci (devDependencies). Run: unset NODE_ENV && npm ci"
+  exit 1
+fi
+if ! /usr/bin/node node_modules/tsx/dist/cli.mjs --version >/dev/null 2>&1; then
+  echo "ERROR: node cannot execute tsx — check npm ci completed on this host."
+  exit 1
+fi
+echo "OK: tsx runtime ready"
+
 if [[ -f "${SQLITE_PATH:-data.db}" ]] || [[ -n "${DATABASE_URL:-}" ]]; then
   echo "==> database backup (before migrate)"
   npm run db:backup || echo "WARNING: backup failed — continuing deploy"
@@ -146,43 +156,22 @@ else
   echo "DEPLOY_COMMIT=${deploy_head}" >> .env
 fi
 
-unit_exists() {
-  local state
-  state="$(systemctl show -p LoadState --value "$1.service" 2>/dev/null || true)"
-  [[ -n "${state}" && "${state}" != "not-found" ]]
-}
-
-restart_systemd() {
-  local api_unit="${SYSTEMD_API_SERVICE:-worldcup}"
-  local jobs_unit="${SYSTEMD_JOBS_SERVICE:-worldcup-jobs}"
-  if ! command -v systemctl >/dev/null 2>&1; then
-    return 1
+echo "==> systemd + port 8787 (install units, kill stray processes, start services)"
+if command -v systemctl >/dev/null 2>&1; then
+  if sudo -n true 2>/dev/null; then
+    bash scripts/ensure-deploy-sudoers.sh
+    bash scripts/restart-production-services.sh
+  else
+    echo "ERROR: deploy needs passwordless sudo for systemctl/cp/kill."
+    echo "  Run once on VM: bash scripts/bootstrap-production-host.sh"
+    exit 1
   fi
-  local restarted=0
-  if unit_exists "${jobs_unit}"; then
-    echo "==> restart ${jobs_unit}"
-    sudo systemctl restart "${jobs_unit}"
-    restarted=1
-  fi
-  if unit_exists "${api_unit}"; then
-    echo "==> restart ${api_unit}"
-    sudo systemctl restart "${api_unit}"
-    restarted=1
-  fi
-  [[ "${restarted}" -eq 1 ]]
-}
-
-if restart_systemd; then
-  echo "==> systemd services restarted"
 else
-  echo "==> No systemd units found (worldcup / worldcup-jobs)."
-  echo "    Install units from deploy/systemd/ or restart manually:"
-  echo "    npm run jobs &  &&  npm run server"
+  echo "WARNING: no systemctl — start server manually"
 fi
 
 expected_verify="${EXPECTED_COMMIT:-${deploy_head}}"
 echo "==> Verify deploy (commit ${expected_verify})"
-sleep 2
 bash scripts/verify-production-deploy.sh "${expected_verify}"
 
 echo "DEPLOY_OK commit=${expected_verify} asset=$(grep -o 'assets/index-[^"]*\.js' dist/index.html | head -1)"

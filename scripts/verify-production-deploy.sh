@@ -58,7 +58,10 @@ else
     note_fail "health ok !== true"
   fi
   if ! printf '%s' "${health_json}" | grep -qF "\"commit\":\"${EXPECTED}\""; then
-    note_fail "health commit does not match expected ${EXPECTED} (restart worldcup after deploy?)"
+    note_fail "health commit does not match expected ${EXPECTED} (check DEPLOY_COMMIT in .env and worldcup.service)"
+  fi
+  if ! grep -q 'tsx/dist/cli.mjs' /etc/systemd/system/worldcup.service 2>/dev/null; then
+    note_fail "worldcup.service still uses npm run server — run scripts/restart-production-services.sh"
   fi
 fi
 

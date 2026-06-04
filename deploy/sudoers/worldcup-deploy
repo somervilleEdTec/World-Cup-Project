@@ -1,0 +1,9 @@
+# Install: sudo cp deploy/sudoers/worldcup-deploy /etc/sudoers.d/worldcup-deploy
+# sudo chmod 440 /etc/sudoers.d/worldcup-deploy
+# Required for GitHub Actions deploy (systemd + port cleanup).
+
+ubuntu ALL=(root) NOPASSWD: /bin/systemctl
+ubuntu ALL=(root) NOPASSWD: /usr/bin/cp
+ubuntu ALL=(root) NOPASSWD: /usr/bin/kill
+ubuntu ALL=(root) NOPASSWD: /usr/bin/lsof
+ubuntu ALL=(root) NOPASSWD: /usr/bin/apt-get
