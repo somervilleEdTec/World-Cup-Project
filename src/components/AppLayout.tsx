@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { getToken } from '../services/apiClient';
+import { clearToken, fetchAuthMe } from '../services/apiClient';
 
 const baseLinks = [
   { to: '/', label: 'Welcome', mobileLabel: 'Home' },
@@ -12,22 +12,29 @@ const baseLinks = [
 export function AppLayout() {
   const navigate = useNavigate();
   const [displayName, setDisplayName] = useState<string | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     const stored = localStorage.getItem('wcb_display_name');
     if (stored) setDisplayName(stored);
+    void fetchAuthMe()
+      .then((response) => {
+        setDisplayName(response.user.displayName);
+        setIsAdmin(response.user.isAdmin);
+        localStorage.setItem('wcb_display_name', response.user.displayName);
+      })
+      .catch(() => setIsAdmin(false));
   }, []);
 
-  const isAdmin = localStorage.getItem('wcb_is_admin') === '1';
   const links = isAdmin
     ? [...baseLinks, { to: '/admin', label: 'Admin', mobileLabel: 'Admin' }]
     : baseLinks;
 
   const logout = () => {
-    localStorage.removeItem('wcb_token');
+    clearToken();
     localStorage.removeItem('wcb_display_name');
-    localStorage.removeItem('wcb_is_admin');
     setDisplayName(null);
+    setIsAdmin(false);
     navigate('/login');
   };
 

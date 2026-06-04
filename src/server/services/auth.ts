@@ -1,8 +1,16 @@
 import crypto from 'node:crypto';
 import { getDb } from '../database';
 
-const SESSION_TTL_HOURS = 24 * 30;
-export const JOIN_PASSWORD = process.env.JOIN_PASSWORD ?? 'MadSlags1';
+/** Player sessions stay valid 90 days on the same device (tournament length). */
+const SESSION_TTL_HOURS = 24 * 90;
+
+/** Player-chosen passwords (after first login); no complexity rules. */
+export const PLAYER_PASSWORD_MAX_LENGTH = 30;
+
+export const BOOTSTRAP_ADMIN_USERNAME =
+  process.env.ADMIN_USERNAME?.trim() || 'AdminTomsom';
+export const BOOTSTRAP_ADMIN_PASSWORD =
+  process.env.ADMIN_PASSWORD?.trim() || 'DickTits9';
 
 function hashPassword(password: string): string {
   const salt = crypto.randomBytes(16).toString('hex');
@@ -20,27 +28,66 @@ export interface AuthUser {
   id: string;
   displayName: string;
   isAdmin: boolean;
+  mustChangePassword: boolean;
 }
 
 function normalizeName(name: string): string {
   return name.trim();
 }
 
-export async function register(
-  displayName: string,
-  password: string,
-  joinPassword: string
-): Promise<AuthUser> {
-  if (joinPassword !== JOIN_PASSWORD) {
-    throw new Error('Invalid sign-up password');
+type UserRow = {
+  id: string;
+  password_hash: string;
+  display_name: string;
+  is_admin: number;
+  must_change_password: number;
+};
+
+function rowToUser(row: UserRow): AuthUser {
+  return {
+    id: row.id,
+    displayName: row.display_name,
+    isAdmin: row.is_admin === 1,
+    mustChangePassword: row.must_change_password === 1
+  };
+}
+
+export async function ensureBootstrapAdmin(): Promise<void> {
+  const db = getDb();
+  const name = normalizeName(BOOTSTRAP_ADMIN_USERNAME);
+  const existing = await db.get<{ id: string }>(
+    `SELECT id FROM users WHERE LOWER(display_name) = LOWER(?)`,
+    [name]
+  );
+
+  if (existing) {
+    await db.run(`UPDATE users SET is_admin = 1, must_change_password = 0 WHERE id = ?`, [
+      existing.id
+    ]);
+    return;
   }
 
+  const id = crypto.randomUUID();
+  const now = new Date().toISOString();
+  const email = `${id}@wcb.local`;
+  await db.run(
+    `INSERT INTO users (id, email, password_hash, display_name, is_admin, must_change_password, created_at)
+     VALUES (?, ?, ?, ?, 1, 0, ?)`,
+    [id, email, hashPassword(BOOTSTRAP_ADMIN_PASSWORD), name, now]
+  );
+  await db.run(`INSERT INTO prediction_meta (user_id, committed_at) VALUES (?, ?)`, [id, now]);
+}
+
+export async function createPlayerAccount(
+  displayName: string,
+  initialPassword: string
+): Promise<AuthUser> {
   const name = normalizeName(displayName);
   if (name.length < 2) {
     throw new Error('Name must be at least 2 characters');
   }
-  if (password.length < 1 || password.length > 6) {
-    throw new Error('Password must be 1–6 characters');
+  if (initialPassword.length < 1 || initialPassword.length > PLAYER_PASSWORD_MAX_LENGTH) {
+    throw new Error(`Temporary password must be 1–${PLAYER_PASSWORD_MAX_LENGTH} characters`);
   }
 
   const db = getDb();
@@ -54,17 +101,21 @@ export async function register(
 
   const id = crypto.randomUUID();
   const now = new Date().toISOString();
-  const passwordHash = hashPassword(password);
   const email = `${id}@wcb.local`;
 
   await db.run(
-    `INSERT INTO users (id, email, password_hash, display_name, created_at) VALUES (?, ?, ?, ?, ?)`,
-    [id, email, passwordHash, name, now]
+    `INSERT INTO users (id, email, password_hash, display_name, is_admin, must_change_password, created_at)
+     VALUES (?, ?, ?, ?, 0, 1, ?)`,
+    [id, email, hashPassword(initialPassword), name, now]
   );
-
   await db.run(`INSERT INTO prediction_meta (user_id, committed_at) VALUES (?, ?)`, [id, now]);
 
-  return { id, displayName: name, isAdmin: false };
+  return {
+    id,
+    displayName: name,
+    isAdmin: false,
+    mustChangePassword: true
+  };
 }
 
 export async function login(
@@ -73,13 +124,9 @@ export async function login(
 ): Promise<{ user: AuthUser; token: string }> {
   const db = getDb();
   const name = normalizeName(displayName);
-  const row = await db.get<{
-    id: string;
-    password_hash: string;
-    display_name: string;
-    is_admin: number;
-  }>(
-    `SELECT id, password_hash, display_name, is_admin FROM users WHERE LOWER(display_name) = LOWER(?)`,
+  const row = await db.get<UserRow>(
+    `SELECT id, password_hash, display_name, is_admin, must_change_password
+     FROM users WHERE LOWER(display_name) = LOWER(?)`,
     [name]
   );
 
@@ -98,25 +145,83 @@ export async function login(
 
   return {
     token,
-    user: { id: row.id, displayName: row.display_name, isAdmin: row.is_admin === 1 }
+    user: rowToUser(row)
   };
 }
 
-export async function requireUser(token: string | undefined): Promise<AuthUser> {
+export async function changePassword(
+  userId: string,
+  currentPassword: string,
+  newPassword: string
+): Promise<void> {
+  if (newPassword.length < 1 || newPassword.length > PLAYER_PASSWORD_MAX_LENGTH) {
+    throw new Error(`Password must be up to ${PLAYER_PASSWORD_MAX_LENGTH} characters`);
+  }
+
+  const db = getDb();
+  const row = await db.get<{ password_hash: string }>(
+    `SELECT password_hash FROM users WHERE id = ?`,
+    [userId]
+  );
+  if (!row || !verifyPassword(currentPassword, row.password_hash)) {
+    throw new Error('Current password is incorrect');
+  }
+
+  await db.run(
+    `UPDATE users SET password_hash = ?, must_change_password = 0 WHERE id = ?`,
+    [hashPassword(newPassword), userId]
+  );
+}
+
+export async function requireUser(
+  token: string | undefined,
+  options?: { allowPasswordChange?: boolean }
+): Promise<AuthUser> {
   if (!token) throw new Error('Missing auth token');
 
   const db = getDb();
-  const row = await db.get<{
-    id: string;
-    display_name: string;
-    is_admin: number;
-  }>(
-    `SELECT u.id, u.display_name, u.is_admin
+  const row = await db.get<UserRow>(
+    `SELECT u.id, u.display_name, u.is_admin, u.must_change_password
      FROM sessions s JOIN users u ON u.id = s.user_id
      WHERE s.token = ? AND s.expires_at > ?`,
     [token, new Date().toISOString()]
   );
 
   if (!row) throw new Error('Unauthorized');
-  return { id: row.id, displayName: row.display_name, isAdmin: row.is_admin === 1 };
+
+  if (row.must_change_password === 1 && !options?.allowPasswordChange) {
+    throw new Error('PASSWORD_CHANGE_REQUIRED');
+  }
+
+  return rowToUser(row);
+}
+
+export async function requireAdmin(token: string | undefined): Promise<AuthUser> {
+  const user = await requireUser(token);
+  if (!user.isAdmin) throw new Error('Admin only');
+  return user;
+}
+
+export async function listPlayers(): Promise<
+  Array<{ id: string; displayName: string; mustChangePassword: boolean; createdAt: string }>
+> {
+  const db = getDb();
+  const rows = await db.all<{
+    id: string;
+    display_name: string;
+    must_change_password: number;
+    created_at: string;
+    is_admin: number;
+  }>(
+    `SELECT id, display_name, must_change_password, created_at, is_admin
+     FROM users
+     WHERE is_admin = 0
+     ORDER BY display_name`
+  );
+  return rows.map((row) => ({
+    id: row.id,
+    displayName: row.display_name,
+    mustChangePassword: row.must_change_password === 1,
+    createdAt: row.created_at
+  }));
 }

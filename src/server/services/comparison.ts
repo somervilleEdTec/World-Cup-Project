@@ -1,6 +1,11 @@
 import { getMatches } from '../../lib/matchResolver';
 import { canViewOthersPicks, getNextUpcomingMatchId } from '../../lib/comparisonVisibility';
-import { isGroupStage, kickoffReached, shouldLockGroup } from '../../lib/tournamentLogic';
+import {
+  isGroupStage,
+  kickoffReached,
+  predictionLockReached,
+  shouldLockGroup
+} from '../../lib/tournamentLogic';
 import { getDb } from '../database';
 import { getResultsMap } from './leaderboard';
 
@@ -89,7 +94,7 @@ export async function getMatchComparison(
 
   const groupPhaseLocked = (await isTournamentGroupPhaseLocked(db)) || shouldLockGroup(nowIso);
   const canViewOthers = canViewOthersPicks(match, nowIso, groupPhaseLocked);
-  const matchLocked = kickoffReached(match.kickoff, nowIso);
+  const matchLocked = predictionLockReached(match.kickoff, nowIso);
   const groupLocked = groupPhaseLocked;
 
   const users = await db.all<{ id: string; display_name: string }>(
@@ -130,7 +135,7 @@ export async function getMatchComparison(
     ? 'Showing predictions for this fixture.'
     : isGroupStage(match)
       ? 'Other players’ predictions appear after the first tournament kickoff (group lock).'
-      : 'Other players’ knockout predictions appear after this fixture’s kickoff.';
+      : 'Other players’ knockout predictions appear 15 minutes before this fixture’s kickoff.';
 
   return {
     actualResult: actual

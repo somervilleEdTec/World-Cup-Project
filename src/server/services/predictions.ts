@@ -1,7 +1,7 @@
 import { getDb } from '../database';
 import { groupMatches } from '../../data/tournament';
 import { getMatches } from '../../lib/matchResolver';
-import { validatePick } from '../../lib/tournamentLogic';
+import { validateBonusPick, validatePick } from '../../lib/tournamentLogic';
 import {
   allGroupPicksCommitted,
   assertAllGroupPicksCommitted,
@@ -13,6 +13,7 @@ import {
   isGroupStage,
   isKnockout,
   isMatchEditable,
+  predictionLockReached,
   shouldLockGroup
 } from '../../lib/pickLocks';
 import { Pick, TournamentBonusPick } from '../../types';
@@ -158,6 +159,9 @@ export async function setBonusDraft(
   const meta = await getMeta(userId);
   const groupLocked = (meta?.group_locked ?? 0) === 1;
   assertBonusEditable(groupLocked, nowIso);
+
+  const bonusErrors = validateBonusPick(bonus);
+  if (bonusErrors.length) throw new Error(bonusErrors[0]);
 
   await db.run(
     `UPDATE prediction_meta SET bonus_committed = ?, bonus_draft = NULL, committed_at = ? WHERE user_id = ?`,
@@ -349,9 +353,7 @@ export async function runAutoLocks(nowIso: string) {
 
   const results = await getResultsMap();
   const lockable = getMatches({}, results)
-    .filter(
-      (m) => m.stage !== 'GROUP' && new Date(nowIso).getTime() >= new Date(m.kickoff).getTime()
-    )
+    .filter((m) => m.stage !== 'GROUP' && predictionLockReached(m.kickoff, nowIso))
     .map((m) => m.id);
 
   for (const matchId of lockable) {

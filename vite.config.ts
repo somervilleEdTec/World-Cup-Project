@@ -10,6 +10,8 @@ export default defineConfig({
   },
   test: {
     environment: 'jsdom',
-    setupFiles: './src/test-setup.ts'
+    setupFiles: './src/test-setup.ts',
+    /** Server tests share a DB singleton — run test files sequentially. */
+    fileParallelism: false
   }
 });

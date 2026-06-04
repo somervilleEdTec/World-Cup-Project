@@ -1,7 +1,14 @@
 import express, { Express, Request, Response } from 'express';
 import cors from 'cors';
 import { z } from 'zod';
-import { login, register, requireUser } from './services/auth';
+import {
+  changePassword,
+  createPlayerAccount,
+  listPlayers,
+  login,
+  requireAdmin,
+  requireUser
+} from './services/auth';
 import {
   commitDraft,
   getUserPredictionState,
@@ -25,6 +32,16 @@ import {
   listComparisonFixtures
 } from './services/comparison';
 import { getDb } from './database';
+import { PLAYER_PASSWORD_MAX_LENGTH } from './services/auth';
+
+function configureCors(app: Express): void {
+  const origin = process.env.CORS_ORIGIN?.trim() || process.env.VITE_API_BASE_URL?.trim();
+  if (process.env.NODE_ENV === 'production' && origin) {
+    app.use(cors({ origin }));
+  } else {
+    app.use(cors());
+  }
+}
 
 function authToken(req: express.Request): string | undefined {
   const bearer = req.header('authorization');
@@ -32,35 +49,52 @@ function authToken(req: express.Request): string | undefined {
   return undefined;
 }
 
+function authFailureStatus(error: unknown): number {
+  if (error instanceof Error) {
+    if (error.message === 'PASSWORD_CHANGE_REQUIRED') return 403;
+    if (error.message === 'Admin only') return 403;
+    if (error.message === 'Unauthorized' || error.message === 'Missing auth token') return 401;
+  }
+  return 401;
+}
+
+function adminRouteFailureStatus(error: unknown): number {
+  if (error instanceof Error) {
+    if (error.message === 'Admin only' || error.message === 'PASSWORD_CHANGE_REQUIRED') return 403;
+    if (error.message === 'Unauthorized' || error.message === 'Missing auth token') return 401;
+  }
+  return 400;
+}
+
+function apiErrorMessage(error: unknown, fallback: string): string {
+  if (error instanceof z.ZodError) {
+    const issue = error.issues[0];
+    const path = issue?.path?.join('.') ?? '';
+    if (path.includes('homeScore') || path.includes('awayScore')) {
+      return 'Scores must be whole numbers between 0 and 20.';
+    }
+    if (/password/i.test(path)) {
+      return `Password must be up to ${PLAYER_PASSWORD_MAX_LENGTH} characters.`;
+    }
+    return fallback;
+  }
+  return error instanceof Error ? error.message : fallback;
+}
+
 export function createApp(): Express {
   const app = express();
-  app.use(cors());
+  configureCors(app);
   app.use(express.json());
 
   app.get('/api/health', (_req, res) => {
     res.json({ ok: true });
   });
 
-  app.post('/api/auth/register', async (req: Request, res: Response) => {
-    try {
-      const schema = z.object({
-        displayName: z.string().min(2),
-        password: z.string().min(1).max(6),
-        joinPassword: z.string().min(1)
-      });
-      const payload = schema.parse(req.body);
-      const user = await register(payload.displayName, payload.password, payload.joinPassword);
-      res.json({ user });
-    } catch (error) {
-      res.status(400).json({ error: error instanceof Error ? error.message : 'Bad request' });
-    }
-  });
-
   app.post('/api/auth/login', async (req: Request, res: Response) => {
     try {
       const schema = z.object({
         displayName: z.string().min(1),
-        password: z.string().min(1).max(6)
+        password: z.string().min(1).max(128)
       });
       const payload = schema.parse(req.body);
       const response = await login(payload.displayName, payload.password);
@@ -70,12 +104,42 @@ export function createApp(): Express {
     }
   });
 
+  app.get('/api/auth/me', async (req: Request, res: Response) => {
+    try {
+      const user = await requireUser(authToken(req), { allowPasswordChange: true });
+      return res.json({ user });
+    } catch (error) {
+      return res
+        .status(authFailureStatus(error))
+        .json({ error: error instanceof Error ? error.message : 'Unauthorized' });
+    }
+  });
+
+  app.post('/api/auth/change-password', async (req: Request, res: Response) => {
+    try {
+      const user = await requireUser(authToken(req), { allowPasswordChange: true });
+      const schema = z.object({
+        currentPassword: z.string().min(1).max(128),
+        newPassword: z.string().min(1).max(PLAYER_PASSWORD_MAX_LENGTH)
+      });
+      const payload = schema.parse(req.body);
+      await changePassword(user.id, payload.currentPassword, payload.newPassword);
+      return res.json({ ok: true });
+    } catch (error) {
+      return res
+        .status(400)
+        .json({ error: apiErrorMessage(error, 'Password change failed') });
+    }
+  });
+
   app.get('/api/predictions/state', async (req: Request, res: Response) => {
     try {
       const user = await requireUser(authToken(req));
       res.json(await getUserPredictionState(user.id));
     } catch (error) {
-      res.status(401).json({ error: error instanceof Error ? error.message : 'Unauthorized' });
+      res
+        .status(authFailureStatus(error))
+        .json({ error: error instanceof Error ? error.message : 'Unauthorized' });
     }
   });
 
@@ -84,14 +148,16 @@ export function createApp(): Express {
       const user = await requireUser(authToken(req));
       const schema = z.object({
         matchId: z.string(),
-        homeScore: z.number().int().min(0),
-        awayScore: z.number().int().min(0),
+        homeScore: z.number().int().min(0).max(20),
+        awayScore: z.number().int().min(0).max(20),
         progressingTeamId: z.string().optional()
       });
       await saveDraftPick(user.id, schema.parse(req.body));
       res.json({ ok: true });
     } catch (error) {
-      res.status(400).json({ error: error instanceof Error ? error.message : 'Invalid draft' });
+      const status =
+        error instanceof Error && error.message === 'PASSWORD_CHANGE_REQUIRED' ? 403 : 400;
+      res.status(status).json({ error: apiErrorMessage(error, 'Invalid draft') });
     }
   });
 
@@ -101,7 +167,9 @@ export function createApp(): Express {
       await markReviewed(user.id, String(req.params.matchId));
       res.json({ ok: true });
     } catch (error) {
-      res.status(400).json({ error: error instanceof Error ? error.message : 'Review failed' });
+      res
+        .status(authFailureStatus(error))
+        .json({ error: error instanceof Error ? error.message : 'Review failed' });
     }
   });
 
@@ -111,7 +179,9 @@ export function createApp(): Express {
       await setGroupAccepted(user.id, String(req.params.groupId).toUpperCase(), true);
       res.json({ ok: true });
     } catch (error) {
-      res.status(400).json({ error: error instanceof Error ? error.message : 'Group lock failed' });
+      const status =
+        error instanceof Error && error.message === 'PASSWORD_CHANGE_REQUIRED' ? 403 : 400;
+      res.status(status).json({ error: error instanceof Error ? error.message : 'Group lock failed' });
     }
   });
 
@@ -121,8 +191,10 @@ export function createApp(): Express {
       await unlockGroupAccepted(user.id, String(req.params.groupId).toUpperCase());
       res.json({ ok: true });
     } catch (error) {
+      const status =
+        error instanceof Error && error.message === 'PASSWORD_CHANGE_REQUIRED' ? 403 : 400;
       res
-        .status(400)
+        .status(status)
         .json({ error: error instanceof Error ? error.message : 'Group unlock failed' });
     }
   });
@@ -135,8 +207,10 @@ export function createApp(): Express {
       await setGroupAccepted(user.id, String(req.params.groupId).toUpperCase(), true);
       res.json({ ok: true });
     } catch (error) {
+      const status =
+        error instanceof Error && error.message === 'PASSWORD_CHANGE_REQUIRED' ? 403 : 400;
       res
-        .status(400)
+        .status(status)
         .json({ error: error instanceof Error ? error.message : 'Group accept failed' });
     }
   });
@@ -153,8 +227,10 @@ export function createApp(): Express {
       await setBonusDraft(user.id, schema.parse(req.body));
       res.json({ ok: true });
     } catch (error) {
+      const status =
+        error instanceof Error && error.message === 'PASSWORD_CHANGE_REQUIRED' ? 403 : 400;
       res
-        .status(400)
+        .status(status)
         .json({ error: error instanceof Error ? error.message : 'Invalid bonus predictions' });
     }
   });
@@ -165,13 +241,22 @@ export function createApp(): Express {
       await commitDraft(user.id, new Date().toISOString());
       res.json({ ok: true });
     } catch (error) {
-      res.status(400).json({ error: error instanceof Error ? error.message : 'Commit failed' });
+      const status =
+        error instanceof Error && error.message === 'PASSWORD_CHANGE_REQUIRED' ? 403 : 400;
+      res.status(status).json({ error: error instanceof Error ? error.message : 'Commit failed' });
     }
   });
 
-  app.post('/api/system/locks/run', async (_req: Request, res: Response) => {
-    await runAutoLocks(new Date().toISOString());
-    res.json({ ok: true });
+  app.post('/api/system/locks/run', async (req: Request, res: Response) => {
+    try {
+      await requireAdmin(authToken(req));
+      await runAutoLocks(new Date().toISOString());
+      return res.json({ ok: true });
+    } catch (error) {
+      return res
+        .status(authFailureStatus(error))
+        .json({ error: error instanceof Error ? error.message : 'Unauthorized' });
+    }
   });
 
   app.get('/api/comparison/fixtures', async (req: Request, res: Response) => {
@@ -219,66 +304,89 @@ export function createApp(): Express {
     res.json(await computeLeaderboard());
   });
 
+  app.get('/api/admin/players', async (req: Request, res: Response) => {
+    try {
+      await requireAdmin(authToken(req));
+      return res.json({ players: await listPlayers() });
+    } catch (error) {
+      return res
+        .status(authFailureStatus(error))
+        .json({ error: error instanceof Error ? error.message : 'Unauthorized' });
+    }
+  });
+
+  app.post('/api/admin/players', async (req: Request, res: Response) => {
+    try {
+      await requireAdmin(authToken(req));
+      const schema = z.object({
+        displayName: z.string().min(2),
+        initialPassword: z.string().min(1).max(PLAYER_PASSWORD_MAX_LENGTH)
+      });
+      const payload = schema.parse(req.body);
+      const user = await createPlayerAccount(payload.displayName, payload.initialPassword);
+      return res.json({ user });
+    } catch (error) {
+      return res
+        .status(adminRouteFailureStatus(error))
+        .json({ error: error instanceof Error ? error.message : 'Could not create player' });
+    }
+  });
+
   app.get('/api/admin/sync-status', async (req: Request, res: Response) => {
     try {
-      const user = await requireUser(authToken(req));
-      if (!user.isAdmin) return res.status(403).json({ error: 'Admin only' });
+      await requireAdmin(authToken(req));
       return res.json(await getSyncStatus());
     } catch (error) {
       return res
-        .status(401)
+        .status(authFailureStatus(error))
         .json({ error: error instanceof Error ? error.message : 'Unauthorized' });
     }
   });
 
   app.post('/api/admin/sync/run', async (req: Request, res: Response) => {
     try {
-      const user = await requireUser(authToken(req));
-      if (!user.isAdmin) return res.status(403).json({ error: 'Admin only' });
+      await requireAdmin(authToken(req));
       const apiToken = process.env.FOOTBALL_DATA_TOKEN;
       if (!apiToken) return res.status(400).json({ error: 'FOOTBALL_DATA_TOKEN missing' });
       const result = await runFullFootballDataSync(apiToken);
       return res.json(result);
     } catch (error) {
       return res
-        .status(401)
+        .status(authFailureStatus(error))
         .json({ error: error instanceof Error ? error.message : 'Unauthorized' });
     }
   });
 
   app.get('/api/admin/mapping-diagnostics', async (req: Request, res: Response) => {
     try {
-      const user = await requireUser(authToken(req));
-      if (!user.isAdmin) return res.status(403).json({ error: 'Admin only' });
+      await requireAdmin(authToken(req));
       const apiToken = process.env.FOOTBALL_DATA_TOKEN;
       if (!apiToken) return res.status(400).json({ error: 'FOOTBALL_DATA_TOKEN missing' });
       return res.json(await buildMappingDiagnostics(apiToken));
     } catch (error) {
       return res
-        .status(400)
+        .status(authFailureStatus(error))
         .json({ error: error instanceof Error ? error.message : 'Diagnostics failed' });
     }
   });
 
   app.post('/api/admin/fixtures/sync', async (req: Request, res: Response) => {
     try {
-      const user = await requireUser(authToken(req));
-      if (!user.isAdmin) return res.status(403).json({ error: 'Admin only' });
+      await requireAdmin(authToken(req));
       const apiToken = process.env.FOOTBALL_DATA_TOKEN;
       if (!apiToken) return res.status(400).json({ error: 'FOOTBALL_DATA_TOKEN missing' });
       const result = await syncKickoffsFromFootballData(apiToken);
       return res.json(result);
     } catch (error) {
       return res
-        .status(401)
+        .status(authFailureStatus(error))
         .json({ error: error instanceof Error ? error.message : 'Unauthorized' });
     }
   });
 
   app.post('/api/admin/results/override', async (req: Request, res: Response) => {
     try {
-      const user = await requireUser(authToken(req));
-      if (!user.isAdmin) return res.status(403).json({ error: 'Admin only' });
+      await requireAdmin(authToken(req));
       const schema = z.object({
         matchId: z.string(),
         homeScore: z.number().int().min(0),
@@ -310,19 +418,18 @@ export function createApp(): Express {
       return res.json({ ok: true });
     } catch (error) {
       return res
-        .status(400)
+        .status(adminRouteFailureStatus(error))
         .json({ error: error instanceof Error ? error.message : 'Override failed' });
     }
   });
 
   app.post('/api/admin/leaderboard/recompute', async (req: Request, res: Response) => {
     try {
-      const user = await requireUser(authToken(req));
-      if (!user.isAdmin) return res.status(403).json({ error: 'Admin only' });
+      await requireAdmin(authToken(req));
       return res.json({ ok: true, leaderboard: await computeLeaderboard() });
     } catch (error) {
       return res
-        .status(401)
+        .status(authFailureStatus(error))
         .json({ error: error instanceof Error ? error.message : 'Unauthorized' });
     }
   });

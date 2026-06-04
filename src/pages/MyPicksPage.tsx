@@ -26,7 +26,7 @@ import { computeMissingPicks } from '../lib/missingPicks';
 import {
   computeGroupStandings,
   isKnockoutFixtureLocked,
-  kickoffReached,
+  predictionLockReached,
   shouldLockGroup
 } from '../lib/tournamentLogic';
 import { ActualResult, Match, Pick, Stage, TournamentBonusPick } from '../types';
@@ -286,7 +286,9 @@ export function MyPicksPage() {
 
     try {
       await saveBonusDraft(payload);
-      setBonusMessage('Tournament result predictions saved. They lock at the first match kickoff.');
+      setBonusMessage(
+        'Tournament result predictions saved. They lock 15 minutes before the first match kickoff.'
+      );
       await refresh();
     } catch (err) {
       setBonusMessage(
@@ -376,7 +378,7 @@ export function MyPicksPage() {
             </p>
           )}
           {activeGroupMatches.map((match) => {
-            const matchKickoffLocked = kickoffReached(match.kickoff, nowIso);
+            const matchKickoffLocked = predictionLockReached(match.kickoff, nowIso);
             const matchHasResult = officialResults[match.id] !== undefined;
             return (
               <FixturePickCard
@@ -476,7 +478,8 @@ export function MyPicksPage() {
         <article className="card">
           <h3>Tournament result predictions</h3>
           <p>
-            Choose the top four teams. These lock at the first match kickoff — no group predictions
+            Choose the top four teams. These lock 15 minutes before the first match kickoff — no
+            group predictions
             required.
           </p>
           {tournamentLocked && <p className="warning">Tournament result predictions are locked.</p>}

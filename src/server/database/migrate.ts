@@ -4,7 +4,11 @@ import type { DatabaseClient } from './types';
 
 const MIGRATION_FILES: Record<number, { sqlite: string; postgres: string }> = {
   1: { sqlite: '001_initial.sqlite.sql', postgres: '001_initial.postgres.sql' },
-  2: { sqlite: '002_accepted_groups.sqlite.sql', postgres: '002_accepted_groups.postgres.sql' }
+  2: { sqlite: '002_accepted_groups.sqlite.sql', postgres: '002_accepted_groups.postgres.sql' },
+  3: {
+    sqlite: '003_user_password_flags.sqlite.sql',
+    postgres: '003_user_password_flags.postgres.sql'
+  }
 };
 
 const LATEST_VERSION = Math.max(...Object.keys(MIGRATION_FILES).map(Number));
