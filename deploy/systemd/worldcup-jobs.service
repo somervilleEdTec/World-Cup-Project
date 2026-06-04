@@ -7,8 +7,7 @@ Type=simple
 User=ubuntu
 WorkingDirectory=/home/ubuntu/World-Cup-Project
 EnvironmentFile=/home/ubuntu/World-Cup-Project/.env
-Environment=NODE_ENV=production
-ExecStart=/usr/bin/npm run jobs
+ExecStart=/home/ubuntu/World-Cup-Project/node_modules/.bin/tsx src/server/jobs.ts
 Restart=on-failure
 RestartSec=10
 

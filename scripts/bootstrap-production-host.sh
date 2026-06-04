@@ -27,12 +27,12 @@ if [[ ! -f .env ]]; then
   echo "  Required: FOOTBALL_DATA_TOKEN, VITE_API_BASE_URL=https://worldcup.dosums.uk, ADMIN_*"
 fi
 
-echo "==> systemd units"
+echo "==> systemd units (tsx direct ExecStart)"
 if [[ -f deploy/systemd/worldcup.service ]]; then
   sudo cp deploy/systemd/worldcup.service deploy/systemd/worldcup-jobs.service /etc/systemd/system/
   sudo systemctl daemon-reload
   sudo systemctl enable worldcup worldcup-jobs 2>/dev/null || true
-  echo "OK: units installed (enable/start after .env and npm ci)"
+  echo "OK: units installed (start after .env and npm ci)"
 fi
 
 echo "==> Passwordless deploy sudoers (GitHub Actions restart + optional apt)"

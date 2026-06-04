@@ -7,8 +7,8 @@ Type=simple
 User=ubuntu
 WorkingDirectory=/home/ubuntu/World-Cup-Project
 EnvironmentFile=/home/ubuntu/World-Cup-Project/.env
-Environment=NODE_ENV=production
-ExecStart=/usr/bin/npm run server
+# NODE_ENV and secrets come from .env only — do not set NODE_ENV here (npm/tsx path issues).
+ExecStart=/home/ubuntu/World-Cup-Project/node_modules/.bin/tsx src/server/index.ts
 Restart=on-failure
 RestartSec=5
 

@@ -16,7 +16,6 @@ if command -v lsof >/dev/null 2>&1; then
 fi
 
 echo "==> Enable and start systemd units"
-sudo systemctl daemon-reload
 sudo systemctl enable worldcup-jobs worldcup 2>/dev/null || true
 sudo systemctl restart worldcup-jobs
 sudo systemctl restart worldcup
