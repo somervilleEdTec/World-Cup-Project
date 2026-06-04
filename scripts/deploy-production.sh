@@ -46,12 +46,43 @@ if [[ "${deploy_head}" != "${remote_head}" ]]; then
 fi
 echo "==> Deploying commit ${deploy_head}"
 
-echo "==> npm ci (install devDependencies — tsx/vite needed for migrate, build, server)"
-# NODE_ENV=production in .env makes npm ci omit devDependencies on older npm (--include=dev may not apply).
-(
+verify_native_build_prereqs() {
+  local missing=0
+  for cmd in python3 make g++; do
+    if ! command -v "${cmd}" >/dev/null 2>&1; then
+      echo "  MISSING: ${cmd}"
+      missing=1
+    fi
+  done
+  if [[ "${missing}" -ne 0 ]]; then
+    echo ""
+    echo "ERROR: better-sqlite3 needs native compile tools on the VM."
+    echo "  sudo apt-get update && sudo apt-get install -y build-essential python3"
+    exit 1
+  fi
+  local free_kb
+  free_kb="$(df -Pk . | awk 'NR==2 {print $4}')"
+  if [[ "${free_kb}" -lt 512000 ]]; then
+    echo "WARNING: less than 500 MB free disk in ${APP_ROOT} — npm ci may fail."
+  fi
+}
+
+run_npm_ci() {
+  # NODE_ENV=production in .env makes npm ci omit devDependencies on older npm.
   unset NODE_ENV
+  # Single-job compile avoids sqlite3.o.d.raw races on small VMs.
+  export MAKEFLAGS=-j1
+  export npm_config_jobs=1
   npm ci
-)
+}
+
+echo "==> npm ci (install devDependencies — tsx/vite needed for migrate, build, server)"
+verify_native_build_prereqs
+if ! run_npm_ci; then
+  echo "==> npm ci failed — removing node_modules and retrying once"
+  rm -rf node_modules
+  run_npm_ci
+fi
 
 if [[ -f "${SQLITE_PATH:-data.db}" ]] || [[ -n "${DATABASE_URL:-}" ]]; then
   echo "==> database backup (before migrate)"

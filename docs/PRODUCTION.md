@@ -122,6 +122,7 @@ ssh -i "C:\Users\tomso\Desktop\ssh-key-2026-06-02.key" -o HostKeyAlgorithms=+ssh
 | `sudo: a password is required` | Install sudoers snippet below |
 | Health check fails | `systemctl status worldcup`; nginx → `127.0.0.1:8787` |
 | Old UI after deploy | Fix `VITE_API_BASE_URL` in `.env` and redeploy |
+| `better-sqlite3` / `sqlite3.o.d.raw` on `npm ci` | Corrupt or parallel native build. On VM: `rm -rf node_modules && bash scripts/deploy-production.sh`. Ensure `build-essential` and `python3` are installed (see below). |
 
 ---
 
@@ -132,10 +133,13 @@ cd ~/World-Cup-Project
 git checkout main
 cp .env.example .env
 nano .env          # see above
+sudo apt-get update && sudo apt-get install -y build-essential python3
 npm install
 npm run migrate
 npm run build
 ```
+
+`better-sqlite3` compiles native code on the server (Node 20). Install **build-essential** once; deploy script uses `MAKEFLAGS=-j1` and retries after `rm -rf node_modules` if `npm ci` fails.
 
 ### systemd (recommended)
 
