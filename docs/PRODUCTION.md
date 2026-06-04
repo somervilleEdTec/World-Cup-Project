@@ -123,6 +123,7 @@ ssh -i "C:\Users\tomso\Desktop\ssh-key-2026-06-02.key" -o HostKeyAlgorithms=+ssh
 | Health check fails | `systemctl status worldcup`; nginx → `127.0.0.1:8787` |
 | Old UI after deploy | Public site shows old `index-*.js` but VM `dist/` is new → **nginx** serving stale static `root` instead of proxying to `:8787`. Run `bash scripts/diagnose-live-routing.sh`; use [deploy/nginx/worldcup.conf.example](../deploy/nginx/worldcup.conf.example). |
 | Health missing `commit` | Add `DEPLOY_COMMIT=$(git rev-parse HEAD)` to `.env`, `sudo systemctl restart worldcup`. Ensure code is current (`git pull`). |
+| `worldcup.service` **inactive** but :8787 responds | Old manual `node`/`npm` process. Run `bash scripts/restart-production-services.sh`. |
 | `better-sqlite3` / missing `better_sqlite3.cpp` on `npm ci` | Corrupt install. On VM: `bash scripts/repair-npm-on-server.sh` then `npm run migrate && npm run build`. Ensure `build-essential` is installed. |
 
 ---

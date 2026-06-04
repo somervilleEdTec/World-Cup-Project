@@ -20,8 +20,20 @@ curl -sf "${PUBLIC}/api/health" && echo ""
 curl -sf "${PUBLIC}/" | grep -oE 'assets/index-[^"]+\.js' | head -1 || echo "(no js in index)"
 
 echo ""
-echo "==> systemd worldcup"
-systemctl is-active worldcup.service 2>/dev/null || true
+echo "==> Who listens on :${PORT}"
+if command -v ss >/dev/null 2>&1; then
+  ss -tlnp 2>/dev/null | grep ":${PORT} " || echo "(nothing listening on ${PORT})"
+fi
+if command -v lsof >/dev/null 2>&1; then
+  sudo lsof -i ":${PORT}" 2>/dev/null | head -5 || true
+fi
+
+echo ""
+echo "==> systemd worldcup / worldcup-jobs"
+for u in worldcup worldcup-jobs; do
+  printf '%s: ' "${u}"
+  systemctl is-active "${u}.service" 2>/dev/null || echo "unknown"
+done
 systemctl show worldcup.service -p WorkingDirectory -p EnvironmentFiles --no-pager 2>/dev/null || true
 
 echo ""
