@@ -50,6 +50,9 @@ fi
 echo "==> Purging database (users, predictions, sessions, results, kickoffs)"
 npm run db:purge:live
 
+echo "==> Ensuring bootstrap organiser admin (excluded from league table)"
+npm run db:ensure-admin
+
 echo "==> Verifying empty database"
 if command -v sqlite3 >/dev/null 2>&1 && [[ -f "${SQLITE_PATH}" ]]; then
   for table in users predictions sessions results; do
@@ -77,4 +80,5 @@ else
 fi
 
 echo "==> Live database wipe finished at $(date -u +%Y-%m-%dT%H:%M:%SZ)"
-echo "    Re-register on the site, then promote admin: sqlite3 ${SQLITE_PATH} \"UPDATE users SET is_admin = 1 WHERE display_name = 'YourName';\""
+echo "    Organiser admin was recreated (see ADMIN_USERNAME in .env). Add players via Admin → Players."
+echo "    Launch rules: docs/LAUNCH_RULES.md"

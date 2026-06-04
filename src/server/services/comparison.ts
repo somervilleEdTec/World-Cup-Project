@@ -98,7 +98,7 @@ export async function getMatchComparison(
   const groupLocked = groupPhaseLocked;
 
   const users = await db.all<{ id: string; display_name: string }>(
-    `SELECT id, display_name FROM users ORDER BY display_name`
+    `SELECT id, display_name FROM users WHERE is_admin = 0 ORDER BY display_name`
   );
 
   const pickRows = await db.all<{

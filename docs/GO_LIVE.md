@@ -1,114 +1,86 @@
 # Go-live checklist — World Cup Boys
 
-**Production is live:** https://worldcup.dosums.uk (Oracle VM, auto-deploy from **`main`** — [PRODUCTION.md](./PRODUCTION.md)).
+**Production:** https://worldcup.dosums.uk (auto-deploy from **`main`**).
 
-Use this checklist before inviting your group (~10 friends). Work on **`Debug`** locally; release via **`main`** ([BRANCHING.md](./BRANCHING.md)).
+## Before inviting friends — read this first
 
-## 1. Environment
+**[LAUNCH_RULES.md](./LAUNCH_RULES.md)** is mandatory for the real tournament start:
 
-- [ ] Copy `.env.example` → `.env`
-- [ ] Set **`FOOTBALL_DATA_TOKEN`** in `.env` (required) — your personal token from [football-data.org](https://www.football-data.org/). The app sends it as the **`X-Auth-Token`** HTTP header on every API request (do not commit `.env`).
-- [ ] Use **`main`** branch; database must be **empty** (no `seed:ko-environment` on production)
-- [ ] Optional: `JOIN_PASSWORD` if not using default `MadSlags1`
-- [ ] Set `VITE_API_BASE_URL` when building for a public domain
+1. **Wipe** the live database one last time  
+2. **Bootstrap admin** (`AdminTomsom` / `ADMIN_PASSWORD` in `.env`) — organiser only, **not** on the league table  
+3. **Add players** only via **Admin → Players** (no public registration)  
+4. **Protect** the admin account from use as a league competitor  
 
-## 2. Install and migrate
+---
 
-**Windows (PowerShell):**
+## Environment (production `.env`)
 
-```powershell
-git pull origin main
+```env
+FOOTBALL_DATA_TOKEN=<your token>
+NODE_ENV=production
+VITE_API_BASE_URL=https://worldcup.dosums.uk
+ADMIN_USERNAME=AdminTomsom
+ADMIN_PASSWORD=<organiser password>
+PORT=8787
+```
+
+Remove obsolete `JOIN_PASSWORD`. See [LIVE_SERVER_ADMIN_SETUP.md](./LIVE_SERVER_ADMIN_SETUP.md).
+
+---
+
+## Install, migrate, test (local or VM)
+
+```bash
 npm install
 npm run migrate
 npm test
 npm run build
-.\scripts\Test-LocalSite.ps1 -Mode Serve
 ```
 
-**macOS / Linux:**
+Backups: [DATABASE_BACKUP.md](./DATABASE_BACKUP.md) · `npm run db:backup`
 
-```bash
-npm install
-npm run migrate
-npm run build
-```
+---
 
-For a small friends pool, **SQLite** (`data.db`) is sufficient. Back up `data.db` regularly.
+## Processes on the server
 
-Fresh start on **production** (destroys all users/picks/results): on the VM, `npm run db:purge:live` — see [PRODUCTION.md](./PRODUCTION.md) § Wipe live database. Local **Debug**: `npm run db:purge`.
+| Process | Command / unit |
+|---------|----------------|
+| API + SPA | `worldcup.service` or `npm run server` (:8787) |
+| Locks + sync | `worldcup-jobs.service` or `npm run jobs` |
 
-## 3. Start processes
+---
 
-```bash
-chmod +x scripts/start-production.sh
-./scripts/start-production.sh
-```
-
-Or manually:
-
-```bash
-npm run jobs    # terminal 1 — locks + football-data sync
-npm run server  # terminal 2 — API + built SPA (:8787)
-```
-
-## 4. Admin setup
-
-1. Register in the app (**Name** + password + sign-up password)
-2. Promote to admin:
-
-```bash
-sqlite3 data.db "UPDATE users SET is_admin = 1 WHERE display_name = 'YourName';"
-```
-
-3. Admin → **Mapping diagnostics** — expect group stage **72/72 mapped**
-4. Run **full football-data sync** once (if token set)
-
-## 5. Group smoke test (2 users)
+## Smoke test (after launch rules)
 
 ### Auth
 
-- [ ] Two users register with different names
-- [ ] Wrong join password rejected
+- [ ] Admin logs in (`AdminTomsom`)
+- [ ] Admin adds a test player; player must change password on first login
+- [ ] Public registration URL removed (login only)
+- [ ] Reserved admin username cannot be added as a player
 
-### Tournament Results
+### Admin visibility
 
-- [ ] Save winner / runner-up / third / fourth (no group predictions required)
-- [ ] Missing-predictions list clears tournament lines
-- [ ] After first kickoff: tournament tab read-only
+- [ ] Regular player does **not** see **Admin** in nav
+- [ ] `/admin` redirects non-admins to home
+- [ ] Admin **not** listed on leaderboard or comparison
 
-### Group Stage (sample groups)
+### Predictions & locks
 
-- [ ] Enter scores — auto-save; projected table updates; actual table when results exist
-- [ ] **Lock group** — cannot edit after lock; unlock only before official results in group
-- [ ] Complete all 12 groups for full pool (or accept partial for limited test)
-- [ ] After global lock: scores show as text with points when results in
+- [ ] Group + tournament bonus lock **15 minutes before** first kickoff (Welcome rules)
+- [ ] KO fixtures lock **15 minutes before** each kickoff
+- [ ] Per-group lock/unlock still works before global lock
 
-### Knockout (per-round tabs)
+### Ops
 
-- [ ] Round tabs empty until official results confirm fixtures for that stage
-- [ ] After **72** group predictions saved: can enter KO scores
-- [ ] Draw + progression team auto-saves
-- [ ] Comparison: others’ KO predictions hidden until fixture kickoff
+- [ ] Admin → mapping diagnostics (72/72 group if token set)
+- [ ] Full football-data sync once
+- [ ] `curl -s http://127.0.0.1:8787/api/health`
 
-### General
+---
 
-- [ ] Missing-predictions header accurate on all tabs
-- [ ] Leaderboard + comparison reflect predictions; comparison colours when results in
-- [ ] Kickoff times display in **BST**
-- [ ] Mobile bottom nav usable at ~375px width
-- [ ] Rules visible on **Welcome** (no Rules tab)
-- [ ] **Unlock group** works before results; blocked after any official result in that group
-- [ ] League table shows category columns; **Points** column last
-- [ ] Optional local regression on **Debug** only: `ALLOW_KO_SEED=1 npm run seed:complete-teams` or `seed:ko-environment` — see [KO_ENVIRONMENT.md](./KO_ENVIRONMENT.md)
+## Related
 
-## 6. During tournament
-
-- Keep `npm run jobs` running (results poll + lock pass)
-- Admin → mapping diagnostics if sync skips increase
-- Manual result override available
-
-## 7. Phase status
-
-**Done:** Rules engine, auth, predictions UX, locks, scoring, comparison (group/KO visibility rules), admin sync, deploy docs, UI polish (PRs #7–#11), KO-environment merge (2026-06-02).
-
-**Later:** OAuth, PWA, PDF export, Playwright E2E.
+- [LAUNCH_RULES.md](./LAUNCH_RULES.md) — **mandatory** one-time live launch  
+- [PRODUCTION.md](./PRODUCTION.md) — VM, deploy, wipe, nginx  
+- [BRANCHING.md](./BRANCHING.md) — Debug vs main  

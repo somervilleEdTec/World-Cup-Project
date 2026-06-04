@@ -20,6 +20,7 @@
     "jobs": "tsx src/server/jobs.ts",
     "migrate": "tsx scripts/migrate.ts",
     "db:backup": "tsx scripts/backup-database.ts",
+    "db:ensure-admin": "tsx scripts/ensure-bootstrap-admin.ts",
     "db:purge": "tsx scripts/purge-database.ts",
     "db:purge:live": "tsx scripts/purge-database.ts --confirm-live",
     "seed:debug": "tsx scripts/seed-ko-environment.ts",

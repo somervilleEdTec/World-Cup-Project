@@ -343,6 +343,27 @@ describe('security and tamper resistance', () => {
     expect(String(res.body.error)).toMatch(/30/);
   });
 
+  it('rejects creating a player with the reserved admin username', async () => {
+    const token = await adminToken(app);
+    const res = await request(app)
+      .post('/api/admin/players')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ displayName: 'AdminTomsom', initialPassword: 'x' });
+    expect(res.status).toBe(400);
+    expect(String(res.body.error)).toMatch(/reserved/i);
+  });
+
+  it('excludes admin from comparison player list', async () => {
+    await createPlayer(app, 'CompareA');
+    const playerToken = await loginPlayerReady(app, 'CompareA');
+    const cmp = await request(app)
+      .get('/api/comparison/g-a-1')
+      .set('Authorization', `Bearer ${playerToken}`);
+    expect(cmp.status).toBe(200);
+    const names = cmp.body.entries.map((e: { displayName: string }) => e.displayName);
+    expect(names).not.toContain('AdminTomsom');
+  });
+
   it('requires password change before predictions', async () => {
     await createPlayer(app, 'MustChange', 'init1');
     const token = await loginPlayer(app, 'MustChange', 'init1');

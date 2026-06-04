@@ -176,7 +176,9 @@ TLS certificate must cover `worldcup.dosums.uk`. Typical nginx `proxy_pass http:
 
 ## Wipe live database (empty start for friends)
 
-**Warning:** Removes **all users**, predictions, sessions, and stored results. Schema is recreated empty. After restart, `npm run jobs` / server startup may **re-import kickoffs and finished scores** from football-data.org (expected on production).
+**Before the real tournament:** follow **[LAUNCH_RULES.md](./LAUNCH_RULES.md)** — this wipe is **required once** before inviting players. The organiser admin is recreated automatically and is **excluded from the league table**.
+
+**Warning:** Removes **all users**, predictions, sessions, and stored results. Schema is recreated empty; bootstrap admin is re-added via `npm run db:ensure-admin`. After restart, `npm run jobs` / server startup may **re-import kickoffs and finished scores** from football-data.org (expected on production).
 
 **Preferred (GitHub):** Actions → **Wipe live database (manual)** → Run workflow → set input `confirm` to **`WIPE_LIVE_DATABASE`**. Uses the same deploy SSH secrets; pulls `main`, runs `scripts/wipe-live-database.sh`, verifies row counts, restarts systemd.
 

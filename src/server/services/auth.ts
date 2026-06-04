@@ -86,6 +86,9 @@ export async function createPlayerAccount(
   if (name.length < 2) {
     throw new Error('Name must be at least 2 characters');
   }
+  if (name.toLowerCase() === normalizeName(BOOTSTRAP_ADMIN_USERNAME).toLowerCase()) {
+    throw new Error('That username is reserved for the organiser account');
+  }
   if (initialPassword.length < 1 || initialPassword.length > PLAYER_PASSWORD_MAX_LENGTH) {
     throw new Error(`Temporary password must be 1–${PLAYER_PASSWORD_MAX_LENGTH} characters`);
   }
