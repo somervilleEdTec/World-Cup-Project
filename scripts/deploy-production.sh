@@ -78,7 +78,7 @@ else
   )
 fi
 
-built_js="$(grep -oE 'assets/index-[^"]+\\.js' dist/index.html | head -1 || true)"
+built_js="$(grep -o 'assets/index-[^"]*\.js' dist/index.html | head -1 || true)"
 if [[ -z "${built_js}" ]]; then
   echo "ERROR: dist/index.html missing built JS asset reference."
   exit 1
