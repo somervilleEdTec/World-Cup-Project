@@ -3,6 +3,10 @@
 
 name: Deploy main (production)
 
+# GitHub Actions JS runtime: Node 20 EOL Sep 2026 — use Node 24 for action steps.
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 on:
   push:
     branches: [main]
@@ -19,9 +23,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
-          node-version: '20'
+          node-version: '22'
           cache: npm
 
       - run: npm ci

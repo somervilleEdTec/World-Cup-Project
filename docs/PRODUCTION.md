@@ -1,6 +1,6 @@
 # Production environment — World Cup Boys (live)
 
-**Last updated:** 2026-06-03  
+**Last updated:** 2026-06-04  
 **Status:** **Live and operational** — https://worldcup.dosums.uk  
 **Automated deploy:** **Active** — every push to **`main`** runs [deploy-main.yml](../.github/workflows/deploy-main.yml) (see § Auto-deploy below)
 
@@ -79,6 +79,8 @@ Optional: `DEPLOY_PORT` = `22`
 **Do not** store `FOOTBALL_DATA_TOKEN` in GitHub — only in server `.env`.
 
 Each push to **`main`** triggers **Deploy main (production)** automatically after CI passes. Manual re-run: **Actions → Deploy main (production) → Run workflow**.
+
+**Typical duration:** CI ~2–3 minutes, then SSH deploy ~5–8 minutes (`npm ci` on the VM is the slowest step). A **Node.js 20 deprecation** annotation on the job is informational only — it does not slow or fail the run. The workflow opts into Node 24 for Actions (`FORCE_JAVASCRIPT_ACTIONS_TO_NODE24`) and uses `setup-node@v5` with Node **22** for `npm test` / `npm run build`.
 
 **Health check on server:** `curl -s http://127.0.0.1:8787/api/health` — returns `{ ok: true, commit: "<git-sha>" }` after deploy (`DEPLOY_COMMIT` in `.env`).
 
