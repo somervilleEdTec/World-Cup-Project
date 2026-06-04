@@ -87,7 +87,10 @@ export function createApp(): Express {
   app.use(express.json());
 
   app.get('/api/health', (_req, res) => {
-    res.json({ ok: true });
+    res.json({
+      ok: true,
+      commit: process.env.DEPLOY_COMMIT?.trim() || undefined
+    });
   });
 
   app.post('/api/auth/login', async (req: Request, res: Response) => {

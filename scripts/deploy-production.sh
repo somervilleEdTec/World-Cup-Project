@@ -38,6 +38,13 @@ echo "==> Git: $(git rev-parse --short HEAD) on $(git branch --show-current)"
 git fetch origin main
 git checkout main
 git pull --ff-only origin main
+deploy_head="$(git rev-parse HEAD)"
+remote_head="$(git rev-parse origin/main)"
+if [[ "${deploy_head}" != "${remote_head}" ]]; then
+  echo "ERROR: HEAD (${deploy_head}) != origin/main (${remote_head}) after pull."
+  exit 1
+fi
+echo "==> Deploying commit ${deploy_head}"
 
 echo "==> npm ci (install devDependencies — tsx/vite needed for migrate, build, server)"
 # NODE_ENV=production in .env makes npm ci omit devDependencies on older npm (--include=dev may not apply).
@@ -71,7 +78,20 @@ else
   )
 fi
 
+built_js="$(grep -oE 'assets/index-[^"]+\\.js' dist/index.html | head -1 || true)"
+if [[ -z "${built_js}" ]]; then
+  echo "ERROR: dist/index.html missing built JS asset reference."
+  exit 1
+fi
+echo "==> Built SPA entry: ${built_js}"
+
 export NODE_ENV="${PRODUCTION_NODE_ENV}"
+
+if grep -q '^DEPLOY_COMMIT=' .env 2>/dev/null; then
+  sed -i "s/^DEPLOY_COMMIT=.*/DEPLOY_COMMIT=${deploy_head}/" .env
+else
+  echo "DEPLOY_COMMIT=${deploy_head}" >> .env
+fi
 
 unit_exists() {
   local state

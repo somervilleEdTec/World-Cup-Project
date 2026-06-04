@@ -50,8 +50,18 @@ async function main() {
   const app = createApp();
 
   const distPath = path.resolve(__dirname, '../../dist');
-  app.use(express.static(distPath));
+  app.use(
+    express.static(distPath, {
+      index: false,
+      setHeaders(res, filePath) {
+        if (filePath.endsWith('index.html')) {
+          res.setHeader('Cache-Control', 'no-store');
+        }
+      }
+    })
+  );
   app.get(/^(?!\/api).*/, (_req, res) => {
+    res.setHeader('Cache-Control', 'no-store');
     res.sendFile(path.join(distPath, 'index.html'));
   });
 

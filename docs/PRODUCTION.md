@@ -80,7 +80,7 @@ Optional: `DEPLOY_PORT` = `22`
 
 Each push to **`main`** triggers **Deploy main (production)** automatically after CI passes. Manual re-run: **Actions → Deploy main (production) → Run workflow**.
 
-**Health check on server:** `curl -s http://127.0.0.1:8787/api/health`
+**Health check on server:** `curl -s http://127.0.0.1:8787/api/health` — returns `{ ok: true, commit: "<git-sha>" }` after deploy (`DEPLOY_COMMIT` in `.env`).
 
 **`Debug` branch** never deploys — [BRANCHING.md](./BRANCHING.md).
 
