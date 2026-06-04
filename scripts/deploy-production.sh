@@ -86,9 +86,21 @@ run_npm_ci() {
   npm ci
 }
 
-echo "==> npm ci (install devDependencies — tsx/vite needed for migrate, build, server)"
-verify_native_build_prereqs
-if ! run_npm_ci; then
+lock_hash="$(sha256sum package-lock.json | awk '{print $1}')"
+skip_ci=0
+if [[ -f node_modules/tsx/dist/cli.mjs && -f .deploy-deps-hash ]]; then
+  if [[ "$(cat .deploy-deps-hash)" == "${lock_hash}" ]]; then
+    echo "==> npm ci skipped (package-lock.json unchanged, tsx present)"
+    skip_ci=1
+  fi
+fi
+
+if [[ "${skip_ci}" -eq 0 ]]; then
+  echo "==> npm ci (install devDependencies — tsx/vite needed for migrate, build, server)"
+  verify_native_build_prereqs
+fi
+
+if [[ "${skip_ci}" -eq 0 ]] && ! run_npm_ci; then
   echo "==> npm ci failed — deep clean and retry"
   rm -rf node_modules
   rm -rf "${HOME}/.cache/node-gyp" 2>/dev/null || true
@@ -99,6 +111,7 @@ if ! run_npm_ci; then
     echo "  Ensure: sudo apt-get install -y build-essential python3 && df -h ."
     exit 1
   fi
+  echo "${lock_hash}" > .deploy-deps-hash
 fi
 
 if [[ ! -f node_modules/better-sqlite3/src/better_sqlite3.cpp ]]; then

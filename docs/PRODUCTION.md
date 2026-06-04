@@ -80,7 +80,7 @@ Optional: `DEPLOY_PORT` = `22`
 
 Each push to **`main`** triggers **Deploy main (production)** automatically after CI passes. Manual re-run: **Actions → Deploy main (production) → Run workflow**.
 
-**Typical duration:** CI ~2–3 minutes, then SSH deploy ~5–8 minutes (`npm ci` on the VM is the slowest step). A **Node.js 20 deprecation** annotation on the job is informational only — it does not slow or fail the run. The workflow opts into Node 24 for Actions (`FORCE_JAVASCRIPT_ACTIONS_TO_NODE24`) and uses `setup-node@v5` with Node **22** for `npm test` / `npm run build`.
+**Typical duration:** CI ~2–3 minutes; SSH deploy ~5–15 minutes (first VM `npm ci` can take ~25 minutes). SSH step timeout is **50 minutes**. Later deploys skip `npm ci` when `package-lock.json` is unchanged. A **Node.js 20 deprecation** annotation on the job is informational only — it does not slow or fail the run. The workflow opts into Node 24 for Actions (`FORCE_JAVASCRIPT_ACTIONS_TO_NODE24`) and uses `setup-node@v5` with Node **22** for `npm test` / `npm run build`.
 
 **Health check on server:** `curl -s http://127.0.0.1:8787/api/health` — returns `{ ok: true, commit: "<git-sha>" }` after deploy (`DEPLOY_COMMIT` in `.env`).
 

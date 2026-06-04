@@ -99,7 +99,7 @@ jobs:
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
           port: ${{ secrets.DEPLOY_PORT }}
-          command_timeout: 25m
+          command_timeout: 50m
           envs: DEPLOY_PATH,EXPECTED_COMMIT
           script: |
             set -euo pipefail
