@@ -14,8 +14,9 @@ Cursor Cloud Agent (or you) → push/merge to main on GitHub
         ▼
 GitHub Actions: Deploy main (production)
   1. ci job     — npm ci, npm test, npm run build (ubuntu-latest)
-  2. deploy job — SSH → scripts/deploy-production.sh on VM
-  3. verify     — curl https://worldcup.dosums.uk/api/health must match github.sha
+  2. deploy job — SSH → deploy-production.sh (optional if port 22 blocked)
+                  VM timer → poll-deploy-from-github.sh every 3 min (fallback)
+  3. verify     — curl https://worldcup.dosums.uk/api/health must match github.sha (~30 min max)
         │
         ▼
 https://worldcup.dosums.uk
@@ -76,6 +77,16 @@ cd /home/ubuntu/World-Cup-Project && git pull origin main && bash scripts/ensure
 
 (Enter sudo password once if prompted.) After that, GitHub deploys manage systemd automatically.
 
+### D. Pull-based deploy (when GitHub cannot SSH to port 22)
+
+If Actions logs show **Connection timed out** or **handshake failed: EOF** on port 22, enable the VM timer (outbound `git fetch` only):
+
+```bash
+cd /home/ubuntu/World-Cup-Project && git pull origin main && bash scripts/ensure-poll-deploy-timer.sh
+```
+
+`worldcup-deploy.timer` runs `scripts/poll-deploy-from-github.sh` every **3 minutes**. Push to **`main`** still triggers **Deploy main**; the workflow tries SSH, then waits up to **30 minutes** for the timer to deploy and for public `/api/health` to match the commit.
+
 ---
 
 ## What runs on the VM (`deploy-production.sh`)
@@ -104,7 +115,7 @@ If verify fails, the SSH step fails → the **whole workflow is red** → the pu
 
 Common fixes (push to `main` after code fix, or re-run workflow):
 
-- **`ssh: handshake failed: EOF`** — GitHub → VM SSH dropped before login. **Deploy main** now uses `scripts/ci-ssh-setup.sh` (Oracle `ssh-rsa` host keys + keepalive) and `scripts/ci-ssh-exec.sh` (3 retries). Re-run the workflow; if it persists, check the VM is up and port 22 reachable.
+- **`ssh: handshake failed: EOF`** / **Connection timed out during banner exchange** — GitHub runners cannot reach VM port 22 reliably. Enable **pull deploy**: `bash scripts/ensure-poll-deploy-timer.sh` on the VM (§ D above). Optionally open Oracle NSG ingress TCP/22 for troubleshooting SSH.
 - **Verify live site: HTTP 530/502** — Cloudflare cannot reach Node on `:8787`. SSH deploy may have failed, or `worldcup.service` is inactive. On VM once: `bash scripts/restart-production-services.sh`.
 - **`better-sqlite3` / `sqlite3.o.d.raw` / `better_sqlite3.cpp: No such file`** — corrupt `node_modules`. On VM: `bash scripts/repair-npm-on-server.sh` (after `build-essential`). Deploy also deep-cleans npm cache on retry.
 - **`sudo: a password is required`** — run `bootstrap-production-host.sh` for sudoers.

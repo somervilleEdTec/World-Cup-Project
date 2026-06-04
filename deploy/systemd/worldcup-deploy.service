@@ -1,0 +1,14 @@
+[Unit]
+Description=World Cup Boys pull deploy from GitHub main
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=ubuntu
+WorkingDirectory=/home/ubuntu/World-Cup-Project
+ExecStart=/home/ubuntu/World-Cup-Project/scripts/poll-deploy-from-github.sh
+Nice=10
+
+[Install]
+WantedBy=multi-user.target

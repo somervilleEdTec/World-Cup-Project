@@ -98,14 +98,9 @@ jobs:
           DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
         run: bash scripts/ci-ssh-setup.sh
 
-      - name: SSH connectivity probe
-        env:
-          SSH_MAX_ATTEMPTS: 5
-          SSH_RETRY_WAIT_SEC: 20
-        run: bash scripts/ci-ssh-exec.sh 'echo SSH_OK && hostname && uptime'
-
-      - name: Deploy over SSH (retry on handshake EOF)
+      - name: Deploy over SSH (retry; optional if VM pull timer is active)
         id: ssh_deploy
+        continue-on-error: true
         env:
           DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
           EXPECTED_COMMIT: ${{ github.sha }}
@@ -116,13 +111,25 @@ jobs:
           set -euo pipefail
           bash scripts/ci-ssh-exec.sh "cd '${DEPLOY_PATH}' && export EXPECTED_COMMIT='${EXPECTED_COMMIT}' && echo GITHUB_SHA=\${EXPECTED_COMMIT} && bash scripts/deploy-production.sh"
 
+      - name: SSH deploy result
+        if: always()
+        run: |
+          if [ "${{ steps.ssh_deploy.outcome }}" = "success" ]; then
+            echo "SSH deploy succeeded."
+          else
+            echo "SSH deploy did not complete — waiting for VM pull timer (worldcup-deploy.timer, ~3 min) if enabled."
+            echo "Enable once on VM: bash scripts/ensure-poll-deploy-timer.sh"
+          fi
+
       - name: Verify live site (public health)
+        timeout-minutes: 35
         run: |
           set -euo pipefail
           expected="${GITHUB_SHA}"
           url="${LIVE_SITE_URL}/api/health"
           echo "Checking ${url} for commit ${expected}"
-          for attempt in 1 2 3 4 5 6; do
+          echo "Allowing up to ~30 min for pull-based deploy if SSH was blocked."
+          for attempt in $(seq 1 60); do
             http_code="$(curl -s -o /tmp/health.json -w '%{http_code}' --max-time 15 "${url}" 2>/dev/null || echo 000)"
             body="$(cat /tmp/health.json 2>/dev/null || true)"
             if [ "${http_code}" = "530" ] || [ "${http_code}" = "502" ] || [ "${http_code}" = "503" ]; then
@@ -136,9 +143,9 @@ jobs:
             else
               echo "Attempt ${attempt}: curl failed (HTTP ${http_code})"
             fi
-            sleep 10
+            sleep 30
           done
-          echo "ERROR: ${url} did not return ok:true with commit ${expected} within ~60s."
+          echo "ERROR: ${url} did not return ok:true with commit ${expected} within ~30 min."
           echo "If SSH deploy succeeded but health failed: on VM run bash scripts/restart-production-services.sh"
           echo "If SSH failed with 'handshake failed: EOF': re-run workflow; check VM sshd and Oracle security lists."
           exit 1

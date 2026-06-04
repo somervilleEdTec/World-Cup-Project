@@ -1,0 +1,11 @@
+[Unit]
+Description=Poll GitHub main every 3 minutes for pull-based deploy
+
+[Timer]
+OnBootSec=3min
+OnUnitActiveSec=3min
+AccuracySec=1min
+Persistent=true
+
+[Install]
+WantedBy=timers.target

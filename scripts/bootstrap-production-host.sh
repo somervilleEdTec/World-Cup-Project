@@ -38,6 +38,9 @@ fi
 echo "==> Passwordless deploy sudoers (GitHub Actions)"
 bash scripts/ensure-deploy-sudoers.sh
 
+echo "==> Pull-based deploy timer (when GitHub SSH to port 22 is blocked)"
+bash scripts/ensure-poll-deploy-timer.sh
+
 echo ""
 echo "Bootstrap complete. Next steps:"
 echo "  1. Create .env on this host (never commit secrets)"

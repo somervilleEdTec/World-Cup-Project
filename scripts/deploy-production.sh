@@ -177,6 +177,7 @@ echo "==> systemd + port 8787 (install units, kill stray processes, start servic
 if command -v systemctl >/dev/null 2>&1; then
   if sudo -n true 2>/dev/null; then
     bash scripts/ensure-deploy-sudoers.sh
+    bash scripts/ensure-poll-deploy-timer.sh
     bash scripts/restart-production-services.sh
   else
     echo "ERROR: deploy needs passwordless sudo for systemctl/cp/kill."
