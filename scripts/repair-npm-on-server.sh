@@ -6,8 +6,10 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 APP_ROOT="$(pwd)"
 
+timer_was_active=0
 if command -v systemctl >/dev/null 2>&1 && systemctl is-active worldcup-deploy.timer >/dev/null 2>&1; then
   echo "==> Stopping worldcup-deploy.timer during repair"
+  timer_was_active=1
   sudo systemctl stop worldcup-deploy.timer
 fi
 
@@ -24,35 +26,49 @@ echo "==> Disk space"
 df -h "${APP_ROOT}" | tail -1
 df -i "${APP_ROOT}" | tail -1
 
-echo "==> Deep clean npm artifacts"
-rm -rf node_modules
-rm -rf "${HOME}/.cache/node-gyp" 2>/dev/null || true
-npm cache clean --force
-
-echo "==> npm ci (MAKEFLAGS=-j1)"
 unset NODE_ENV
 export MAKEFLAGS=-j1
 export npm_config_jobs=1
-npm ci
+
+sqlite_node="node_modules/better-sqlite3/build/Release/better_sqlite3.node"
+
+if [[ -f "${sqlite_node}" && -f node_modules/tsx/dist/cli.mjs ]]; then
+  echo "==> better_sqlite3.node and tsx already present — skip full reinstall"
+else
+  echo "==> Deep clean npm artifacts"
+  rm -rf node_modules
+  rm -rf "${HOME}/.cache/node-gyp" 2>/dev/null || true
+  npm cache clean --force
+
+  echo "==> npm ci --ignore-scripts (avoids flaky better-sqlite3 postinstall on small VMs)"
+  npm ci --ignore-scripts
+
+  echo "==> npm rebuild better-sqlite3"
+  npm rebuild better-sqlite3
+
+  echo "==> postinstall (flag assets)"
+  npm run postinstall
+fi
 
 if [[ ! -f node_modules/better-sqlite3/src/better_sqlite3.cpp ]]; then
-  echo "ERROR: better-sqlite3 package incomplete after npm ci (missing src/better_sqlite3.cpp)"
+  echo "ERROR: better-sqlite3 package incomplete (missing src/better_sqlite3.cpp)"
   exit 1
 fi
 
-if [[ ! -f node_modules/better-sqlite3/build/Release/better_sqlite3.node ]]; then
-  echo "WARNING: better_sqlite3.node not found — running npm rebuild better-sqlite3"
-  npm rebuild better-sqlite3
+if [[ ! -f "${sqlite_node}" ]]; then
+  echo "ERROR: ${sqlite_node} missing after rebuild"
+  exit 1
 fi
+echo "OK: ${sqlite_node}"
 
 echo "==> Verify toolchain can see devDependencies"
+/usr/bin/node node_modules/tsx/dist/cli.mjs --version
 npx --no-install tsc --version
-npx --no-install tsx --version
 
 lock_hash="$(sha256sum package-lock.json | awk '{print $1}')"
 echo "${lock_hash}" > .deploy-deps-hash
 
-if command -v systemctl >/dev/null 2>&1; then
+if [[ "${timer_was_active}" -eq 1 ]]; then
   sudo systemctl start worldcup-deploy.timer 2>/dev/null || true
 fi
 

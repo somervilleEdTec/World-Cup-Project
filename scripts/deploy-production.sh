@@ -102,7 +102,14 @@ run_npm_ci() {
   # Single-job compile avoids sqlite3.o.d.raw races on small VMs.
   export MAKEFLAGS=-j1
   export npm_config_jobs=1
-  npm ci
+  if npm ci; then
+    return 0
+  fi
+  echo "==> npm ci failed — retry with --ignore-scripts + rebuild better-sqlite3"
+  rm -rf node_modules/better-sqlite3/build 2>/dev/null || true
+  npm ci --ignore-scripts
+  npm rebuild better-sqlite3
+  npm run postinstall
 }
 
 lock_hash="$(sha256sum package-lock.json | awk '{print $1}')"
@@ -121,7 +128,7 @@ if [[ "${skip_ci}" -eq 0 ]]; then
   if run_npm_ci; then
     echo "${lock_hash}" > .deploy-deps-hash
   else
-    echo "==> npm ci failed — deep clean and retry"
+    echo "==> npm ci still failed — deep clean and final retry"
     rm -rf node_modules
     rm -rf "${HOME}/.cache/node-gyp" 2>/dev/null || true
     npm cache clean --force
