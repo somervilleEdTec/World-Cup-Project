@@ -14,6 +14,7 @@ import { isKnockout, predictionLockReached, predictionLockTimeIso } from '../lib
 import { ActualResult, Match, Pick } from '../types';
 import { TeamLabel } from './TeamLabel';
 import { formatFixtureScore } from './FixtureScoreSummary';
+import { shouldClearScoreInputOnFocus } from '../lib/touchDevice';
 
 const AUTOSAVE_MS = 450;
 
@@ -78,6 +79,12 @@ function EditableScoreInputs({
   const [awayScore, setAwayScore] = useState(pick?.awayScore ?? 0);
   const [progressingTeamId, setProgressingTeamId] = useState(pick?.progressingTeamId ?? '');
   const [edited, setEdited] = useState(false);
+  const [homeEditingEmpty, setHomeEditingEmpty] = useState(false);
+  const [awayEditingEmpty, setAwayEditingEmpty] = useState(false);
+  const homeBeforeEditRef = useRef(pick?.homeScore ?? 0);
+  const awayBeforeEditRef = useRef(pick?.awayScore ?? 0);
+  const homeTouchFocusRef = useRef(false);
+  const awayTouchFocusRef = useRef(false);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const editedRef = useRef(edited);
   const disabledRef = useRef(disabled);
@@ -89,6 +96,10 @@ function EditableScoreInputs({
     setAwayScore(pick?.awayScore ?? 0);
     setProgressingTeamId(pick?.progressingTeamId ?? '');
     setEdited(false);
+    setHomeEditingEmpty(false);
+    setAwayEditingEmpty(false);
+    homeBeforeEditRef.current = pick?.homeScore ?? 0;
+    awayBeforeEditRef.current = pick?.awayScore ?? 0;
   }, [pick?.homeScore, pick?.awayScore, pick?.progressingTeamId, match.id]);
 
   const buildPick = useCallback((): Pick => {
@@ -157,6 +168,40 @@ function EditableScoreInputs({
     event.currentTarget.blur();
   };
 
+  const beginTouchScoreEdit = (side: 'home' | 'away') => {
+    if (side === 'home') {
+      homeBeforeEditRef.current = homeScore;
+      setHomeEditingEmpty(true);
+      return;
+    }
+    awayBeforeEditRef.current = awayScore;
+    setAwayEditingEmpty(true);
+  };
+
+  const handleScoreFocus = (side: 'home' | 'away') => {
+    const touchStarted = side === 'home' ? homeTouchFocusRef.current : awayTouchFocusRef.current;
+    if (side === 'home') homeTouchFocusRef.current = false;
+    else awayTouchFocusRef.current = false;
+
+    if (!shouldClearScoreInputOnFocus(touchStarted)) return;
+    beginTouchScoreEdit(side);
+  };
+
+  const handleScoreBlur = (side: 'home' | 'away') => {
+    if (side === 'home' && homeEditingEmpty) {
+      setHomeEditingEmpty(false);
+      setHomeScore(homeBeforeEditRef.current);
+      return;
+    }
+    if (side === 'away' && awayEditingEmpty) {
+      setAwayEditingEmpty(false);
+      setAwayScore(awayBeforeEditRef.current);
+    }
+  };
+
+  const homeDisplayValue = homeEditingEmpty ? '' : hasSavedPick || edited ? homeScore : '';
+  const awayDisplayValue = awayEditingEmpty ? '' : hasSavedPick || edited ? awayScore : '';
+
   return (
     <>
       <div className="score-inputs">
@@ -167,12 +212,18 @@ function EditableScoreInputs({
           step="1"
           inputMode="numeric"
           pattern="[0-9]*"
-          value={hasSavedPick || edited ? homeScore : ''}
+          value={homeDisplayValue}
           placeholder="0"
           disabled={disabled}
+          onTouchStart={() => {
+            homeTouchFocusRef.current = true;
+          }}
+          onFocus={() => handleScoreFocus('home')}
+          onBlur={() => handleScoreBlur('home')}
           onWheel={handleScoreWheel}
           onKeyDown={blockNonIntegerScoreKeys}
           onChange={(event) => {
+            setHomeEditingEmpty(false);
             const next = parseScoreInput(event.target.value);
             setEdited(true);
             setHomeScore(next);
@@ -186,12 +237,18 @@ function EditableScoreInputs({
           step="1"
           inputMode="numeric"
           pattern="[0-9]*"
-          value={hasSavedPick || edited ? awayScore : ''}
+          value={awayDisplayValue}
           placeholder="0"
           disabled={disabled}
+          onTouchStart={() => {
+            awayTouchFocusRef.current = true;
+          }}
+          onFocus={() => handleScoreFocus('away')}
+          onBlur={() => handleScoreBlur('away')}
           onWheel={handleScoreWheel}
           onKeyDown={blockNonIntegerScoreKeys}
           onChange={(event) => {
+            setAwayEditingEmpty(false);
             const next = parseScoreInput(event.target.value);
             setEdited(true);
             setAwayScore(next);
