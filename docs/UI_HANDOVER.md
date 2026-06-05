@@ -1,8 +1,8 @@
 # UI / UX handover
 
-**Last updated:** 2026-06-02  
+**Last updated:** 2026-06-05  
 **Branches:** `main` (production) · `Debug` (development) — [BRANCHING.md](./BRANCHING.md)  
-**Status:** Owner polish + KO-environment UX **merged to `main`** (2026-06-02). See [HANDOVER.md](./HANDOVER.md) for current behaviour.
+**Status:** Owner polish + KO-environment UX **merged to `main`**. Group kickoffs + touch inputs fixed 2026-06-05. See [HANDOVER.md](./HANDOVER.md).
 
 ---
 
@@ -23,7 +23,7 @@
 | Area | File(s) | Notes |
 |------|---------|--------|
 | **My Predictions** | `src/pages/MyPicksPage.tsx` | 7 phase tabs; projected/actual tables; locked text view |
-| **Fixture card** | `src/components/FixturePickCard.tsx` | Prediction / result / points per fixture |
+| **Fixture card** | `src/components/FixturePickCard.tsx` | Prediction / result / points; touch focus clears score input |
 | **Group tables** | `src/components/GroupStandingsTable.tsx` | Projected + actual standings |
 | **Team picker** | `src/components/TeamSelect.tsx` | Flags + A–Z names |
 | **Layout / nav** | `src/components/AppLayout.tsx`, `src/styles/app.css` | Mobile 2×2 bottom nav |
@@ -60,6 +60,8 @@ Styling: **`src/styles/app.css` only** (no Tailwind).
 3. **SVG flags** — not emoji; custom `TeamSelect` (not native `<option>` images).
 4. **Lock / Unlock group** — `accepted_groups` in DB; unlock disabled when group has official results ([LOCKING.md](./LOCKING.md)).
 5. **Match picks** — POST `/api/predictions/draft` writes **committed** rows (no UI commit step).
+6. **Group kickoffs** — official FIFA UTC schedule in `groupStageKickoffs.ts`; displayed in BST; DB sync may override.
+7. **Touch score entry** — on touch/coarse pointer, focusing a score field clears it; blur without typing restores the previous value.
 
 ---
 
@@ -98,6 +100,8 @@ http://localhost:8787/login
 | 8 | Leaderboard | Two players (admin-created) | Both listed (non-admin) | 2 users on `/api/leaderboard` | Verified |
 | 9 | Group unlock (API) | Lock group A, insert result for g-a-1, unlock | 400 — cannot unlock | Works | Verified (2026-06-03) |
 | 10 | Results lock (API) | Edit g-a-1 after official result | 400 — official result | Works | Verified (2026-06-03) |
+| 11 | Group kickoffs | View g-a-3, g-l-1 on My Picks | Matchday 2/1 FIFA dates (not staggered per group) | Was wrong from game 2+ | **Fixed** — PR #25, `groupStageKickoffs.ts` (2026-06-05) |
+| 12 | Touch score inputs | Tap score field on phone/tablet | Field clears for fresh entry | Hard to replace existing digits | **Fixed** — touch focus clear (2026-06-05) |
 
 ---
 

@@ -266,6 +266,17 @@ Log in as `ADMIN_USERNAME`, then add players via **Admin → Players**.
 
 Deploy restarts all of the above via `scripts/restart-production-services.sh`. See [OUTAGE_RECOVERY.md](./OUTAGE_RECOVERY.md).
 
+### football-data maintenance
+
+| Command | Purpose |
+|---------|---------|
+| Admin → **Import kickoffs** | Full kickoff sync from football-data.org |
+| `npm run diagnose:mappings` | Mapping report (requires `FOOTBALL_DATA_TOKEN` on server) |
+| `npm run generate:group-kickoffs` | Print updated `GROUP_STAGE_KICKOFFS` map from API (dev/ops) |
+| `npm run seed:fixtures` | Full kickoff + results sync (CLI) |
+
+Group-stage static kickoffs in code use the official FIFA UTC schedule; production DB rows in `match_kickoffs` override when synced. After a kickoff-date fix deploy, run **Import kickoffs** once if the live site still shows old dates.
+
 ---
 
 ## Related

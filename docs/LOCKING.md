@@ -1,6 +1,6 @@
 # Prediction locking — specification
 
-> **Last updated:** 2026-06-05 (KO fixture sync mapping, per-fixture unlock)  
+> **Last updated:** 2026-06-05 (group-stage kickoffs, KO fixture sync mapping, per-fixture unlock)  
 > **FINAL_PLAN:** [FINAL_PLAN.md](./FINAL_PLAN.md) (owner-owned)  
 > **Code:** `src/lib/pickLocks.ts`, `src/server/services/predictions.ts`, `src/lib/comparisonVisibility.ts`, `src/server/jobs.ts`
 
@@ -75,6 +75,7 @@ See [KO_ENVIRONMENT.md](./KO_ENVIRONMENT.md) (`seed:before-final` for final-pick
 | `src/__tests__/pickLocks.test.ts` | Global lock, results, unlock |
 | `src/__tests__/comparisonVisibility.test.ts` | Group / KO visibility |
 | `src/__tests__/lockingPolicy.test.ts` | Policy assertions vs this doc |
+| `src/__tests__/groupStageKickoffs.test.ts` | Official group kickoff schedule regression |
 | `src/__tests__/knockoutFixtureAvailability.test.ts` | Per-fixture KO unlock, API mapping with stored results |
 | `src/server/__tests__/api.integration.test.ts` | Lock/unlock API, 72 gate, global lock |
 | `src/server/__tests__/tournament.integration.test.ts` | Leaderboard scoring, KO unlock, DB upsert |

@@ -17,6 +17,9 @@
 - [x] Per-group lock/unlock + results-based edit lock (Debug, 2026-06-03)
 - [x] Knockout scoring — advancing team +2, FT exact +4 (PR #22, 2026-06-05)
 - [x] KO fixture sync mapping + per-fixture unlock from stored results (PR #23, 2026-06-05)
+- [x] Official FIFA group-stage kickoffs + group-scoped football-data mapping (PR #25, 2026-06-05)
+- [x] Touch score inputs — clear on focus for touch devices (2026-06-05)
+- [x] Expanded test suite — 166 tests (PR #24 + kickoff/touch tests, 2026-06-05)
 - [x] API same-origin / autosave performance (Debug, 2026-06-03)
 
 ## Go-live
@@ -64,7 +67,8 @@
 
 - [x] Postgres + migrations
 - [x] Deploy docs ([PRODUCTION.md](./PRODUCTION.md), [GO_LIVE.md](./GO_LIVE.md))
-- [x] API integration tests (154 tests)
+- [x] Official group-stage kickoffs (FIFA UTC static + football-data override)
+- [x] API integration tests (166 tests)
 - [x] football-data seed + sync
 - [x] Windows `scripts/Test-LocalSite.ps1`
 - [x] SVG team flags

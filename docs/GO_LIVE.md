@@ -77,7 +77,8 @@ Backups: [DATABASE_BACKUP.md](./DATABASE_BACKUP.md) · `npm run db:backup`
 ### Ops
 
 - [ ] Admin → mapping diagnostics (72/72 group if token set)
-- [ ] Full football-data sync once
+- [ ] Group kickoff dates correct — e.g. Mexico vs South Africa **11 Jun 20:00 BST**; England vs Croatia **17 Jun** (not staggered to 22 Jun for Group L)
+- [ ] Full football-data sync once (Admin → **Import kickoffs** if production DB has stale dates)
 - [ ] `curl -s http://127.0.0.1:8787/api/health`
 
 ---

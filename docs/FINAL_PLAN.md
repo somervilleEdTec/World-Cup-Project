@@ -135,10 +135,13 @@ Two states:
 
 ## football-data.org Integration
 
-- Poll fixtures/results on quota-safe schedule.
+- Poll fixtures/results on quota-safe schedule (kickoffs every 6 hours, results every 2 minutes).
+- Static group-stage kickoffs use the official FIFA UTC schedule (`src/data/groupStageKickoffs.ts`); production DB overrides via sync when mapped.
+- football-data mapping scopes team pairs by provider group code (`GROUP_A` → `A`) where available.
 - Update KO availability as teams qualify.
 - Recalculate leaderboard after results finalize.
 - Manual admin override always available.
+- Regenerate kickoff map: `FOOTBALL_DATA_TOKEN=... npx tsx scripts/generate-group-kickoffs.ts`
 
 ## Acceptance Criteria
 
