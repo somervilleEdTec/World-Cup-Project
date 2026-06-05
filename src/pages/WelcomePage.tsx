@@ -52,24 +52,18 @@ export function WelcomePage() {
         <h3>Knockout match points</h3>
         <ul>
           <li>
-            <strong>Correct advancing team:</strong> +2 points (base). You must pick the team that
-            goes through — after 90 minutes if there is a winner, or via your &quot;team to
-            progress&quot; pick on a draw (extra time / penalties).
+            <strong>Correct advancing team:</strong> +2 points. You must pick a team to advance if
+            FT score is a draw.
           </li>
           <li>
-            <strong>Exact score bonus:</strong> +4 additional points (base) when your predicted{' '}
-            <strong>90-minute scoreline</strong> matches the official result. Extra time and
-            penalty-shootout goals are <strong>not</strong> included in this bonus.
+            <strong>Exact score bonus:</strong> +4 additional points when your predicted 90-minute
+            scoreline matches the official result. Extra time and penalty-shootout goals are not
+            included in this bonus.
           </li>
           <li>Quarter-finals: 1.5× match points</li>
           <li>Semi-finals: 2× match points</li>
           <li>Final and third-place play-off: 3× match points</li>
         </ul>
-        <p>
-          Example: official result 1-1 after 90 minutes with Team A advancing on penalties — result
-          points if you picked Team A to progress; exact bonus only if you predicted 1-1 (not the
-          post-90 score if it differed).
-        </p>
       </article>
 
       <article className="card">
