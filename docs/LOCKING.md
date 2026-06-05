@@ -1,6 +1,6 @@
 # Prediction locking — specification
 
-> **Last updated:** 2026-06-03 (Debug → `main` sync)  
+> **Last updated:** 2026-06-05 (KO fixture sync mapping, per-fixture unlock)  
 > **FINAL_PLAN:** [FINAL_PLAN.md](./FINAL_PLAN.md) (owner-owned)  
 > **Code:** `src/lib/pickLocks.ts`, `src/server/services/predictions.ts`, `src/lib/comparisonVisibility.ts`, `src/server/jobs.ts`
 
@@ -30,7 +30,7 @@ Saves use **committed** picks only (UI auto-saves as `committed`). Draft rows ar
 | **15 min before KO kickoff** | Per-fixture KO lock | That KO fixture for everyone | Others’ KO picks visible from that lock time |
 | **KO official result** | — | That fixture locked even before kickoff (sync/seed edge case) | Still kickoff-based for visibility |
 | **72 group picks** | Completeness before KO | Blocks KO **saves** only until global lock | — |
-| **KO fixture confirmed** | Real qualifiers | Blocks KO save until both teams known | — |
+| **KO fixture confirmed** | Real qualifiers | Blocks KO save until both teams known from **official** group or KO results (not user predictions). R32 group-fed slots unlock when feeding groups finish; third-place R32 slots need all 12 groups; R16+ unlock when feeder KO matches have FT results. | — |
 
 ---
 
@@ -75,6 +75,7 @@ See [KO_ENVIRONMENT.md](./KO_ENVIRONMENT.md) (`seed:before-final` for final-pick
 | `src/__tests__/pickLocks.test.ts` | Global lock, results, unlock |
 | `src/__tests__/comparisonVisibility.test.ts` | Group / KO visibility |
 | `src/__tests__/lockingPolicy.test.ts` | Policy assertions vs this doc |
+| `src/__tests__/knockoutFixtureAvailability.test.ts` | Per-fixture KO unlock, API mapping with stored results |
 | `src/server/__tests__/api.integration.test.ts` | Lock/unlock API, 72 gate, global lock |
 
 ---

@@ -1,6 +1,6 @@
 # FINAL_PLAN compliance checklist
 
-Verified against [FINAL_PLAN.md](./FINAL_PLAN.md). **Last reviewed:** 2026-06-03 (Debug — per-group lock, results lock). See [LOCKING.md](./LOCKING.md).
+Verified against [FINAL_PLAN.md](./FINAL_PLAN.md). **Last reviewed:** 2026-06-05 (KO scoring, fixture sync mapping). See [LOCKING.md](./LOCKING.md).
 
 > **Note:** UI no longer uses a draft/commit panel. Match picks are written **committed** on save; tournament picks use **bonus_committed**. See [UI_HANDOVER.md](./UI_HANDOVER.md) for current behaviour.
 
@@ -9,6 +9,8 @@ Verified against [FINAL_PLAN.md](./FINAL_PLAN.md). **Last reviewed:** 2026-06-03
 | Group + tournament lock at first kickoff | Done | `pickLocks.ts`, `runAutoLocks`, server rejects writes |
 | Each KO fixture locks at its kickoff | Done | `assertMatchEditable` per fixture kickoff |
 | Committed picks count at lock | Done | Scoring/leaderboard use `state = 'committed'`; UI saves committed directly |
+| Group match scoring (+2 W/D/L, +4 exact) | Done | `matchScoring.ts`, `computeScore` |
+| Knockout match scoring (+2 advancer, +4 FT exact) | Done | `matchScoring.ts` — no group W/D/L fallback in KO |
 | +1 exact group-position scoring | Done | `computeScore`; only when all 6 group results exist |
 | Tournament bonus scoring | Done | `bonus_committed` in `computeScore` |
 | Comparison / leaderboard use committed only | Done | SQL `state = 'committed'` |
@@ -18,8 +20,9 @@ Verified against [FINAL_PLAN.md](./FINAL_PLAN.md). **Last reviewed:** 2026-06-03
 | All 72 group picks before KO saves | Done | `assertAllGroupPicksCommitted` in `saveDraftPick` for KO |
 | Tournament picks standalone | Done | `setBonusDraft` → `bonus_committed`; no group gate |
 | Knockout round multipliers (QF/SF/Final) | Done | `knockoutStageMultiplier.ts`, `matchScoring.ts` |
-| Knockout only when officially confirmed | Done | `knockoutFixtureAvailability.ts` |
-| football-data sync + manual override | Done | `sync.ts`, admin routes |
+| Knockout only when officially confirmed | Done | `knockoutFixtureAvailability.ts` — per feeder group/KO timing |
+| football-data sync + manual override | Done | `sync.ts`, admin routes; 90-min `fullTime` scores |
+| KO API mapping from stored results | Done | `matchMapping.ts`, `sync.ts`, `fixtureSync.ts` pass `actuals` |
 | Mapping diagnostics | Done | Admin API + `npm run diagnose:mappings` |
 | Tie-breaker earliest commit | Done | `leaderboard.ts` sorts by `committed_at` |
 
@@ -33,6 +36,6 @@ Verified against [FINAL_PLAN.md](./FINAL_PLAN.md). **Last reviewed:** 2026-06-03
 - **Comparison — knockout:** others’ predictions hidden until fixture kickoff (not visible pre-kickoff).
 - User-facing label **prediction**; API/DB still use `committed` state naming.
 
-**Tests:** 71 tests (`npm test`) — includes `lockingPolicy.test.ts`, lock/unlock integration tests.
+**Tests:** 121 tests (`npm test`) — includes `matchScoring.test.ts`, `knockoutFixtureAvailability.test.ts`, lock/unlock integration tests.
 
 **Deferred (P3):** OAuth, PWA, PDF export, E2E tests, production CORS hardening.

@@ -22,10 +22,16 @@
 
 ### Knockout Stage
 
+- Knockout phase begins at the **Round of 32** (R32) and includes R16, QF, SF, Final, and third-place play-off.
 - Knockout fixtures appear as real-world qualifiers are confirmed.
+- **Fixture confirmation:** A fixture unlocks for prediction once **both teams are known from official results**:
+  - **R32 (group-fed slots):** when every feeding group has all six official results (e.g. `r32-1` after groups A and B finish).
+  - **R32 (third-place slots):** when all 12 groups are complete (third-place mapping needs full group stage).
+  - **R16 onward:** when both feeder knockout matches have full-time official results and winners are known.
 - Users predict each knockout fixture before that fixture’s kickoff.
 - **Rolling lock per fixture:** each KO match auto-locks at its own kickoff.
 - Future KO fixtures remain editable until their own kickoff.
+- **Results sync:** football-data.org 90-minute scores sync every 2 minutes; kickoffs every 6 hours. API mapping uses stored official results so knockout fixtures map as soon as the bracket resolves teams.
 
 ### Preselected Tournament Outcome Picks (during group-stage flow)
 

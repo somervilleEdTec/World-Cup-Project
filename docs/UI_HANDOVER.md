@@ -55,7 +55,7 @@ Styling: **`src/styles/app.css` only** (no Tailwind).
 
 ## 4. Intentional behaviour (do not revert without owner)
 
-1. **Knockout tab** — only fixtures with **both teams** from official `results` ([knockoutFixtureAvailability.ts](../src/lib/knockoutFixtureAvailability.ts)).
+1. **Knockout tab** — only fixtures with **both teams** from official `results` ([knockoutFixtureAvailability.ts](../src/lib/knockoutFixtureAvailability.ts)). R32 group-fed slots unlock when feeding groups finish (all six results each); R16+ unlock when feeder KO matches have FT results. Third-place R32 slots need all 12 groups complete.
 2. **72 group picks** — server gate for knockout **saves** ([pickLocks.ts](../src/lib/pickLocks.ts)); tournament picks are **not** gated.
 3. **SVG flags** — not emoji; custom `TeamSelect` (not native `<option>` images).
 4. **Lock / Unlock group** — `accepted_groups` in DB; unlock disabled when group has official results ([LOCKING.md](./LOCKING.md)).

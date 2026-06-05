@@ -1,6 +1,6 @@
 # Agent Handover — World Cup Boys
 
-**Last updated:** 2026-06-05  
+**Last updated:** 2026-06-05
 **Repository:** https://github.com/somervilleEdTec/World-Cup-Project  
 **Branches:** **`main`** (live deploy) · **`Debug`** (PC only) — [BRANCHING.md](./BRANCHING.md)  
 **Live:** https://worldcup.dosums.uk — automated deploy active — [DEPLOY_CONTROL_PLANE.md](./DEPLOY_CONTROL_PLANE.md) · [PRODUCTION.md](./PRODUCTION.md)  
@@ -29,12 +29,14 @@ This handover lets a new agent work without prior chat context:
 
 Friends-and-family prediction app for **FIFA World Cup 2026** (48 teams, 12 groups, 104 matches). Name/password auth, mobile-first UI, leaderboard from real results (football-data.org + admin override).
 
-### Scoring (`src/lib/tournamentLogic.ts`)
+### Scoring (`src/lib/tournamentLogic.ts`, `src/lib/matchScoring.ts`)
 
 | Rule | Points |
 |------|--------|
-| Correct W/D/L (any stage) | +2 base (×1 R32/R16, ×1.5 QF, ×2 SF, ×3 final/3rd) |
-| Exact score bonus | +4 base (scaled by same KO multiplier) |
+| Group — correct W/D/L | +2 |
+| Group — exact score bonus | +4 (total **6** when both) |
+| Knockout — correct **advancing team** | +2 base (×1 R32/R16, ×1.5 QF, ×2 SF, ×3 final/3rd) |
+| Knockout — exact **90-minute** score bonus | +4 base (same KO multiplier; ET/pens goals excluded) |
 | Exact group finishing position (per team) | +1 |
 | Preselected champion | +6 |
 | Preselected runner-up | +5 |
@@ -91,6 +93,8 @@ Historical docs: [archive/README.md](./archive/README.md)
 
 | PR / area | Summary |
 |-----------|---------|
+| #22 | Knockout scoring hardened — advancing team +2, FT exact +4; no group W/D/L fallback |
+| #23 | KO fixture API mapping uses stored official results; per-fixture unlock timing |
 | #7 | Name auth, join password, `db:purge`, My Picks tabs, auto-save, projected table |
 | #8 | Bonus save fix, table zeros, score clamp |
 | #9 | Tournament standalone, TeamSelect flags, no commit panel |
@@ -110,8 +114,8 @@ Historical docs: [archive/README.md](./archive/README.md)
 - [x] Bracket engine + **495** third-place mappings (`src/lib/bracketEngine.ts`, `scripts/generate-third-place-map.mjs`)
 - [x] Dynamic KO fixtures (`src/lib/matchResolver.ts`)
 - [x] Group standings + scoring (`src/lib/groupStandings.ts`, `src/lib/tournamentLogic.ts`)
-- [x] football-data mapping (`src/server/services/matchMapping.ts`, `sync.ts`)
-- [x] Official KO gating (`src/lib/knockoutFixtureAvailability.ts`)
+- [x] football-data mapping + KO sync with stored results (`matchMapping.ts`, `sync.ts`, `fixtureSync.ts`)
+- [x] Official KO gating — per-fixture unlock from feeder group/KO results (`knockoutFixtureAvailability.ts`)
 
 ### App & UX (current)
 
@@ -124,7 +128,7 @@ Historical docs: [archive/README.md](./archive/README.md)
 - [x] All kickoff times shown in **BST** (`src/lib/formatDateTime.ts`)
 - [x] `TeamSelect` — flags + alphabetical teams
 - [x] SVG flags (`CountryFlag`, `public/flags/4x3/`)
-- [x] **66 tests**; `npm run build`; Windows `scripts/Test-LocalSite.ps1`; `npm run seed:ko-environment`; `npm run seed:complete-teams`
+- [x] **121 tests**; `npm run build`; Windows `scripts/Test-LocalSite.ps1`; `npm run seed:ko-environment`; `npm run seed:complete-teams`
 
 ### Ops / partial
 
@@ -160,7 +164,7 @@ Jobs: src/server/jobs.ts (locks, sync poll)
 | `src/components/FixturePickCard.tsx` | Fixture UI; locked text + points |
 | `src/components/GroupStandingsTable.tsx` | Group projected/actual tables |
 | `src/lib/missingPicks.ts` | Missing predictions list for header |
-| `src/lib/matchScoring.ts` | Per-fixture points (+2 / +4) |
+| `src/lib/matchScoring.ts` | Per-fixture points — group W/D/L; KO advancing team + FT exact |
 | `src/lib/comparisonVisibility.ts` | When others’ predictions are visible |
 | `src/lib/formatDateTime.ts` | BST kickoff formatting |
 | `src/components/TeamSelect.tsx` | Flag + name picker |

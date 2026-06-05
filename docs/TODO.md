@@ -15,6 +15,8 @@
 
 - [ ] **Prediction locking audit** — [AGENT_PROMPT_LOCKING.md](./AGENT_PROMPT_LOCKING.md) · [LOCKING.md](./LOCKING.md) — when picks lock for all players vs per-user vs per-fixture
 - [x] Per-group lock/unlock + results-based edit lock (Debug, 2026-06-03)
+- [x] Knockout scoring — advancing team +2, FT exact +4 (PR #22, 2026-06-05)
+- [x] KO fixture sync mapping + per-fixture unlock from stored results (PR #23, 2026-06-05)
 - [x] API same-origin / autosave performance (Debug, 2026-06-03)
 
 ## Go-live
@@ -61,7 +63,7 @@
 
 - [x] Postgres + migrations
 - [x] Deploy docs ([PRODUCTION.md](./PRODUCTION.md), [GO_LIVE.md](./GO_LIVE.md))
-- [x] API integration tests (66 tests)
+- [x] API integration tests (121 tests)
 - [x] football-data seed + sync
 - [x] Windows `scripts/Test-LocalSite.ps1`
 - [x] SVG team flags
