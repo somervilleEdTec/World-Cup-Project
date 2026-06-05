@@ -356,6 +356,16 @@ describe('security and tamper resistance', () => {
     expect(String(res.body.error)).toMatch(/reserved/i);
   });
 
+  it('rejects spaced variants of the reserved admin username', async () => {
+    const token = await adminToken(app);
+    const res = await request(app)
+      .post('/api/admin/players')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ displayName: 'Admin Tomsom', initialPassword: 'x' });
+    expect(res.status).toBe(400);
+    expect(String(res.body.error)).toMatch(/reserved/i);
+  });
+
   it('blocks admin from prediction APIs and leaderboard inclusion', async () => {
     const token = await adminToken(app);
     const draft = await request(app)
