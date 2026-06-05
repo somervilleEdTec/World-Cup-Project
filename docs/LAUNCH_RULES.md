@@ -102,8 +102,9 @@ Public self-registration is **disabled**.
 
 | When | What |
 |------|------|
-| Every deploy | `npm run db:backup` before migrate (automatic in `deploy-production.sh`) |
+| Every deploy | `npm run db:backup` (operational + retrieval archive) before migrate; deploy **aborts** if backup or migrate would destroy predictions — [DATA_PROTECTION.md](./DATA_PROTECTION.md) |
 | Daily | Cron `npm run db:backup` — [DATABASE_BACKUP.md](./DATABASE_BACKUP.md) |
+| Retrieval archive | `prediction-archive-retrieval-only/` — never used by app; copy off VM periodically |
 | nginx | Login rate limit — `deploy/nginx/worldcup-rate-limit.conf.snippet` |
 | CORS | `VITE_API_BASE_URL=https://worldcup.dosums.uk` in production `.env` |
 

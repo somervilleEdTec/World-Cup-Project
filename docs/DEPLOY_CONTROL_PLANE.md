@@ -87,7 +87,8 @@ Success: `{"ok":true,"commit":"<full-sha-matching-main>"}`
 | Deploy lock + pause `worldcup-deploy.timer` | Prevents concurrent npm/deploy races |
 | `git pull origin main` | Match GitHub `main` |
 | `npm ci` (skipped when lockfile + deps OK) | Uses `--ignore-scripts` + `rebuild better-sqlite3` on failure |
-| `npm run migrate` | Schema |
+| `npm run db:backup` | Retrieval archive (if predictions exist) + operational backup — **deploy aborts if this fails** |
+| `npm run migrate` | Additive schema only — **blocked** if migration would destroy stored predictions ([DATA_PROTECTION.md](./DATA_PROTECTION.md)) |
 | `npm run build` | SPA → `dist/` |
 | `DEPLOY_COMMIT` in `.env` | `/api/health` reports commit |
 | `restart-production-services.sh` | systemd units (`node` + `tsx/cli.mjs`), health retries |

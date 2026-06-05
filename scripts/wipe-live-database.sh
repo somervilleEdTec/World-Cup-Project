@@ -47,8 +47,19 @@ else
   sleep 2
 fi
 
+echo "==> Retrieval-only prediction archive (never used by app — manual recovery only)"
+if ! npm run db:archive; then
+  echo ""
+  echo "ERROR: prediction archive failed — wipe aborted to protect stored predictions."
+  echo "Alternative solutions:"
+  echo "  1. Free disk space and retry."
+  echo "  2. Copy backups/ manually before proceeding."
+  echo "  3. Do not wipe — deploy code-only updates instead."
+  exit 1
+fi
+
 echo "==> Purging database (users, predictions, sessions, results, kickoffs)"
-npm run db:purge:live
+CONFIRM_DESTROY_PREDICTIONS=yes npm run db:purge:live
 
 echo "==> Ensuring bootstrap organiser admin (excluded from league table)"
 npm run db:ensure-admin

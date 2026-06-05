@@ -71,6 +71,8 @@ See **[README.md](./README.md)** for the full map. Active docs:
 |------|------|
 | [BRANCHING.md](./BRANCHING.md) | **`main`** vs **`Debug`** workflow |
 | [PRODUCTION.md](./PRODUCTION.md) | Live ops, auto-deploy, wipe DB |
+| [DATA_PROTECTION.md](./DATA_PROTECTION.md) | Prediction preservation, retrieval archive, blocked destructive ops |
+| [DATABASE_BACKUP.md](./DATABASE_BACKUP.md) | Operational + retrieval-only backups |
 | [GO_LIVE.md](./GO_LIVE.md) | Smoke tests and in-tournament ops |
 | [HANDOVER.md](./HANDOVER.md) | This file — architecture and API |
 | [KO_ENVIRONMENT.md](./KO_ENVIRONMENT.md) | Local test seeds (`Debug` only) |

@@ -197,7 +197,7 @@ TLS certificate must cover `worldcup.dosums.uk`. **All** paths (`/` and `/api`) 
 
 **Login rate limit (recommended):** see `deploy/nginx/worldcup-rate-limit.conf.snippet` — limits `/api/auth/login` to ~10 requests/minute per IP.
 
-**Database backups:** [DATABASE_BACKUP.md](./DATABASE_BACKUP.md) — `npm run db:backup`; runs automatically before each deploy.
+**Database backups:** [DATABASE_BACKUP.md](./DATABASE_BACKUP.md) — `npm run db:backup`; runs automatically before each deploy. **Data protection:** [DATA_PROTECTION.md](./DATA_PROTECTION.md) — deploy aborts if predictions would be destroyed.
 
 ---
 
@@ -205,7 +205,7 @@ TLS certificate must cover `worldcup.dosums.uk`. **All** paths (`/` and `/api`) 
 
 **Before the real tournament:** follow **[LAUNCH_RULES.md](./LAUNCH_RULES.md)** — this wipe is **required once** before inviting players. The organiser admin is recreated automatically and is **excluded from the league table**.
 
-**Warning:** Removes **all users**, predictions, sessions, and stored results. Schema is recreated empty; bootstrap admin is re-added via `npm run db:ensure-admin`. After restart, `npm run jobs` / server startup may **re-import kickoffs and finished scores** from football-data.org (expected on production).
+**Warning:** Removes **all users**, predictions, sessions, and stored results. A retrieval archive is written first (`npm run db:archive`); if that fails, the wipe **aborts**. Requires explicit confirmation flags when predictions exist — see [DATA_PROTECTION.md](./DATA_PROTECTION.md).
 
 **Preferred (GitHub):** Actions → **Wipe live database (manual)** → Run workflow → set input `confirm` to **`WIPE_LIVE_DATABASE`**. Uses the same deploy SSH secrets; pulls `main`, runs `scripts/wipe-live-database.sh`, verifies row counts, restarts systemd.
 
@@ -221,8 +221,8 @@ Manual steps equivalent to the script:
 
 ```bash
 sudo systemctl stop worldcup worldcup-jobs 2>/dev/null || true
-npm run db:purge:live
-# equivalent: CONFIRM_LIVE_DB_PURGE=yes npm run db:purge
+npm run db:archive
+CONFIRM_LIVE_DB_PURGE=yes CONFIRM_DESTROY_PREDICTIONS=yes npm run db:purge:live
 sudo systemctl start worldcup-jobs worldcup 2>/dev/null || true
 ```
 

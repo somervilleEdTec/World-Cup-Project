@@ -3,6 +3,14 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { gzipSync } from 'node:zlib';
 import { spawnSync } from 'node:child_process';
+import { closeDatabase, getDb, initDatabase } from '../src/server/database/index.js';
+import {
+  formatBlockedActionMessage,
+  hasStoredPredictions,
+  purgeBlockedAlternatives,
+  readProtectedRowCounts
+} from '../src/lib/dataProtection.js';
+import { writePredictionArchive } from '../src/lib/predictionArchive.js';
 
 const BACKUP_DIR = process.env.BACKUP_DIR?.trim() || 'backups';
 const KEEP_COUNT = Number(process.env.BACKUP_KEEP_COUNT ?? 14);
@@ -59,10 +67,32 @@ function backupPostgres(): string {
   return dest;
 }
 
-function main(): void {
+async function main(): Promise<void> {
+  const hasDatabase =
+    Boolean(process.env.DATABASE_URL?.trim()) ||
+    fs.existsSync(path.resolve(process.env.SQLITE_PATH?.trim() || 'data.db'));
+
+  if (hasDatabase) {
+    await initDatabase({ skipMigrations: true });
+    const db = getDb();
+    const counts = await readProtectedRowCounts(db);
+    if (hasStoredPredictions(counts)) {
+      const manifest = writePredictionArchive({ counts, dialect: db.dialect });
+      // eslint-disable-next-line no-console
+      console.log(`Retrieval-only prediction archive written: ${manifest.archivePath}`);
+    }
+    await closeDatabase();
+  }
+
   const dest = process.env.DATABASE_URL?.trim() ? backupPostgres() : backupSqlite();
   // eslint-disable-next-line no-console
-  console.log(`Database backup written: ${dest}`);
+  console.log(`Operational database backup written: ${dest}`);
 }
 
-main();
+main().catch((error) => {
+  // eslint-disable-next-line no-console
+  console.error(error);
+  process.exit(1);
+});
+
+export { main as runDatabaseBackup };

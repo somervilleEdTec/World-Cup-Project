@@ -14,6 +14,8 @@
 | [BRANCHING.md](./BRANCHING.md) | Merge Debug → main; what deploys live |
 | [DEPLOY_CONTROL_PLANE.md](./DEPLOY_CONTROL_PLANE.md) | **Automated deploy** — merge to `main`, CI, VM pull timer, verify health |
 | [PRODUCTION.md](./PRODUCTION.md) | Live URL, VM, `.env`, auto-deploy, systemd, wipe DB |
+| [DATA_PROTECTION.md](./DATA_PROTECTION.md) | **Prediction preservation** — blocked destructive ops, retrieval archive |
+| [DATABASE_BACKUP.md](./DATABASE_BACKUP.md) | Operational backups + retrieval-only archive |
 | [LAUNCH_RULES.md](./LAUNCH_RULES.md) | **Mandatory** live launch: wipe DB, admin-only organiser |
 | [GO_LIVE.md](./GO_LIVE.md) | Smoke tests and in-tournament ops |
 

@@ -160,14 +160,27 @@ fi
 echo "OK: tsx runtime ready"
 
 if [[ -f "${SQLITE_PATH:-data.db}" ]] || [[ -n "${DATABASE_URL:-}" ]]; then
-  echo "==> database backup (before migrate)"
-  npm run db:backup || echo "WARNING: backup failed — continuing deploy"
+  echo "==> retrieval-only prediction archive + operational backup (before migrate)"
+  if ! npm run db:backup; then
+    echo ""
+    echo "ERROR: database backup/archive failed — deploy aborted to protect stored predictions."
+    echo "Alternative solutions:"
+    echo "  1. Free disk space on the VM and re-run deploy."
+    echo "  2. Run manually on VM: npm run db:archive && npm run db:backup"
+    echo "  3. Fix permissions on prediction-archive-retrieval-only/ and backups/"
+    exit 1
+  fi
 else
   echo "==> skip database backup (no database file yet)"
 fi
 
-echo "==> migrate"
-npm run migrate
+echo "==> migrate (blocked automatically if migration would destroy predictions)"
+if ! npm run migrate; then
+  echo ""
+  echo "ERROR: migrate failed or was blocked — deploy aborted to protect stored predictions."
+  echo "See docs/DATA_PROTECTION.md for alternative solutions."
+  exit 1
+fi
 
 echo "==> build"
 if [[ -z "${VITE_API_BASE_URL:-}" ]]; then

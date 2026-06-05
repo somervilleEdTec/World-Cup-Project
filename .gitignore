@@ -8,6 +8,7 @@ data.db
 data.db-shm
 data.db-wal
 backups/
+prediction-archive-retrieval-only/
 .deploy-deps-hash
 *.db-journal
 coverage
