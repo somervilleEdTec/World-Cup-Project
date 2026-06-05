@@ -165,6 +165,44 @@ sudo systemctl enable worldcup worldcup-jobs nginx
 
 ---
 
+## Automated monitoring (no user input)
+
+Two layers recover outages without manual SSH:
+
+### 1. On-VM monitor (primary — ~4 min to recover)
+
+`worldcup-monitor.timer` runs **`scripts/monitor-live-site.sh` every 2 minutes**:
+
+1. `curl https://worldcup.dosums.uk/api/health`
+2. After **2 consecutive failures**, run **`scripts/recover-live-connectivity.sh`** (restart `cloudflared` first; full service restart if needed)
+3. **15-minute cooldown** between recovery attempts to avoid restart loops
+
+Installed automatically on each deploy (`ensure-monitor-timer.sh`). One-time on existing VM:
+
+```bash
+cd /home/ubuntu/World-Cup-Project
+git pull origin main
+bash scripts/ensure-monitor-timer.sh
+```
+
+**Logs:** `journalctl -u worldcup-monitor.service -n 50` (after a failed check triggers recovery)
+
+### 2. GitHub Actions monitor (backup — every 5 min)
+
+Workflow **[monitor-production.yml](../.github/workflows/monitor-production.yml)**:
+
+- Cron: every **5 minutes**
+- If public health fails → SSH → `recover-live-connectivity.sh`
+- Manual run: **Actions → Monitor production (auto-recover) → Run workflow**
+
+Uses the same deploy secrets as **Deploy main**. Does not replace the VM timer (faster, works if GitHub SSH is blocked intermittently).
+
+### Optional: external alerting
+
+For email/Slack when automation fails, add a free **UptimeRobot** or **Better Stack** check on `https://worldcup.dosums.uk/api/health` (alert only — recovery is already automated on the VM).
+
+---
+
 ## Related
 
 - [DEPLOY_CONTROL_PLANE.md](./DEPLOY_CONTROL_PLANE.md) — day-to-day releases  

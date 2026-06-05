@@ -1,0 +1,14 @@
+[Unit]
+Description=World Cup Boys live site health check and auto-recovery
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=ubuntu
+WorkingDirectory=/home/ubuntu/World-Cup-Project
+ExecStart=/home/ubuntu/World-Cup-Project/scripts/monitor-live-site.sh
+Nice=10
+
+[Install]
+WantedBy=multi-user.target

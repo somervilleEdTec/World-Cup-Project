@@ -45,6 +45,9 @@ bash scripts/ensure-production-nginx.sh
 echo "==> Pull-based deploy timer (when GitHub SSH to port 22 is blocked)"
 bash scripts/ensure-poll-deploy-timer.sh
 
+echo "==> Live site monitor + auto-recovery (every 2 min on VM)"
+bash scripts/ensure-monitor-timer.sh
+
 echo ""
 echo "Bootstrap complete. Next steps:"
 echo "  1. Create .env on this host (never commit secrets)"

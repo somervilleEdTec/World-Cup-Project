@@ -12,4 +12,5 @@ ubuntu ALL=(root) NOPASSWD: /usr/bin/tee
 ubuntu ALL=(root) NOPASSWD: /usr/bin/ln
 ubuntu ALL=(root) NOPASSWD: /usr/bin/rm
 ubuntu ALL=(root) NOPASSWD: /usr/bin/mkdir
+ubuntu ALL=(root) NOPASSWD: /bin/chown
 ubuntu ALL=(root) NOPASSWD: /usr/bin/openssl

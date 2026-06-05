@@ -1,0 +1,93 @@
+# Monitor live site and auto-recover on outage (Cloudflare 530/1033, Node down).
+# Runs every 5 minutes from GitHub — backup when VM monitor timer is not installed.
+# See docs/OUTAGE_RECOVERY.md
+
+name: Monitor production (auto-recover)
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  LIVE_SITE_URL: https://worldcup.dosums.uk
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: production-monitor
+  cancel-in-progress: false
+
+jobs:
+  check-and-recover:
+    name: Check health and recover if needed
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Check public health
+        id: health
+        run: |
+          set -euo pipefail
+          url="${LIVE_SITE_URL}/api/health"
+          http_code="$(curl -s -o /tmp/monitor-health.json -w '%{http_code}' --max-time 20 "${url}" 2>/dev/null || echo 000)"
+          body="$(cat /tmp/monitor-health.json 2>/dev/null || true)"
+          echo "HTTP ${http_code}: ${body}"
+          if [ "${http_code}" = "200" ] && printf '%s' "${body}" | grep -q '"ok":true'; then
+            echo "healthy=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "healthy=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Site healthy — no action
+        if: steps.health.outputs.healthy == 'true'
+        run: echo "OK: ${LIVE_SITE_URL} is healthy"
+
+      - name: Check deploy secrets
+        if: steps.health.outputs.healthy != 'true'
+        run: |
+          missing=0
+          check() { if [ -z "$1" ]; then echo "  MISSING: $2"; missing=1; else echo "  OK: $2"; fi; }
+          check "${{ secrets.DEPLOY_HOST }}" "DEPLOY_HOST"
+          check "${{ secrets.DEPLOY_USER }}" "DEPLOY_USER"
+          check "${{ secrets.DEPLOY_SSH_KEY }}" "DEPLOY_SSH_KEY"
+          check "${{ secrets.DEPLOY_PATH }}" "DEPLOY_PATH"
+          if [ "${missing}" -ne 0 ]; then exit 1; fi
+
+      - uses: actions/checkout@v4
+        if: steps.health.outputs.healthy != 'true'
+
+      - name: Configure SSH
+        if: steps.health.outputs.healthy != 'true'
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
+        run: bash scripts/ci-ssh-setup.sh
+
+      - name: Recover over SSH
+        if: steps.health.outputs.healthy != 'true'
+        env:
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+        run: |
+          set -euo pipefail
+          echo "Public health failed — running recover-live-connectivity.sh on VM"
+          bash scripts/ci-ssh-exec.sh "cd '${DEPLOY_PATH}' && git pull --ff-only origin main && bash scripts/recover-live-connectivity.sh"
+
+      - name: Verify recovery
+        if: steps.health.outputs.healthy != 'true'
+        run: |
+          set -euo pipefail
+          url="${LIVE_SITE_URL}/api/health"
+          for attempt in 1 2 3 4 5 6; do
+            sleep 10
+            http_code="$(curl -s -o /tmp/recover-health.json -w '%{http_code}' --max-time 20 "${url}" 2>/dev/null || echo 000)"
+            body="$(cat /tmp/recover-health.json 2>/dev/null || true)"
+            echo "Verify attempt ${attempt}: HTTP ${http_code} ${body}"
+            if [ "${http_code}" = "200" ] && printf '%s' "${body}" | grep -q '"ok":true'; then
+              echo "OK: site recovered"
+              exit 0
+            fi
+          done
+          echo "ERROR: automated recovery did not restore public health within ~1 min"
+          echo "See docs/OUTAGE_RECOVERY.md — manual intervention may be required"
+          exit 1

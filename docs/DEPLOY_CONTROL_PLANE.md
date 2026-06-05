@@ -18,8 +18,8 @@ You / Cursor Agent → work on Debug → merge to main → git push origin main
         │     2. deploy  — SSH deploy (best-effort; optional if port 22 blocked)
         │     3. verify  — public /api/health must match github.sha (~30 min max)
         │
-        └─► Oracle VM: worldcup-deploy.timer (every 3 min)
-              poll-deploy-from-github.sh → deploy-production.sh
+        └─► Oracle VM: worldcup-deploy.timer (every 3 min) — pull new commits
+              worldcup-monitor.timer (every 2 min) — auto-recover outages
         │
         ▼
 Cloudflare → cloudflared (outbound tunnel) → Node :8787
@@ -97,6 +97,7 @@ Success: `{"ok":true,"commit":"<full-sha-matching-main>"}`
 | `npm run migrate` | Additive schema only — **blocked** if migration would destroy stored predictions ([DATA_PROTECTION.md](./DATA_PROTECTION.md)) |
 | `npm run build` | SPA → `dist/` |
 | `DEPLOY_COMMIT` in `.env` | `/api/health` reports commit |
+| `ensure-monitor-timer.sh` | Health check every 2 min + auto-recovery on outage |
 | `restart-production-services.sh` | `worldcup` + `worldcup-jobs`, nginx ensure, **cloudflared restart** |
 | `verify-production-deploy.sh` | Fails if Node/tunnel/nginx/commit/dist checks fail |
 | Resume `worldcup-deploy.timer` | Pull deploy enabled again |
