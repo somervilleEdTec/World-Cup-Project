@@ -47,9 +47,10 @@
 
 - [x] Bracket engine + third-place mappings
 - [x] football-data match ID mapping
-- [x] Scoring (group position, tournament bonus)
-- [x] Dynamic KO fixtures from results
+- [x] Scoring (group W/D/L; KO advancing team + FT exact; group position, tournament bonus)
+- [x] Dynamic KO fixtures from results — per-feeder-group / per-feeder-KO unlock
 - [x] Knockout only when officially confirmed
+- [x] KO API mapping uses stored official results during sync
 
 ## P1 — Product
 
