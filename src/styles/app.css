@@ -3,6 +3,13 @@
   color: #10213a;
   background: #f4f7fb;
   line-height: 1.45;
+  --mobile-nav-height: 9.5rem;
+}
+
+@media (min-width: 520px) {
+  :root {
+    --mobile-nav-height: 4.75rem;
+  }
 }
 
 * {
@@ -20,17 +27,17 @@ a {
 
 .app-shell {
   min-height: 100dvh;
-  display: grid;
-  grid-template-rows: auto 1fr auto;
+  display: flex;
+  flex-direction: column;
 }
 
 .app-main {
+  flex: 1;
   padding: 1rem;
+  padding-bottom: calc(var(--mobile-nav-height) + 1rem + env(safe-area-inset-bottom, 0px));
   max-width: 1100px;
   width: 100%;
   margin: 0 auto;
-  min-height: 0;
-  overflow-y: auto;
 }
 
 .app-header {
@@ -67,6 +74,11 @@ button {
 }
 
 .mobile-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
   background: #0f2f56;
   padding: 0.65rem 0.5rem calc(0.65rem + env(safe-area-inset-bottom, 0px));
   display: grid;
@@ -328,7 +340,7 @@ td {
   }
 
   .app-main {
-    overflow-y: visible;
+    padding-bottom: 1rem;
   }
 }
 

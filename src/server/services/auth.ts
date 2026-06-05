@@ -50,6 +50,18 @@ function rowToUser(row: UserRow): AuthUser {
   };
 }
 
+export function assertPlayerCanPredict(user: AuthUser): void {
+  if (user.isAdmin) {
+    throw new Error('Admin accounts cannot submit predictions.');
+  }
+}
+
+async function purgeAdminPredictionData(userId: string): Promise<void> {
+  const db = getDb();
+  await db.run(`DELETE FROM predictions WHERE user_id = ?`, [userId]);
+  await db.run(`DELETE FROM prediction_meta WHERE user_id = ?`, [userId]);
+}
+
 export async function ensureBootstrapAdmin(): Promise<void> {
   const db = getDb();
   const name = normalizeName(BOOTSTRAP_ADMIN_USERNAME);
@@ -62,6 +74,7 @@ export async function ensureBootstrapAdmin(): Promise<void> {
     await db.run(`UPDATE users SET is_admin = 1, must_change_password = 0 WHERE id = ?`, [
       existing.id
     ]);
+    await purgeAdminPredictionData(existing.id);
     return;
   }
 
@@ -73,7 +86,6 @@ export async function ensureBootstrapAdmin(): Promise<void> {
      VALUES (?, ?, ?, ?, 1, 0, ?)`,
     [id, email, hashPassword(BOOTSTRAP_ADMIN_PASSWORD), name, now]
   );
-  await db.run(`INSERT INTO prediction_meta (user_id, committed_at) VALUES (?, ?)`, [id, now]);
 }
 
 export async function createPlayerAccount(

@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import { AdminRoute } from './components/AdminRoute';
 import { AppLayout } from './components/AppLayout';
 import { PasswordChangeGate } from './components/PasswordChangeGate';
+import { PlayerRoute } from './components/PlayerRoute';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { AdminPage } from './pages/AdminPage';
 import { ChangePasswordPage } from './pages/ChangePasswordPage';
@@ -33,7 +34,7 @@ export function App() {
       >
         <Route element={<AppLayout />}>
           <Route index element={<WelcomePage />} />
-          <Route path="my-picks" element={<MyPicksPage />} />
+          <Route path="my-picks" element={<PlayerRoute><MyPicksPage /></PlayerRoute>} />
           <Route path="league-table" element={<LeagueTablePage />} />
           <Route path="comparison" element={<ComparisonPage />} />
           <Route

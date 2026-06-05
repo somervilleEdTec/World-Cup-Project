@@ -356,6 +356,28 @@ describe('security and tamper resistance', () => {
     expect(String(res.body.error)).toMatch(/reserved/i);
   });
 
+  it('blocks admin from prediction APIs and leaderboard inclusion', async () => {
+    const token = await adminToken(app);
+    const draft = await request(app)
+      .post('/api/predictions/draft')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ matchId: 'g-a-1', homeScore: 1, awayScore: 0 });
+    expect(draft.status).toBe(403);
+    expect(String(draft.body.error)).toMatch(/Admin accounts cannot/i);
+
+    const state = await request(app)
+      .get('/api/predictions/state')
+      .set('Authorization', `Bearer ${token}`);
+    expect(state.status).toBe(403);
+
+    const board = await request(app)
+      .get('/api/leaderboard')
+      .set('Authorization', `Bearer ${token}`);
+    expect(board.status).toBe(200);
+    const names = board.body.entries.map((entry: { name: string }) => entry.name);
+    expect(names).not.toContain('AdminTomsom');
+  });
+
   it('excludes admin from comparison player list', async () => {
     await createPlayer(app, 'CompareA');
     const playerToken = await loginPlayerReady(app, 'CompareA');

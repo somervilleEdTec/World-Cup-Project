@@ -363,7 +363,12 @@ async function applyDefaultGroupPicksForUser(userId: string, nowIso: string) {
 export async function runAutoLocks(nowIso: string) {
   const db = getDb();
   const lockGroup = shouldLockGroup(nowIso);
-  const userRows = await db.all<{ user_id: string }>(`SELECT user_id FROM prediction_meta`);
+  const userRows = await db.all<{ user_id: string }>(
+    `SELECT pm.user_id AS user_id
+     FROM prediction_meta pm
+     JOIN users u ON u.id = pm.user_id
+     WHERE u.is_admin = 0`
+  );
   if (lockGroup) {
     for (const row of userRows) {
       await applyDefaultGroupPicksForUser(row.user_id, nowIso);

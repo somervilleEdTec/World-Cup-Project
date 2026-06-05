@@ -7,7 +7,8 @@ import {
   listPlayers,
   login,
   requireAdmin,
-  requireUser
+  requireUser,
+  assertPlayerCanPredict
 } from './services/auth';
 import {
   commitDraft,
@@ -81,6 +82,15 @@ function apiErrorMessage(error: unknown, fallback: string): string {
   return error instanceof Error ? error.message : fallback;
 }
 
+function predictionRouteFailureStatus(error: unknown): number {
+  if (error instanceof Error) {
+    if (error.message === 'Unauthorized' || error.message === 'Missing auth token') return 401;
+    if (error.message === 'PASSWORD_CHANGE_REQUIRED') return 403;
+    if (error.message.includes('Admin accounts cannot')) return 403;
+  }
+  return 400;
+}
+
 export function createApp(): Express {
   const app = express();
   configureCors(app);
@@ -136,10 +146,11 @@ export function createApp(): Express {
   app.get('/api/predictions/state', async (req: Request, res: Response) => {
     try {
       const user = await requireUser(authToken(req));
+      assertPlayerCanPredict(user);
       res.json(await getUserPredictionState(user.id));
     } catch (error) {
       res
-        .status(authFailureStatus(error))
+        .status(predictionRouteFailureStatus(error))
         .json({ error: error instanceof Error ? error.message : 'Unauthorized' });
     }
   });
@@ -147,6 +158,7 @@ export function createApp(): Express {
   app.post('/api/predictions/draft', async (req: Request, res: Response) => {
     try {
       const user = await requireUser(authToken(req));
+      assertPlayerCanPredict(user);
       const schema = z.object({
         matchId: z.string(),
         homeScore: z.number().int().min(0).max(20),
@@ -158,18 +170,21 @@ export function createApp(): Express {
     } catch (error) {
       const status =
         error instanceof Error && error.message === 'PASSWORD_CHANGE_REQUIRED' ? 403 : 400;
-      res.status(status).json({ error: apiErrorMessage(error, 'Invalid draft') });
+      res
+        .status(predictionRouteFailureStatus(error))
+        .json({ error: apiErrorMessage(error, 'Invalid draft') });
     }
   });
 
   app.post('/api/predictions/review/:matchId', async (req: Request, res: Response) => {
     try {
       const user = await requireUser(authToken(req));
+      assertPlayerCanPredict(user);
       await markReviewed(user.id, String(req.params.matchId));
       res.json({ ok: true });
     } catch (error) {
       res
-        .status(authFailureStatus(error))
+        .status(predictionRouteFailureStatus(error))
         .json({ error: error instanceof Error ? error.message : 'Review failed' });
     }
   });
@@ -177,13 +192,12 @@ export function createApp(): Express {
   app.post('/api/predictions/groups/:groupId/lock', async (req: Request, res: Response) => {
     try {
       const user = await requireUser(authToken(req));
+      assertPlayerCanPredict(user);
       await setGroupAccepted(user.id, String(req.params.groupId).toUpperCase(), true);
       res.json({ ok: true });
     } catch (error) {
-      const status =
-        error instanceof Error && error.message === 'PASSWORD_CHANGE_REQUIRED' ? 403 : 400;
       res
-        .status(status)
+        .status(predictionRouteFailureStatus(error))
         .json({ error: error instanceof Error ? error.message : 'Group lock failed' });
     }
   });
@@ -191,13 +205,12 @@ export function createApp(): Express {
   app.post('/api/predictions/groups/:groupId/unlock', async (req: Request, res: Response) => {
     try {
       const user = await requireUser(authToken(req));
+      assertPlayerCanPredict(user);
       await unlockGroupAccepted(user.id, String(req.params.groupId).toUpperCase());
       res.json({ ok: true });
     } catch (error) {
-      const status =
-        error instanceof Error && error.message === 'PASSWORD_CHANGE_REQUIRED' ? 403 : 400;
       res
-        .status(status)
+        .status(predictionRouteFailureStatus(error))
         .json({ error: error instanceof Error ? error.message : 'Group unlock failed' });
     }
   });
@@ -205,15 +218,14 @@ export function createApp(): Express {
   app.post('/api/predictions/groups/:groupId/accept', async (req: Request, res: Response) => {
     try {
       const user = await requireUser(authToken(req));
+      assertPlayerCanPredict(user);
       const schema = z.object({ accepted: z.literal(true) });
       schema.parse(req.body);
       await setGroupAccepted(user.id, String(req.params.groupId).toUpperCase(), true);
       res.json({ ok: true });
     } catch (error) {
-      const status =
-        error instanceof Error && error.message === 'PASSWORD_CHANGE_REQUIRED' ? 403 : 400;
       res
-        .status(status)
+        .status(predictionRouteFailureStatus(error))
         .json({ error: error instanceof Error ? error.message : 'Group accept failed' });
     }
   });
@@ -221,6 +233,7 @@ export function createApp(): Express {
   app.post('/api/predictions/bonus', async (req: Request, res: Response) => {
     try {
       const user = await requireUser(authToken(req));
+      assertPlayerCanPredict(user);
       const schema = z.object({
         winnerTeamId: z.string(),
         runnerUpTeamId: z.string(),
@@ -230,10 +243,8 @@ export function createApp(): Express {
       await setBonusDraft(user.id, schema.parse(req.body));
       res.json({ ok: true });
     } catch (error) {
-      const status =
-        error instanceof Error && error.message === 'PASSWORD_CHANGE_REQUIRED' ? 403 : 400;
       res
-        .status(status)
+        .status(predictionRouteFailureStatus(error))
         .json({ error: error instanceof Error ? error.message : 'Invalid bonus predictions' });
     }
   });
@@ -241,12 +252,13 @@ export function createApp(): Express {
   app.post('/api/predictions/commit', async (req: Request, res: Response) => {
     try {
       const user = await requireUser(authToken(req));
+      assertPlayerCanPredict(user);
       await commitDraft(user.id, new Date().toISOString());
       res.json({ ok: true });
     } catch (error) {
-      const status =
-        error instanceof Error && error.message === 'PASSWORD_CHANGE_REQUIRED' ? 403 : 400;
-      res.status(status).json({ error: error instanceof Error ? error.message : 'Commit failed' });
+      res
+        .status(predictionRouteFailureStatus(error))
+        .json({ error: error instanceof Error ? error.message : 'Commit failed' });
     }
   });
 
