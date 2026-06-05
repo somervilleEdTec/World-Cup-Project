@@ -6,6 +6,25 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 APP_ROOT="$(pwd)"
 
+DEPLOY_LOCK="/tmp/worldcup-deploy.lock"
+exec 200>"${DEPLOY_LOCK}"
+if ! flock -w 600 200; then
+  echo "ERROR: another deploy is already running (lock ${DEPLOY_LOCK})."
+  exit 1
+fi
+
+timer_was_active=0
+if command -v systemctl >/dev/null 2>&1 && systemctl is-active worldcup-deploy.timer >/dev/null 2>&1; then
+  timer_was_active=1
+  sudo -n systemctl stop worldcup-deploy.timer 2>/dev/null || true
+fi
+cleanup_deploy() {
+  if [[ "${timer_was_active}" -eq 1 ]]; then
+    sudo -n systemctl start worldcup-deploy.timer 2>/dev/null || true
+  fi
+}
+trap cleanup_deploy EXIT
+
 current_branch="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo unknown)"
 if [[ "${current_branch}" != "main" ]]; then
   echo "ERROR: deploy-production.sh refuses to run on branch '${current_branch}'."
@@ -88,34 +107,32 @@ run_npm_ci() {
 
 lock_hash="$(sha256sum package-lock.json | awk '{print $1}')"
 skip_ci=0
-if [[ -f node_modules/tsx/dist/cli.mjs && -f .deploy-deps-hash ]]; then
-  if [[ "$(cat .deploy-deps-hash)" == "${lock_hash}" ]]; then
-    echo "==> npm ci skipped (package-lock.json unchanged, tsx present)"
-    skip_ci=1
-  fi
-fi
-
-if [[ "${skip_ci}" -eq 1 ]]; then
-  echo "${lock_hash}" > .deploy-deps-hash
+if [[ -f node_modules/tsx/dist/cli.mjs \
+  && -f node_modules/better-sqlite3/build/Release/better_sqlite3.node \
+  && -f .deploy-deps-hash \
+  && "$(cat .deploy-deps-hash)" == "${lock_hash}" ]]; then
+  echo "==> npm ci skipped (package-lock.json unchanged, native deps OK)"
+  skip_ci=1
 fi
 
 if [[ "${skip_ci}" -eq 0 ]]; then
   echo "==> npm ci (install devDependencies — tsx/vite needed for migrate, build, server)"
   verify_native_build_prereqs
-fi
-
-if [[ "${skip_ci}" -eq 0 ]] && ! run_npm_ci; then
-  echo "==> npm ci failed — deep clean and retry"
-  rm -rf node_modules
-  rm -rf "${HOME}/.cache/node-gyp" 2>/dev/null || true
-  npm cache clean --force
-  if ! run_npm_ci; then
-    echo "ERROR: npm ci failed after clean retry."
-    echo "  On the VM run: bash scripts/repair-npm-on-server.sh"
-    echo "  Ensure: sudo apt-get install -y build-essential python3 && df -h ."
-    exit 1
+  if run_npm_ci; then
+    echo "${lock_hash}" > .deploy-deps-hash
+  else
+    echo "==> npm ci failed — deep clean and retry"
+    rm -rf node_modules
+    rm -rf "${HOME}/.cache/node-gyp" 2>/dev/null || true
+    npm cache clean --force
+    if ! run_npm_ci; then
+      echo "ERROR: npm ci failed after clean retry."
+      echo "  On the VM run: bash scripts/repair-npm-on-server.sh"
+      echo "  Ensure: sudo apt-get install -y build-essential python3 && df -h ."
+      exit 1
+    fi
+    echo "${lock_hash}" > .deploy-deps-hash
   fi
-  echo "${lock_hash}" > .deploy-deps-hash
 fi
 
 if [[ ! -f node_modules/better-sqlite3/src/better_sqlite3.cpp ]]; then

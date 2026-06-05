@@ -6,6 +6,11 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 APP_ROOT="$(pwd)"
 
+if command -v systemctl >/dev/null 2>&1 && systemctl is-active worldcup-deploy.timer >/dev/null 2>&1; then
+  echo "==> Stopping worldcup-deploy.timer during repair"
+  sudo systemctl stop worldcup-deploy.timer
+fi
+
 echo "==> Repair npm native modules @ ${APP_ROOT}"
 
 for cmd in python3 make g++ git; do
@@ -44,4 +49,11 @@ echo "==> Verify toolchain can see devDependencies"
 npx --no-install tsc --version
 npx --no-install tsx --version
 
-echo "==> repair-npm-on-server.sh finished OK — run: npm run migrate && npm run build"
+lock_hash="$(sha256sum package-lock.json | awk '{print $1}')"
+echo "${lock_hash}" > .deploy-deps-hash
+
+if command -v systemctl >/dev/null 2>&1; then
+  sudo systemctl start worldcup-deploy.timer 2>/dev/null || true
+fi
+
+echo "==> repair-npm-on-server.sh finished OK — run: npm run migrate && npm run build && bash scripts/deploy-production.sh"

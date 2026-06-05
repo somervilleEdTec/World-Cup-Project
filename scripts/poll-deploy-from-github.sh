@@ -6,13 +6,6 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 APP_ROOT="$(pwd)"
 
-lock_file="/tmp/worldcup-poll-deploy.lock"
-exec 9>"${lock_file}"
-if ! flock -n 9; then
-  echo "poll-deploy: another run in progress — skip"
-  exit 0
-fi
-
 current_branch="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo unknown)"
 if [[ "${current_branch}" != "main" ]]; then
   echo "poll-deploy: not on main (${current_branch}) — skip"
