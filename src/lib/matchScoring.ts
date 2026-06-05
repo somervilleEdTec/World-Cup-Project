@@ -28,7 +28,11 @@ export function evaluateMatchScoring(
 ): { correctResult: boolean; exactScore: boolean } {
   const exactScore = pick.homeScore === actual.homeScore && pick.awayScore === actual.awayScore;
 
-  if (isKnockoutStage(stage) && match) {
+  if (isKnockoutStage(stage)) {
+    if (!match) {
+      // Knockout base points require fixture teams; never fall back to group W/D/L.
+      return { correctResult: false, exactScore };
+    }
     const predictedAdvancer = advancingTeamId(match, pick);
     const actualAdvancer = advancingTeamId(match, actual);
     const correctResult =

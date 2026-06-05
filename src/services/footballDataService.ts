@@ -62,6 +62,7 @@ export async function fetchLatestResults(apiToken: string): Promise<FootballData
       providerId: String(match.id),
       homeName: match.homeTeam.shortName ?? match.homeTeam.name,
       awayName: match.awayTeam.shortName ?? match.awayTeam.name,
+      // fullTime is 90-minute score; winner resolves ET/pen advancer on level FT draws.
       homeScore: match.score.fullTime.home ?? 0,
       awayScore: match.score.fullTime.away ?? 0,
       progressingTeamId:

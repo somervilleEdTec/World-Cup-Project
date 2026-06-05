@@ -60,6 +60,54 @@ describe('computeMatchPoints', () => {
       )
     ).toBe(6);
   });
+
+  it('knockout base points use advancing team on different FT scorelines', () => {
+    const match = {
+      homeTeamId: 'mexico',
+      awayTeamId: 'canada'
+    };
+    expect(
+      computeMatchPoints(
+        { matchId: 'r32-1', homeScore: 1, awayScore: 0 },
+        { matchId: 'r32-1', homeScore: 2, awayScore: 0 },
+        'R32',
+        match
+      )
+    ).toBe(2);
+    expect(
+      computeMatchPoints(
+        { matchId: 'r32-1', homeScore: 1, awayScore: 0 },
+        { matchId: 'r32-1', homeScore: 0, awayScore: 1 },
+        'R32',
+        match
+      )
+    ).toBe(0);
+  });
+
+  it('knockout awards FT exact bonus even when advancer is wrong or missing', () => {
+    const match = {
+      homeTeamId: 'mexico',
+      awayTeamId: 'canada'
+    };
+    expect(
+      computeMatchPoints(
+        { matchId: 'r32-1', homeScore: 1, awayScore: 1 },
+        { matchId: 'r32-1', homeScore: 1, awayScore: 1, progressingTeamId: 'mexico' },
+        'R32',
+        match
+      )
+    ).toBe(4);
+  });
+
+  it('knockout without fixture teams awards exact FT bonus only', () => {
+    expect(
+      computeMatchPoints(
+        { matchId: 'final', homeScore: 2, awayScore: 1 },
+        { matchId: 'final', homeScore: 2, awayScore: 1 },
+        'FINAL'
+      )
+    ).toBe(12);
+  });
 });
 
 describe('classifyPickAccuracy', () => {

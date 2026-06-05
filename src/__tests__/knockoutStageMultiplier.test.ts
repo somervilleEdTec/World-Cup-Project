@@ -49,12 +49,13 @@ describe('scaled match points', () => {
 describe('computeMatchPoints with stage', () => {
   const exactPick = { matchId: 'final', homeScore: 2, awayScore: 1 };
   const exactActual = { matchId: 'final', homeScore: 2, awayScore: 1 };
+  const finalMatch = { homeTeamId: 'mexico', awayTeamId: 'canada' };
 
   it('awards 6 for group-stage exact', () => {
     expect(computeMatchPoints(exactPick, exactActual, 'GROUP')).toBe(6);
   });
 
-  it('awards 18 for final exact at 3×', () => {
-    expect(computeMatchPoints(exactPick, exactActual, 'FINAL')).toBe(18);
+  it('awards 18 for final exact at 3× when advancer matches', () => {
+    expect(computeMatchPoints(exactPick, exactActual, 'FINAL', finalMatch)).toBe(18);
   });
 });

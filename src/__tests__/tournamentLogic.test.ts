@@ -126,6 +126,32 @@ describe('tournament logic', () => {
     expect(summary.exactGroupPositions).toBe(0);
   });
 
+  it('scores knockout using FT exact bonus and advancing team base points', () => {
+    const picks = {
+      'r32-1': { matchId: 'r32-1', homeScore: 1, awayScore: 0 },
+      'r32-2': {
+        matchId: 'r32-2',
+        homeScore: 1,
+        awayScore: 1,
+        progressingTeamId: 'mexico'
+      }
+    };
+    const actuals = {
+      'r32-1': { matchId: 'r32-1', homeScore: 2, awayScore: 0 },
+      'r32-2': {
+        matchId: 'r32-2',
+        homeScore: 1,
+        awayScore: 1,
+        progressingTeamId: 'canada'
+      }
+    };
+    const summary = computeScore(picks, actuals, undefined, undefined);
+    expect(summary.correctResultPoints).toBe(2);
+    expect(summary.exactScorePoints).toBe(4);
+    expect(summary.groupPositionPoints).toBe(0);
+    expect(summary.points).toBe(6);
+  });
+
   it('scores exact group positions from official results', () => {
     const picks = {
       'g-a-1': { matchId: 'g-a-1', homeScore: 2, awayScore: 1 },
