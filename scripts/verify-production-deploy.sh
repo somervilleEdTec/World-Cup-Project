@@ -77,17 +77,21 @@ if command -v systemctl >/dev/null 2>&1; then
   done
 fi
 
-# --- nginx (Cloudflare → origin) ---
-if command -v nginx >/dev/null 2>&1; then
+# --- nginx (Cloudflare → origin) — required for public HTTPS ---
+if ! command -v nginx >/dev/null 2>&1; then
+  note_fail "nginx is not installed — Cloudflare cannot reach Node on :${PORT} (run scripts/ensure-production-nginx.sh)"
+else
   nginx_state="$(systemctl is-active nginx.service 2>/dev/null || echo unknown)"
   if [[ "${nginx_state}" != "active" ]]; then
     note_fail "nginx.service is not active (state=${nginx_state}) — public URL will show Cloudflare 530"
   else
     echo "OK: nginx.service active"
-    if ! curl -sf --max-time 10 -k "https://127.0.0.1/api/health" -H "Host: worldcup.dosums.uk" >/dev/null 2>&1; then
-      note_fail "nginx is active but https://127.0.0.1/api/health (Host: worldcup.dosums.uk) failed"
+    if curl -sf --max-time 10 -k "https://127.0.0.1/api/health" -H "Host: worldcup.dosums.uk" >/dev/null 2>&1; then
+      echo "OK: nginx proxies /api/health to Node (HTTPS)"
+    elif curl -sf --max-time 10 "http://127.0.0.1/api/health" -H "Host: worldcup.dosums.uk" >/dev/null 2>&1; then
+      echo "OK: nginx proxies /api/health to Node (HTTP only — add TLS certs for :443)"
     else
-      echo "OK: nginx proxies /api/health to Node"
+      note_fail "nginx is active but local /api/health proxy check failed"
     fi
   fi
 fi

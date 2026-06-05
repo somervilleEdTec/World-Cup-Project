@@ -19,7 +19,8 @@ sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq \
   build-essential \
   python3 \
   git \
-  curl
+  curl \
+  nginx
 
 if [[ ! -f .env ]]; then
   echo ""
@@ -37,6 +38,9 @@ fi
 
 echo "==> Passwordless deploy sudoers (GitHub Actions)"
 bash scripts/ensure-deploy-sudoers.sh
+
+echo "==> nginx reverse proxy (HTTPS → Node :8787)"
+bash scripts/ensure-production-nginx.sh
 
 echo "==> Pull-based deploy timer (when GitHub SSH to port 22 is blocked)"
 bash scripts/ensure-poll-deploy-timer.sh
