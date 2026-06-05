@@ -69,8 +69,7 @@ export function WelcomePage() {
             first match kickoff.
           </li>
           <li>
-            Unpredicted group matches are treated as <strong>0-0 draws</strong> when you lock a
-            group, or automatically at the group-stage deadline if still missing.
+            Unpredicted matches are treated as <strong>0-0 draws</strong>.
           </li>
           <li>Each knockout fixture locks 15 minutes before that fixture&apos;s kickoff.</li>
           <li>Knockout draws require choosing which team progresses (extra time / penalties).</li>
