@@ -1,8 +1,8 @@
 # Production environment — World Cup Boys (live)
 
-**Last updated:** 2026-06-04  
-**Status:** Deploy pipeline on **`main`** is automated via GitHub Actions; if https://worldcup.dosums.uk returns **HTTP 530/502**, the Oracle VM origin is down — re-run **Deploy main** or on the VM run `bash scripts/restart-production-services.sh`.  
-**Automated deploy:** **Active** — every push to **`main`** runs [deploy-main.yml](../.github/workflows/deploy-main.yml) (see § Auto-deploy below)
+**Last updated:** 2026-06-05  
+**Status:** **Live and operational** — https://worldcup.dosums.uk (health `ok:true`, commit matches `main`).  
+**Automated deploy:** **Active** — push to **`main`** → GitHub Actions + VM pull timer (`worldcup-deploy.timer`, every 3 min). See [DEPLOY_CONTROL_PLANE.md](./DEPLOY_CONTROL_PLANE.md).
 
 ---
 
@@ -14,7 +14,8 @@
 | Oracle VM | `ubuntu@84.8.146.237` (`worldcup-boys`) |
 | App on server | `/home/ubuntu/World-Cup-Project` on branch **`main`** |
 | GitHub Actions secrets | `DEPLOY_HOST`, `DEPLOY_USER`, `DEPLOY_PATH`, `DEPLOY_SSH_KEY` configured |
-| Auto-deploy | Push to **`main`** → CI → SSH → `deploy-production.sh` |
+| Auto-deploy | Push to **`main`** → CI + VM pull timer → `deploy-production.sh` |
+| Pull timer | `worldcup-deploy.timer` — enabled 2026-06-05 |
 | **`Debug` branch** | Local PC only — **never** updates production |
 
 **Day-to-day release:** merge to `main`, `git push origin main` — live site updates after a green Actions run. **Full pipeline:** [DEPLOY_CONTROL_PLANE.md](./DEPLOY_CONTROL_PLANE.md) (no SSH required for normal deploys).
@@ -97,10 +98,17 @@ Each push to **`main`** triggers **Deploy main (production)** automatically afte
 
 ### What runs on push to `main`
 
-1. **CI** — `npm ci`, `npm test`, `npm run build`
-2. **Deploy** — SSH → `scripts/deploy-production.sh`: pull `main`, `npm ci` (with dev deps), migrate, build, restart systemd, health check
+1. **CI (GitHub)** — `npm ci`, `npm test`, `npm run build`
+2. **Deploy (VM)** — within ~3 min, `worldcup-deploy.timer` runs `poll-deploy-from-github.sh` → `deploy-production.sh` (pull `main`, migrate, build, restart systemd, verify)
+3. **Deploy (GitHub SSH)** — best-effort; verify step waits up to 30 min for public health
 
-Manual re-run: **Actions → Deploy main (production) → Run workflow** (on branch **`main`** only).
+Manual re-run: **Actions → Deploy main (production) → Run workflow** (branch **`main`**).
+
+**Verify from Windows:**
+
+```powershell
+curl https://worldcup.dosums.uk/api/health
+```
 
 ### SSH key for `DEPLOY_SSH_KEY` secret
 
@@ -127,7 +135,9 @@ ssh -i "C:\Users\tomso\Desktop\ssh-key-2026-06-02.key" -o HostKeyAlgorithms=+ssh
 | Health missing `commit` | Add `DEPLOY_COMMIT=$(git rev-parse HEAD)` to `.env`, `sudo systemctl restart worldcup`. Ensure code is current (`git pull`). |
 | `worldcup.service` **inactive** but :8787 responds | Old manual `node`/`npm` process. Run `bash scripts/restart-production-services.sh`. |
 | `worldcup` **active** but `Connection refused` on :8787 | Stale unit files or crash loop. `git pull`, `bash scripts/restart-production-services.sh`, read `journalctl -u worldcup -n 40`. |
-| `better-sqlite3` / missing `better_sqlite3.cpp` on `npm ci` | Corrupt install. On VM: `bash scripts/repair-npm-on-server.sh` then `npm run migrate && npm run build`. Ensure `build-essential` is installed. |
+| `better-sqlite3` / missing `better_sqlite3.cpp` on `npm ci` | Corrupt install. On VM: `FORCE_NPM_REPAIR=1 bash scripts/repair-npm-on-server.sh` (uses `npm ci --ignore-scripts` + rebuild; **10–25 min**). Then `bash scripts/deploy-production.sh`. |
+| `Cannot find module 'xtend/mutable'` | Partial `node_modules` after failed `npm ci`. Run `repair-npm-on-server.sh` (do not skip reinstall). |
+| Ran VM commands on Windows Desktop | Use `ssh ubuntu@84.8.146.237 "cd /home/ubuntu/World-Cup-Project && ..."` — `/home/ubuntu/...` is on the **server**, not your PC. |
 
 ---
 

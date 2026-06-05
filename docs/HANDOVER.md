@@ -1,9 +1,9 @@
 # Agent Handover — World Cup Boys
 
-**Last updated:** 2026-06-04  
+**Last updated:** 2026-06-05  
 **Repository:** https://github.com/somervilleEdTec/World-Cup-Project  
 **Branches:** **`main`** (live deploy) · **`Debug`** (PC only) — [BRANCHING.md](./BRANCHING.md)  
-**Live:** https://worldcup.dosums.uk — [PRODUCTION.md](./PRODUCTION.md) · [GO_LIVE.md](./GO_LIVE.md)  
+**Live:** https://worldcup.dosums.uk — automated deploy active — [DEPLOY_CONTROL_PLANE.md](./DEPLOY_CONTROL_PLANE.md) · [PRODUCTION.md](./PRODUCTION.md)  
 **Debug policy:** [DEBUG.md](./DEBUG.md) — local only, Test1–20/guest, no live API  
 **Local debug:** [KO_ENVIRONMENT.md](./KO_ENVIRONMENT.md)  
 **Agent prompt:** [AGENT_PROMPT.md](./AGENT_PROMPT.md) · **Doc index:** [README.md](./README.md)

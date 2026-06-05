@@ -1,22 +1,24 @@
 # GitHub as the deployment control plane
 
-**Last updated:** 2026-06-04
+**Last updated:** 2026-06-05  
+**Production status:** **Live** — https://worldcup.dosums.uk/api/health returns `ok:true` with matching `commit` (verified 2026-06-05).
 
-Production releases are **fully driven from GitHub**. You do not need to SSH to the Oracle VM for normal deploys or debugging failed releases — use **Actions** logs and re-runs.
+Production releases are **fully driven from GitHub**. You do not need to SSH to the Oracle VM for normal deploys — use **Actions** logs and re-runs.
 
 ---
 
 ## Architecture
 
 ```text
-Cursor Cloud Agent (or you) → push/merge to main on GitHub
+You / Cursor Agent → work on Debug → merge to main → git push origin main
         │
-        ▼
-GitHub Actions: Deploy main (production)
-  1. ci job     — npm ci, npm test, npm run build (ubuntu-latest)
-  2. deploy job — SSH → deploy-production.sh (optional if port 22 blocked)
-                  VM timer → poll-deploy-from-github.sh every 3 min (fallback)
-  3. verify     — curl https://worldcup.dosums.uk/api/health must match github.sha (~30 min max)
+        ├─► GitHub Actions: Deploy main (production)
+        │     1. ci      — npm ci, npm test, npm run build
+        │     2. deploy  — SSH deploy (best-effort; optional if port 22 blocked)
+        │     3. verify  — public /api/health must match github.sha (~30 min max)
+        │
+        └─► Oracle VM: worldcup-deploy.timer (every 3 min)
+              poll-deploy-from-github.sh → deploy-production.sh
         │
         ▼
 https://worldcup.dosums.uk
@@ -24,68 +26,57 @@ https://worldcup.dosums.uk
 
 | Branch | Workflow | Deploys live? |
 |--------|----------|---------------|
-| **`main`** | [deploy-main.yml](../.github/workflows/deploy-main.yml) | **Yes** — every green push |
+| **`main`** | [deploy-main.yml](../.github/workflows/deploy-main.yml) | **Yes** — every push |
 | **`Debug`** | [ci-debug.yml](../.github/workflows/ci-debug.yml) | **No** — test + build only |
 
----
-
-## Day-to-day (no SSH)
-
-1. Work on **`Debug`** (local or cloud workspace); push → **CI Debug** runs automatically.
-2. When ready for live: merge **`Debug` → `main`** (PR or merge).
-3. Push **`main`** (or merge on GitHub) → **Deploy main** runs.
-4. Open **Actions** → latest run:
-   - Red **ci** → fix tests/build in repo, push again.
-   - Red **Deploy over SSH** → read SSH log (`npm ci`, `better-sqlite3`, `.env`, sudo).
-   - Red **Verify live site** → deploy script ran but public health ≠ `github.sha` (systemd/nginx).
-
-**Re-deploy same commit:** Actions → **Deploy main (production)** → **Run workflow** (branch `main`).
+On this server, **pull-based deploy** (`worldcup-deploy.timer`) is the reliable path when GitHub Actions cannot SSH inbound. Both paths run the same `scripts/deploy-production.sh`.
 
 ---
 
-## One-time VM setup (then GitHub owns deploys)
+## Day-to-day release (automated — no SSH)
 
-Only needed for a **new** server or rebuild. Two options:
+### 1. Develop on `Debug`
 
-### A. Manual SSH (once)
+```powershell
+cd C:\Users\tomso\World-Cup-Project
+git checkout Debug
+git pull origin Debug
+# edit, test locally
+npm test
+git push origin Debug
+```
 
-```bash
-cd /home/ubuntu/World-Cup-Project
+Push to **`Debug`** runs **CI Debug** only — the live site does **not** change.
+
+### 2. Release to production
+
+When the owner confirms a live release:
+
+```powershell
+cd C:\Users\tomso\World-Cup-Project
 git checkout main
 git pull origin main
-bash scripts/bootstrap-production-host.sh
-# create .env (FOOTBALL_DATA_TOKEN, VITE_API_BASE_URL, ADMIN_*)
-npm ci && npm run migrate && npm run build
-sudo systemctl start worldcup-jobs worldcup
+git merge Debug
+git push origin main
 ```
 
-### B. GitHub Actions (no SSH on your PC)
+Or merge a PR **`Debug` → `main`** on GitHub.
 
-**Actions → Bootstrap production host (manual) → Run workflow**
+### 3. Confirm deploy
 
-- Input confirm: `BOOTSTRAP_PRODUCTION`
-- Uses same `DEPLOY_*` secrets as deploy
-- Installs `build-essential`, systemd units, and **passwordless sudo** for deploy (`deploy/sudoers/worldcup-deploy`)
+Within **~3–5 minutes** the VM pull timer deploys. GitHub **Deploy main** also runs CI and verifies public health.
 
-Then create **`.env` on the VM once** (secrets stay off GitHub). See [PRODUCTION.md](./PRODUCTION.md).
+**Check live (PowerShell):**
 
-### C. Existing VM — one SSH command for sudoers (if deploy fails on sudo)
-
-```bash
-cd /home/ubuntu/World-Cup-Project && git pull origin main && bash scripts/ensure-deploy-sudoers.sh
+```powershell
+curl https://worldcup.dosums.uk/api/health
 ```
 
-(Enter sudo password once if prompted.) After that, GitHub deploys manage systemd automatically.
+Success: `{"ok":true,"commit":"<full-sha-matching-main>"}`
 
-### D. Pull-based deploy (when GitHub cannot SSH to port 22)
+**Check GitHub:** Actions → **Deploy main (production)** → green **Verify live site**.
 
-If Actions logs show **Connection timed out** or **handshake failed: EOF** on port 22, enable the VM timer (outbound `git fetch` only):
-
-```bash
-cd /home/ubuntu/World-Cup-Project && git pull origin main && bash scripts/ensure-poll-deploy-timer.sh
-```
-
-`worldcup-deploy.timer` runs `scripts/poll-deploy-from-github.sh` every **3 minutes**. Push to **`main`** still triggers **Deploy main**; the workflow tries SSH, then waits up to **30 minutes** for the timer to deploy and for public `/api/health` to match the commit.
+**Re-deploy same commit:** Actions → **Deploy main (production)** → **Run workflow** (branch `main`).
 
 ---
 
@@ -93,15 +84,81 @@ cd /home/ubuntu/World-Cup-Project && git pull origin main && bash scripts/ensure
 
 | Step | Purpose |
 |------|---------|
+| Deploy lock + pause `worldcup-deploy.timer` | Prevents concurrent npm/deploy races |
 | `git pull origin main` | Match GitHub `main` |
-| `npm ci` (+ retry after `rm -rf node_modules`) | Install deps; `MAKEFLAGS=-j1` for `better-sqlite3`; verifies **tsx** present |
+| `npm ci` (skipped when lockfile + deps OK) | Uses `--ignore-scripts` + `rebuild better-sqlite3` on failure |
 | `npm run migrate` | Schema |
 | `npm run build` | SPA → `dist/` |
 | `DEPLOY_COMMIT` in `.env` | `/api/health` reports commit |
-| `restart-production-services.sh` | Kills stray :8787, installs systemd units (`node` + `tsx/cli.mjs`), starts services |
-| `verify-production-deploy.sh` | Fails deploy if health/commit/dist/systemd wrong |
+| `restart-production-services.sh` | systemd units (`node` + `tsx/cli.mjs`), health retries |
+| `verify-production-deploy.sh` | Fails if health/commit/dist/systemd wrong |
+| Resume `worldcup-deploy.timer` | Pull deploy enabled again |
 
-If verify fails, the SSH step fails → the **whole workflow is red** → the public health step does not pass.
+Later deploys **skip `npm ci`** when `package-lock.json` is unchanged and `better_sqlite3.node`, `tsx`, and dependency integrity checks pass.
+
+---
+
+## VM commands vs your PC (important)
+
+Paths like `/home/ubuntu/World-Cup-Project` and `bash scripts/...` run **on the Linux server**, not in Windows PowerShell on your Desktop.
+
+**From Windows — SSH in:**
+
+```powershell
+ssh -i "C:\Users\tomso\Desktop\ssh-key-2026-06-02.key" -o HostKeyAlgorithms=+ssh-rsa -o PubkeyAcceptedAlgorithms=+ssh-rsa ubuntu@84.8.146.237
+```
+
+**From Windows — one remote command:**
+
+```powershell
+ssh -i "C:\Users\tomso\Desktop\ssh-key-2026-06-02.key" -o HostKeyAlgorithms=+ssh-rsa -o PubkeyAcceptedAlgorithms=+ssh-rsa ubuntu@84.8.146.237 "cd /home/ubuntu/World-Cup-Project && curl -s http://127.0.0.1:8787/api/health"
+```
+
+---
+
+## One-time VM setup (already done on this server)
+
+Bootstrap completed 2026-06-05. Reference for rebuilds:
+
+```bash
+cd /home/ubuntu/World-Cup-Project
+git checkout main && git pull origin main
+bash scripts/bootstrap-production-host.sh   # build tools, systemd, sudoers, pull timer
+# create .env (FOOTBALL_DATA_TOKEN, VITE_API_BASE_URL, ADMIN_*)
+FORCE_NPM_REPAIR=1 bash scripts/repair-npm-on-server.sh
+npm run migrate && npm run build
+bash scripts/deploy-production.sh
+```
+
+### GitHub Actions bootstrap (no SSH on your PC)
+
+**Actions → Bootstrap production host (manual) → Run workflow** with input `BOOTSTRAP_PRODUCTION`.
+
+### Pull-based deploy timer
+
+```bash
+bash scripts/ensure-poll-deploy-timer.sh
+```
+
+Runs `scripts/poll-deploy-from-github.sh` every **3 minutes** when `origin/main` is ahead of the VM.
+
+---
+
+## Recovery (rare — SSH once)
+
+### Corrupt `node_modules` / `better-sqlite3`
+
+```powershell
+ssh -i "C:\Users\tomso\Desktop\ssh-key-2026-06-02.key" -o HostKeyAlgorithms=+ssh-rsa -o PubkeyAcceptedAlgorithms=+ssh-rsa ubuntu@84.8.146.237 "sudo systemctl stop worldcup-deploy.timer && cd /home/ubuntu/World-Cup-Project && git pull origin main && FORCE_NPM_REPAIR=1 bash scripts/repair-npm-on-server.sh && npm run migrate && npm run build && bash scripts/deploy-production.sh"
+```
+
+`repair-npm-on-server.sh` uses `npm ci --ignore-scripts` then `npm rebuild better-sqlite3` (avoids flaky postinstall on small VMs). **`npm rebuild better-sqlite3` can take 10–25 minutes with little output** — do not interrupt.
+
+### Service down but deps OK
+
+```bash
+bash scripts/restart-production-services.sh
+```
 
 ---
 
@@ -110,17 +167,16 @@ If verify fails, the SSH step fails → the **whole workflow is red** → the pu
 | Failed step | Where to look |
 |-------------|----------------|
 | **Test and build** | Job log: Vitest, TypeScript, ESLint |
-| **Deploy over SSH** | Log tail: `VERIFY_FAIL`, `npm error`, `ERROR: better-sqlite3`, missing `.env` |
-| **Verify live site** | Health JSON in log; compare `commit` to commit SHA at top of workflow |
+| **Deploy over SSH** | May fail if port 22 blocked — pull timer may still deploy |
+| **Verify live site** | Health JSON; compare `commit` to workflow SHA |
 
-Common fixes (push to `main` after code fix, or re-run workflow):
-
-- **`ssh: handshake failed: EOF`** / **Connection timed out during banner exchange** — GitHub runners cannot reach VM port 22 reliably. Enable **pull deploy**: `bash scripts/ensure-poll-deploy-timer.sh` on the VM (§ D above). Optionally open Oracle NSG ingress TCP/22 for troubleshooting SSH.
-- **Verify live site: HTTP 530/502** — Cloudflare cannot reach Node on `:8787`. SSH deploy may have failed, or `worldcup.service` is inactive. On VM once: `bash scripts/restart-production-services.sh`.
-- **`better-sqlite3` / `sqlite3.o.d.raw` / `better_sqlite3.cpp: No such file`** — corrupt `node_modules`. On VM: `bash scripts/repair-npm-on-server.sh` (after `build-essential`). Deploy also deep-cleans npm cache on retry.
-- **`sudo: a password is required`** — run `bootstrap-production-host.sh` for sudoers.
-- **Health commit mismatch** — deploy finished but service not restarted; check `systemctl status worldcup`.
-- **Missing `FOOTBALL_DATA_TOKEN` in .env`** — SSH once to edit `.env` (not in GitHub secrets by design).
+| Symptom | Fix |
+|---------|-----|
+| **`ssh: handshake failed: EOF`** / **banner timeout** | Normal on this VM. Ensure `worldcup-deploy.timer` is active; re-run workflow or wait ~3 min after push. |
+| **HTTP 530/502** on public URL | `bash scripts/restart-production-services.sh` on VM |
+| **`better-sqlite3` / corrupt `node_modules`** | `FORCE_NPM_REPAIR=1 bash scripts/repair-npm-on-server.sh` |
+| **`sudo: a password is required`** | `bash scripts/ensure-deploy-sudoers.sh` |
+| **Health commit mismatch** | `bash scripts/deploy-production.sh` |
 
 ---
 
@@ -128,7 +184,7 @@ Common fixes (push to `main` after code fix, or re-run workflow):
 
 | Secret | Purpose |
 |--------|---------|
-| `DEPLOY_HOST` | e.g. `84.8.146.237` |
+| `DEPLOY_HOST` | `84.8.146.237` |
 | `DEPLOY_USER` | `ubuntu` |
 | `DEPLOY_PATH` | `/home/ubuntu/World-Cup-Project` |
 | `DEPLOY_SSH_KEY` | Full private key file |
@@ -142,8 +198,8 @@ Common fixes (push to `main` after code fix, or re-run workflow):
 Cloud agents should:
 
 1. Edit on **`Debug`**, push → wait for **CI Debug** green.
-2. Merge to **`main`** and push (with owner permission for production).
-3. Rely on **Deploy main** + public health check — **do not** ask the owner to SSH unless bootstrap or `.env` is missing.
+2. Merge to **`main`** and push when the user confirms production release.
+3. Rely on **Deploy main** + public health check — **do not** ask the owner to SSH unless bootstrap, `.env`, or `repair-npm-on-server.sh` is needed.
 
 ---
 
@@ -151,4 +207,4 @@ Cloud agents should:
 
 - [PRODUCTION.md](./PRODUCTION.md) — VM details, nginx, wipe DB  
 - [BRANCHING.md](./BRANCHING.md) — `main` vs `Debug`  
-- [DEBUG.md](./DEBUG.md) — local policy (optional; CI replaces most PC testing)
+- [DEBUG.md](./DEBUG.md) — local policy

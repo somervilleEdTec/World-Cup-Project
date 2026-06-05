@@ -10,3 +10,7 @@
 **Control plane guide:** [docs/DEPLOY_CONTROL_PLANE.md](../docs/DEPLOY_CONTROL_PLANE.md)
 
 **`Debug`** never deploys live. **`main`** is the only automated path to https://worldcup.dosums.uk.
+
+**On-server fallback:** `worldcup-deploy.timer` polls `origin/main` every 3 min and runs `deploy-production.sh` when GitHub SSH to port 22 is unavailable.
+
+**Guide:** [docs/DEPLOY_CONTROL_PLANE.md](../docs/DEPLOY_CONTROL_PLANE.md)

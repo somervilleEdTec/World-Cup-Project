@@ -2,7 +2,7 @@
 
 **World Cup Predictions** — friends-and-family predictions for FIFA World Cup 2026.
 
-**Live site:** https://worldcup.dosums.uk  
+**Live site:** https://worldcup.dosums.uk (automated deploy from **`main`**)  
 **Repository:** https://github.com/somervilleEdTec/World-Cup-Project
 
 ---
@@ -51,15 +51,16 @@ npm run jobs      # locks only in debug mode
 
 ## Release to production (GitHub control plane)
 
-Merge **`Debug` → `main`** and push — **GitHub Actions** runs tests, deploys to the VM, and verifies https://worldcup.dosums.uk/api/health matches the commit. **No SSH required** for normal releases.
+Merge **`Debug` → `main`** and push — the VM pull timer and **GitHub Actions** deploy within minutes and verify https://worldcup.dosums.uk/api/health. **No SSH required** for normal releases.
 
 Guide: **[docs/DEPLOY_CONTROL_PLANE.md](docs/DEPLOY_CONTROL_PLANE.md)** · VM details: **[docs/PRODUCTION.md](docs/PRODUCTION.md)**
 
-```bash
+```powershell
+cd C:\Users\tomso\World-Cup-Project
 git checkout main
 git merge Debug
 git push origin main
-# Watch: GitHub → Actions → "Deploy main (production)"
+curl https://worldcup.dosums.uk/api/health
 ```
 
 ---

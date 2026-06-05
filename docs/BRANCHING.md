@@ -1,6 +1,6 @@
 # Branches: `main` and `Debug`
 
-**Last updated:** 2026-06-04
+**Last updated:** 2026-06-05
 
 This repository uses **two branches only**. All other remote branches should be deleted.
 
@@ -56,15 +56,26 @@ See **[DEBUG.md](./DEBUG.md)** · [KO_ENVIRONMENT.md](./KO_ENVIRONMENT.md). Use 
 
 ### Release flow (Debug → live)
 
-```bash
+**Windows (PowerShell) — inside the repo:**
+
+```powershell
+cd C:\Users\tomso\World-Cup-Project
 git checkout main
 git pull origin main
 git merge Debug
-npm test && npm run build
+npm test
 git push origin main
 ```
 
-A green **Deploy main (production)** run updates https://worldcup.dosums.uk. See [PRODUCTION.md](./PRODUCTION.md).
+Within **~3–5 minutes** the VM pull timer deploys. GitHub **Deploy main (production)** runs CI and verifies https://worldcup.dosums.uk/api/health. **No SSH required.**
+
+```powershell
+curl https://worldcup.dosums.uk/api/health
+```
+
+See [DEPLOY_CONTROL_PLANE.md](./DEPLOY_CONTROL_PLANE.md) · [PRODUCTION.md](./PRODUCTION.md).
+
+**Note:** Server paths (`/home/ubuntu/World-Cup-Project`, `bash scripts/...`) are for the **Oracle VM** via SSH — not your Windows Desktop.
 
 **Never** run `scripts/deploy-production.sh` on the server unless the repo is on **`main`**.
 

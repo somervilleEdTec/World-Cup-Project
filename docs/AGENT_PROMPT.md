@@ -60,7 +60,7 @@ npm run build
 npm run lint
 ```
 
-Production: merge to **`main`** and push — **Deploy main** deploys and verifies live health. See [DEPLOY_CONTROL_PLANE.md](./DEPLOY_CONTROL_PLANE.md). **Do not** ask the owner to SSH for routine releases.
+Production: merge to **`main`** and push — VM pull timer (~3 min) + **Deploy main** verify live health. See [DEPLOY_CONTROL_PLANE.md](./DEPLOY_CONTROL_PLANE.md). **Do not** ask the owner to SSH for routine releases. Recovery only: `scripts/repair-npm-on-server.sh`, `scripts/restart-production-services.sh` (on the VM via SSH, not Windows Desktop).
 
 ## Rules
 
