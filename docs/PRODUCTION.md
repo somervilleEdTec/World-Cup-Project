@@ -275,7 +275,7 @@ Deploy restarts all of the above via `scripts/restart-production-services.sh`. S
 | `npm run generate:group-kickoffs` | Print updated `GROUP_STAGE_KICKOFFS` map from API (dev/ops) |
 | `npm run seed:fixtures` | Full kickoff + results sync (CLI) |
 
-Group-stage static kickoffs in code use the official FIFA UTC schedule; production DB rows in `match_kickoffs` override when synced. After a kickoff-date fix deploy, run **Import kickoffs** once if the live site still shows old dates.
+Group-stage and knockout static kickoffs in code use the official FIFA UTC schedule (`officialKickoffs.ts`); production DB rows in `match_kickoffs` override when synced. After a kickoff-date fix deploy, run **Import kickoffs** once if the live site still shows old dates.
 
 ---
 

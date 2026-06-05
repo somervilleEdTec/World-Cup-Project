@@ -60,7 +60,7 @@ Styling: **`src/styles/app.css` only** (no Tailwind).
 3. **SVG flags** — not emoji; custom `TeamSelect` (not native `<option>` images).
 4. **Lock / Unlock group** — `accepted_groups` in DB; unlock disabled when group has official results ([LOCKING.md](./LOCKING.md)).
 5. **Match picks** — POST `/api/predictions/draft` writes **committed** rows (no UI commit step).
-6. **Group kickoffs** — official FIFA UTC schedule in `groupStageKickoffs.ts`; displayed in BST; DB sync may override.
+6. **All kickoffs** — official FIFA UTC for 72 group + 32 knockout fixtures in `officialKickoffs.ts`; displayed in BST via `formatKickoffBst`; DB sync may override.
 7. **Touch score entry** — on touch/coarse pointer, focusing a score field clears it; blur without typing restores the previous value.
 
 ---

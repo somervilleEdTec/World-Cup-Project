@@ -1,18 +1,20 @@
 import { GROUP_STAGE_KICKOFFS } from '../data/groupStageKickoffs';
+import { KNOCKOUT_STAGE_KICKOFFS } from '../data/knockoutStageKickoffs';
+import { OFFICIAL_KICKOFFS, OFFICIAL_KICKOFF_COUNT } from '../data/officialKickoffs';
 import { groupMatches } from '../data/tournament';
 import { setKickoffState } from '../lib/kickoffOverrides';
 import type { DatabaseClient } from './database/types';
 import { getDb } from './database';
 
-const FALLBACK_FIRST_KICKOFF = GROUP_STAGE_KICKOFFS['g-a-1'];
+const FALLBACK_FIRST_KICKOFF = OFFICIAL_KICKOFFS['g-a-1'];
 
-/** Repair stale group kickoffs in DB; keep football-data.org overrides when present. */
-export async function repairOfficialGroupKickoffs(db?: DatabaseClient): Promise<number> {
+/** Repair stale kickoffs in DB; keep football-data.org overrides when present. */
+export async function repairOfficialKickoffs(db?: DatabaseClient): Promise<number> {
   const client = db ?? getDb();
   const now = new Date().toISOString();
   let updated = 0;
 
-  for (const [matchId, kickoff] of Object.entries(GROUP_STAGE_KICKOFFS)) {
+  for (const [matchId, kickoff] of Object.entries(OFFICIAL_KICKOFFS)) {
     const existing = await client.get<{ kickoff: string; source: string }>(
       `SELECT kickoff, source FROM match_kickoffs WHERE match_id = ?`,
       [matchId]
@@ -36,6 +38,9 @@ export async function repairOfficialGroupKickoffs(db?: DatabaseClient): Promise<
   return updated;
 }
 
+/** @deprecated use repairOfficialKickoffs */
+export const repairOfficialGroupKickoffs = repairOfficialKickoffs;
+
 export async function refreshKickoffCache(db?: DatabaseClient): Promise<void> {
   const client =
     db ??
@@ -48,7 +53,7 @@ export async function refreshKickoffCache(db?: DatabaseClient): Promise<void> {
     })();
 
   if (!client) {
-    setKickoffState({ ...GROUP_STAGE_KICKOFFS }, FALLBACK_FIRST_KICKOFF);
+    setKickoffState({ ...OFFICIAL_KICKOFFS }, FALLBACK_FIRST_KICKOFF);
     return;
   }
 
@@ -56,15 +61,17 @@ export async function refreshKickoffCache(db?: DatabaseClient): Promise<void> {
     `SELECT match_id, kickoff, source FROM match_kickoffs`
   );
 
-  const overrides: Record<string, string> = { ...GROUP_STAGE_KICKOFFS };
+  const overrides: Record<string, string> = { ...OFFICIAL_KICKOFFS };
   for (const row of rows) {
-    const isGroup = row.match_id.startsWith('g-');
-    if (isGroup && row.source !== 'football-data.org') continue;
-    overrides[row.match_id] = row.kickoff;
+    if (row.source === 'football-data.org') {
+      overrides[row.match_id] = row.kickoff;
+    }
   }
 
   const groupKickoffs = groupMatches.map((m) => overrides[m.id] ?? m.kickoff);
-  const earliest = [...groupKickoffs].sort()[0] ?? FALLBACK_FIRST_KICKOFF;
+  const earliest = groupKickoffs.reduce((min, kickoff) => {
+    return new Date(kickoff).getTime() < new Date(min).getTime() ? kickoff : min;
+  }, FALLBACK_FIRST_KICKOFF);
   setKickoffState(overrides, earliest);
 }
 
@@ -87,3 +94,5 @@ export async function upsertMatchKickoff(
   );
   await refreshKickoffCache(client);
 }
+
+export { OFFICIAL_KICKOFF_COUNT, GROUP_STAGE_KICKOFFS, KNOCKOUT_STAGE_KICKOFFS };

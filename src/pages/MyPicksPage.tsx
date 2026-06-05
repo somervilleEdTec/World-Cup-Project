@@ -97,6 +97,7 @@ export function MyPicksPage() {
   const [pendingGroupPicks, setPendingGroupPicks] = useState<Record<string, Pick>>({});
   /** Per-group voluntary lock (UI + server); each group is independent. */
   const [acceptedGroupsLocal, setAcceptedGroupsLocal] = useState<string[]>([]);
+  const [fixturesLoaded, setFixturesLoaded] = useState(false);
 
   const [nowIso, setNowIso] = useState(() => new Date().toISOString());
   useEffect(() => {
@@ -120,6 +121,7 @@ export function MyPicksPage() {
         acceptedGroups: accepted
       });
       setAcceptedGroupsLocal(accepted);
+      setFixturesLoaded(true);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to load prediction state';
       if (isAuthErrorMessage(message)) {
@@ -136,7 +138,8 @@ export function MyPicksPage() {
     void refresh();
   }, []);
 
-  const groupStageFixtures = state.groupStageFixtures ?? groupMatches;
+  const groupStageFixtures =
+    state.groupStageFixtures ?? (fixturesLoaded ? [] : groupMatches);
   const activeGroup = groupSequence[groupIndex];
   const activeGroupMatches = groupStageFixtures.filter((match) => match.group === activeGroup);
   const calendarGroupLocked = shouldLockGroup(nowIso);
