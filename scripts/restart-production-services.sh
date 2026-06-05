@@ -16,6 +16,11 @@ if ! /usr/bin/node node_modules/tsx/dist/cli.mjs --version >/dev/null 2>&1; then
   exit 1
 fi
 
+if [[ ! -f node_modules/better-sqlite3/build/Release/better_sqlite3.node ]]; then
+  echo "ERROR: better_sqlite3 native module missing. Run: bash scripts/repair-npm-on-server.sh"
+  exit 1
+fi
+
 echo "==> Stopping stray processes on port ${PORT}"
 if command -v lsof >/dev/null 2>&1; then
   mapfile -t pids < <(sudo lsof -t -i ":${PORT}" 2>/dev/null || true)
@@ -39,13 +44,22 @@ sudo systemctl start worldcup
 echo "==> Effective unit:"
 systemctl show worldcup.service -p ExecStart --no-pager
 
-sleep 5
 for u in worldcup worldcup-jobs; do
   printf '%s: ' "${u}"
   systemctl is-active "${u}.service" 2>/dev/null || true
 done
 
-if ! curl -sf --max-time 10 "http://127.0.0.1:${PORT}/api/health" >/dev/null; then
+health_ok=0
+for attempt in 1 2 3 4 5 6; do
+  sleep 5
+  if curl -sf --max-time 10 "http://127.0.0.1:${PORT}/api/health" >/dev/null; then
+    health_ok=1
+    break
+  fi
+  echo "Health check attempt ${attempt}/6 — waiting for :${PORT}"
+done
+
+if [[ "${health_ok}" -ne 1 ]]; then
   echo ""
   echo "ERROR: nothing healthy on port ${PORT}."
   echo "Installed unit ExecStart:"
