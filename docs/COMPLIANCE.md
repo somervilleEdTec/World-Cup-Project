@@ -25,6 +25,7 @@ Verified against [FINAL_PLAN.md](./FINAL_PLAN.md). **Last reviewed:** 2026-06-05
 | Group-stage kickoffs (official FIFA UTC) | Done | `groupStageKickoffs.ts`, `tournament.ts`; overridden by `match_kickoffs` sync |
 | KO API mapping from stored results | Done | `matchMapping.ts`, `sync.ts`, `fixtureSync.ts` pass `actuals`; group-scoped lookup |
 | Organiser excluded from competition views | Done | `competitionUsers.ts` — `is_admin` + reserved bootstrap display name |
+| Mapping diagnostics | Done | Admin API + `npm run diagnose:mappings` |
 | Tie-breaker earliest commit | Done | `leaderboard.ts` sorts by `committed_at` |
 
 **UX differences from original plan text (owner-approved):**
