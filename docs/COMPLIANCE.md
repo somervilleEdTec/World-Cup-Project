@@ -24,7 +24,7 @@ Verified against [FINAL_PLAN.md](./FINAL_PLAN.md). **Last reviewed:** 2026-06-05
 | football-data sync + manual override | Done | `sync.ts`, admin routes; 90-min `fullTime` scores |
 | Group-stage kickoffs (official FIFA UTC) | Done | `groupStageKickoffs.ts`, `tournament.ts`; overridden by `match_kickoffs` sync |
 | KO API mapping from stored results | Done | `matchMapping.ts`, `sync.ts`, `fixtureSync.ts` pass `actuals`; group-scoped lookup |
-| Mapping diagnostics | Done | Admin API + `npm run diagnose:mappings` |
+| Organiser excluded from competition views | Done | `competitionUsers.ts` — `is_admin` + reserved bootstrap display name |
 | Tie-breaker earliest commit | Done | `leaderboard.ts` sorts by `committed_at` |
 
 **UX differences from original plan text (owner-approved):**
@@ -37,7 +37,7 @@ Verified against [FINAL_PLAN.md](./FINAL_PLAN.md). **Last reviewed:** 2026-06-05
 - **Comparison — knockout:** others’ predictions hidden until fixture kickoff (not visible pre-kickoff).
 - User-facing label **prediction**; API/DB still use `committed` state naming.
 
-**Tests:** 166 tests (`npm test`) — unit logic, API integration, DB/data-protection, sync mapping, kickoff schedule, security/tamper, and tournament stress scenarios.
+**Tests:** 171 tests (`npm test`) — unit logic, API integration, DB/data-protection, sync mapping, kickoff schedule, security/tamper, and tournament stress scenarios.
 
 | Area | Key files |
 |------|-----------|

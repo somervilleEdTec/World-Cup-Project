@@ -98,6 +98,7 @@ Historical docs: [archive/README.md](./archive/README.md)
 | #24 | Expanded test suite — tournament, DB, sync mapping, security stress tests |
 | #25 | Official FIFA UTC group-stage kickoffs; football-data mapping scoped by group |
 | Touch inputs | Clear score field on touch focus (`FixturePickCard.tsx`, `touchDevice.ts`) |
+| Kickoffs + organiser | Server `groupStageFixtures` on Predict page; organiser excluded from league/compare |
 | #7 | Name auth, join password, `db:purge`, My Picks tabs, auto-save, projected table |
 | #8 | Bonus save fix, table zeros, score clamp |
 | #9 | Tournament standalone, TeamSelect flags, no commit panel |
@@ -133,7 +134,7 @@ Historical docs: [archive/README.md](./archive/README.md)
 - [x] `TeamSelect` — flags + alphabetical teams
 - [x] SVG flags (`CountryFlag`, `public/flags/4x3/`)
 - [x] Touch devices — score inputs clear on focus for easier entry (`src/lib/touchDevice.ts`, `FixturePickCard.tsx`)
-- [x] **166 tests** across unit + integration (validation, scoring, kickoffs, DB, sync mapping, security); `npm run build`; Windows `scripts/Test-LocalSite.ps1`; `npm run seed:ko-environment`; `npm run seed:complete-teams`
+- [x] **171 tests** across unit + integration (validation, scoring, kickoffs, DB, sync mapping, security); `npm run build`; Windows `scripts/Test-LocalSite.ps1`; `npm run seed:ko-environment`; `npm run seed:complete-teams`
 
 ### Ops / partial
 

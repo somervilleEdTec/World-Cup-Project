@@ -18,6 +18,8 @@
 - [x] Knockout scoring — advancing team +2, FT exact +4 (PR #22, 2026-06-05)
 - [x] KO fixture sync mapping + per-fixture unlock from stored results (PR #23, 2026-06-05)
 - [x] Official FIFA group-stage kickoffs + group-scoped football-data mapping (PR #25, 2026-06-05)
+- [x] Predict page kickoffs from server API; stale DB kickoff repair on startup (2026-06-05)
+- [x] Organiser hidden from leaderboard/comparison even if is_admin flag missing (2026-06-05)
 - [x] Touch score inputs — clear on focus for touch devices (2026-06-05)
 - [x] Expanded test suite — 166 tests (PR #24 + kickoff/touch tests, 2026-06-05)
 - [x] API same-origin / autosave performance (Debug, 2026-06-03)
