@@ -1,0 +1,64 @@
+# Manual only — remove a single non-admin player on production (keeps bootstrap admin).
+
+name: Remove production player (manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      display_name:
+        description: 'Player display name to remove (non-admin only)'
+        required: true
+        type: string
+        default: 'Admin Tomsom'
+      confirm:
+        description: 'Type REMOVE_PLAYER to confirm'
+        required: true
+        type: string
+
+concurrency:
+  group: production-remove-player
+  cancel-in-progress: false
+
+jobs:
+  remove-player:
+    name: Remove player on production host
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Require confirmation phrase
+        run: |
+          if [ "${{ github.event.inputs.confirm }}" != "REMOVE_PLAYER" ]; then
+            echo "Refusing: input must be exactly REMOVE_PLAYER"
+            exit 1
+          fi
+
+      - name: Check deploy secrets
+        run: |
+          missing=0
+          check() { if [ -z "$1" ]; then echo "  MISSING: $2"; missing=1; else echo "  OK: $2"; fi; }
+          check "${{ secrets.DEPLOY_HOST }}" "DEPLOY_HOST"
+          check "${{ secrets.DEPLOY_USER }}" "DEPLOY_USER"
+          check "${{ secrets.DEPLOY_SSH_KEY }}" "DEPLOY_SSH_KEY"
+          check "${{ secrets.DEPLOY_PATH }}" "DEPLOY_PATH"
+          if [ "${missing}" -ne 0 ]; then exit 1; fi
+
+      - name: Configure SSH
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
+        run: bash scripts/ci-ssh-setup.sh
+
+      - name: Remove player over SSH
+        env:
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+          PLAYER_NAME: ${{ github.event.inputs.display_name }}
+          SSH_MAX_ATTEMPTS: 3
+          SSH_RETRY_WAIT_SEC: 30
+        timeout-minutes: 15
+        run: |
+          set -euo pipefail
+          bash scripts/ci-ssh-exec.sh "cd '${DEPLOY_PATH}' && git fetch origin main && git checkout main && git pull --ff-only origin main && echo '=== Before ===' && sqlite3 data.db \"SELECT id, display_name, is_admin FROM users WHERE LOWER(display_name) LIKE '%admin%tomsom%' OR LOWER(display_name) LIKE '%admin tomsom%' ORDER BY display_name;\" && npm run db:remove-player -- \"${PLAYER_NAME}\" && echo '=== After ===' && sqlite3 data.db \"SELECT id, display_name, is_admin FROM users WHERE LOWER(display_name) LIKE '%admin%tomsom%' OR LOWER(display_name) LIKE '%admin tomsom%' ORDER BY display_name;\""
