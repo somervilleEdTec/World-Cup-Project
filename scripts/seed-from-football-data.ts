@@ -1,14 +1,15 @@
 import 'dotenv/config';
+import { getFootballDataToken } from '../src/lib/runtimeConfig.js';
 import { closeDatabase, initDatabase } from '../src/server/database/index.js';
 import { seedGroupMatchMappings } from '../src/server/services/matchMapping.js';
 import { syncKickoffsFromFootballData } from '../src/server/services/fixtureSync.js';
 import { syncFootballData } from '../src/server/services/sync.js';
 
 async function main() {
-  const token = process.env.FOOTBALL_DATA_TOKEN;
+  const token = getFootballDataToken();
   if (!token) {
     // eslint-disable-next-line no-console
-    console.error('FOOTBALL_DATA_TOKEN is required');
+    console.error('FOOTBALL_DATA_TOKEN or FOOTBALL_API_KEY is required');
     process.exit(1);
   }
 

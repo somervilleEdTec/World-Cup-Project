@@ -1,6 +1,7 @@
 // @vitest-environment node
 import { describe, it, expect, afterAll, beforeEach } from 'vitest';
 import request from 'supertest';
+import { getFootballDataToken } from '../../lib/runtimeConfig';
 import { setupTestServer, teardownTestServer } from '../testHarness';
 import { adminToken, createPlayer, loginPlayerReady } from './authHelpers';
 import type { Express } from 'express';
@@ -205,7 +206,7 @@ describe('API integration', () => {
       .get('/api/admin/mapping-diagnostics')
       .set('Authorization', `Bearer ${token}`);
 
-    if (process.env.FOOTBALL_DATA_TOKEN) {
+    if (getFootballDataToken()) {
       expect(res.status).toBe(200);
       expect(res.body.summary.groupStageTotal).toBe(72);
       expect(res.body.totals.providerFixtures).toBe(104);

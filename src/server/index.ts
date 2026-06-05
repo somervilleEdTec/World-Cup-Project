@@ -4,7 +4,11 @@ import { fileURLToPath } from 'node:url';
 import express from 'express';
 import { createApp } from './app';
 import { initDatabase, closeDatabase } from './database';
-import { isDebugLocalMode, shouldSyncFootballData } from '../lib/runtimeConfig';
+import {
+  getFootballDataToken,
+  isDebugLocalMode,
+  shouldSyncFootballData
+} from '../lib/runtimeConfig';
 import { bootstrapFootballData, warnIfNonLiveResultsPresent } from './footballDataStartup';
 import { seedGroupMatchMappings } from './services/matchMapping';
 
@@ -34,11 +38,11 @@ async function main() {
     );
   }
 
-  const footballToken = process.env.FOOTBALL_DATA_TOKEN?.trim();
+  const footballToken = getFootballDataToken();
   if (process.env.NODE_ENV === 'production' && !isDebugLocalMode() && !footballToken) {
     // eslint-disable-next-line no-console
     console.error(
-      'FOOTBALL_DATA_TOKEN is required in production for live results from football-data.org.'
+      'FOOTBALL_DATA_TOKEN (or FOOTBALL_API_KEY) is required in production for live results from football-data.org.'
     );
     process.exit(1);
   }
@@ -73,7 +77,7 @@ async function main() {
   } else if (!isDebugLocalMode()) {
     // eslint-disable-next-line no-console
     console.warn(
-      'No live results sync — set FOOTBALL_DATA_TOKEN for production or DEBUG_LOCAL=1 + seed:debug for local testing.'
+      'No live results sync — set FOOTBALL_DATA_TOKEN or FOOTBALL_API_KEY for production, or DEBUG_LOCAL=1 + seed:debug for local testing.'
     );
     void warnIfNonLiveResultsPresent();
   }

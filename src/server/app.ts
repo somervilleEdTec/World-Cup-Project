@@ -21,6 +21,7 @@ import {
   unlockGroupAccepted
 } from './services/predictions';
 import { computeLeaderboard } from './services/leaderboard';
+import { getFootballDataToken } from '../lib/runtimeConfig';
 import { buildMappingDiagnostics } from './services/mappingDiagnostics';
 import {
   getSyncStatus,
@@ -361,8 +362,10 @@ export function createApp(): Express {
   app.post('/api/admin/sync/run', async (req: Request, res: Response) => {
     try {
       await requireAdmin(authToken(req));
-      const apiToken = process.env.FOOTBALL_DATA_TOKEN;
-      if (!apiToken) return res.status(400).json({ error: 'FOOTBALL_DATA_TOKEN missing' });
+      const apiToken = getFootballDataToken();
+      if (!apiToken) {
+        return res.status(400).json({ error: 'FOOTBALL_DATA_TOKEN or FOOTBALL_API_KEY missing' });
+      }
       const result = await runFullFootballDataSync(apiToken);
       return res.json(result);
     } catch (error) {
@@ -375,8 +378,10 @@ export function createApp(): Express {
   app.get('/api/admin/mapping-diagnostics', async (req: Request, res: Response) => {
     try {
       await requireAdmin(authToken(req));
-      const apiToken = process.env.FOOTBALL_DATA_TOKEN;
-      if (!apiToken) return res.status(400).json({ error: 'FOOTBALL_DATA_TOKEN missing' });
+      const apiToken = getFootballDataToken();
+      if (!apiToken) {
+        return res.status(400).json({ error: 'FOOTBALL_DATA_TOKEN or FOOTBALL_API_KEY missing' });
+      }
       return res.json(await buildMappingDiagnostics(apiToken));
     } catch (error) {
       return res
@@ -388,8 +393,10 @@ export function createApp(): Express {
   app.post('/api/admin/fixtures/sync', async (req: Request, res: Response) => {
     try {
       await requireAdmin(authToken(req));
-      const apiToken = process.env.FOOTBALL_DATA_TOKEN;
-      if (!apiToken) return res.status(400).json({ error: 'FOOTBALL_DATA_TOKEN missing' });
+      const apiToken = getFootballDataToken();
+      if (!apiToken) {
+        return res.status(400).json({ error: 'FOOTBALL_DATA_TOKEN or FOOTBALL_API_KEY missing' });
+      }
       const result = await syncKickoffsFromFootballData(apiToken);
       return res.json(result);
     } catch (error) {
