@@ -10,6 +10,11 @@ import {
 } from '../services/apiClient';
 import { formatFixtureScore } from '../components/FixtureScoreSummary';
 import { formatKickoffBst } from '../lib/formatDateTime';
+import {
+  fixtureSelectGroupLabel,
+  formatFixtureOptionLabel,
+  formatFixtureStageLabel
+} from '../lib/fixtureLabels';
 import { classifyPickAccuracy } from '../lib/matchScoring';
 import { MatchComparisonView, Stage } from '../types';
 
@@ -58,7 +63,14 @@ export function ComparisonPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [data, setData] = useState<MatchComparisonView | null>(null);
   const [fixtures, setFixtures] = useState<
-    Array<{ id: string; stage: string; kickoff: string; homeTeamId: string; awayTeamId: string }>
+    Array<{
+      id: string;
+      stage: string;
+      group?: string;
+      kickoff: string;
+      homeTeamId: string;
+      awayTeamId: string;
+    }>
   >([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -111,6 +123,19 @@ export function ComparisonPage() {
   const awayTeam = teams.find((team) => team.id === data.match.awayTeamId);
   const activeId = selectedMatchId || data.match.id;
 
+  const fixtureGroups = fixtures.reduce<
+    Array<{ label: string; items: typeof fixtures }>
+  >((groups, fixture) => {
+    const label = fixtureSelectGroupLabel(fixture);
+    const existing = groups.find((group) => group.label === label);
+    if (existing) {
+      existing.items.push(fixture);
+    } else {
+      groups.push({ label, items: [fixture] });
+    }
+    return groups;
+  }, []);
+
   return (
     <section className="stack">
       <article className="card">
@@ -124,22 +149,18 @@ export function ComparisonPage() {
               setSearchParams({ matchId: id });
             }}
           >
-            {fixtures.map((fixture) => {
-              const home = teams.find((t) => t.id === fixture.homeTeamId);
-              const away = teams.find((t) => t.id === fixture.awayTeamId);
-              return (
-                <option key={fixture.id} value={fixture.id}>
-                  {fixture.stage} — {home?.name ?? 'TBD'} vs {away?.name ?? 'TBD'} —{' '}
-                  {formatKickoffBst(fixture.kickoff)}
-                </option>
-              );
-            })}
+            {fixtureGroups.map((group) => (
+              <optgroup key={group.label} label={group.label}>
+                {group.items.map((fixture) => (
+                  <option key={fixture.id} value={fixture.id}>
+                    {formatFixtureOptionLabel(fixture, teams)}
+                  </option>
+                ))}
+              </optgroup>
+            ))}
           </select>
         </label>
-        <p className="kicker">
-          {data.match.stage}
-          {data.match.group ? ` · Group ${data.match.group}` : ''}
-        </p>
+        <p className="kicker">{formatFixtureStageLabel(data.match.stage, data.match.group)}</p>
         <div className="fixture-row">
           {homeTeam && homeTeam.id !== 'tbd' ? <TeamLabel team={homeTeam} /> : <span>TBD</span>}
           <strong>vs</strong>

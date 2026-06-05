@@ -228,6 +228,27 @@ export async function requireAdmin(token: string | undefined): Promise<AuthUser>
   return user;
 }
 
+export async function deletePlayerAccount(userId: string): Promise<void> {
+  const db = getDb();
+  const row = await db.get<{ id: string; is_admin: number; display_name: string }>(
+    `SELECT id, is_admin, display_name FROM users WHERE id = ?`,
+    [userId]
+  );
+  if (!row) {
+    throw new Error('Player not found');
+  }
+  if (row.is_admin === 1 || isReservedOrganiserDisplayName(row.display_name)) {
+    throw new Error('Cannot delete admin or organiser accounts');
+  }
+
+  await db.transaction(async (tx) => {
+    await tx.run(`DELETE FROM sessions WHERE user_id = ?`, [userId]);
+    await tx.run(`DELETE FROM predictions WHERE user_id = ?`, [userId]);
+    await tx.run(`DELETE FROM prediction_meta WHERE user_id = ?`, [userId]);
+    await tx.run(`DELETE FROM users WHERE id = ?`, [userId]);
+  });
+}
+
 export async function listPlayers(): Promise<
   Array<{ id: string; displayName: string; mustChangePassword: boolean; createdAt: string }>
 > {
