@@ -1,4 +1,5 @@
 import { fetchCompetitionFixtures, PROVIDER } from '../../services/footballDataService';
+import { ActualResult } from '../../types';
 import { upsertMatchKickoff } from '../kickoffs';
 import {
   explainMappingFailure,
@@ -6,16 +7,26 @@ import {
   resolveInternalMatchId
 } from './matchMapping';
 import type { MappingFailureReason } from './matchMapping';
+import { getResultsMap } from './leaderboard';
 
-export async function syncKickoffsFromFootballData(apiToken: string) {
+export async function syncKickoffsFromFootballData(
+  apiToken: string,
+  actuals?: Record<string, ActualResult>
+) {
   const fixtures = await fetchCompetitionFixtures(apiToken);
+  const syncActuals = actuals ?? (await getResultsMap());
   let mapped = 0;
   let skipped = 0;
   const skipReasons = {} as Record<MappingFailureReason, number>;
 
   for (const fixture of fixtures) {
     const existing = await internalIdFromProvider(PROVIDER, fixture.providerId);
-    const reason = explainMappingFailure(fixture.homeName, fixture.awayName, existing);
+    const reason = explainMappingFailure(
+      fixture.homeName,
+      fixture.awayName,
+      existing,
+      syncActuals
+    );
 
     if (reason !== 'mappable' && reason !== 'already_mapped') {
       skipped += 1;
@@ -27,7 +38,8 @@ export async function syncKickoffsFromFootballData(apiToken: string) {
       PROVIDER,
       fixture.providerId,
       fixture.homeName,
-      fixture.awayName
+      fixture.awayName,
+      syncActuals
     );
     if (!internalId) {
       skipped += 1;

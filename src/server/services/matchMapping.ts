@@ -1,6 +1,9 @@
 import { groupMatches, teams } from '../../data/tournament';
 import { getMatches } from '../../lib/matchResolver';
+import { ActualResult } from '../../types';
 import { getDb } from '../database';
+
+type ResultsContext = Record<string, ActualResult>;
 
 function normalizeName(name: string): string {
   return name
@@ -73,10 +76,23 @@ export type MappingFailureReason =
   | 'unmapped_away_team'
   | 'no_matching_internal_fixture';
 
+function findInternalMatchByTeamIds(
+  homeId: string,
+  awayId: string,
+  actuals: ResultsContext = {}
+) {
+  return getMatches({}, actuals).find(
+    (m) =>
+      (m.homeTeamId === homeId && m.awayTeamId === awayId) ||
+      (m.homeTeamId === awayId && m.awayTeamId === homeId)
+  );
+}
+
 export function explainMappingFailure(
   homeName: string | null | undefined,
   awayName: string | null | undefined,
-  existingId: string | null
+  existingId: string | null,
+  actuals: ResultsContext = {}
 ): MappingFailureReason | 'mappable' {
   if (existingId) return 'already_mapped';
   if (!homeName) return 'missing_home_team';
@@ -87,13 +103,9 @@ export function explainMappingFailure(
   if (!homeId) return 'unmapped_home_team';
   if (!awayId) return 'unmapped_away_team';
 
-  const allMatches = getMatches();
-  const found = allMatches.find(
-    (m) =>
-      (m.homeTeamId === homeId && m.awayTeamId === awayId) ||
-      (m.homeTeamId === awayId && m.awayTeamId === homeId)
-  );
-  if (!found) return 'no_matching_internal_fixture';
+  if (!findInternalMatchByTeamIds(homeId, awayId, actuals)) {
+    return 'no_matching_internal_fixture';
+  }
   return 'mappable';
 }
 
@@ -102,10 +114,11 @@ export async function resolveInternalMatchId(
   provider: string,
   providerId: string,
   homeName: string | null | undefined,
-  awayName: string | null | undefined
+  awayName: string | null | undefined,
+  actuals: ResultsContext = {}
 ): Promise<string | null> {
   const existing = await internalIdFromProvider(provider, providerId);
-  const failure = explainMappingFailure(homeName, awayName, existing);
+  const failure = explainMappingFailure(homeName, awayName, existing, actuals);
   if (failure === 'already_mapped') return existing;
   if (failure !== 'mappable') return null;
 
@@ -113,12 +126,7 @@ export async function resolveInternalMatchId(
   const awayId = teamIdFromProviderName(awayName);
   if (!homeId || !awayId) return null;
 
-  const allMatches = getMatches();
-  const found = allMatches.find(
-    (m) =>
-      (m.homeTeamId === homeId && m.awayTeamId === awayId) ||
-      (m.homeTeamId === awayId && m.awayTeamId === homeId)
-  );
+  const found = findInternalMatchByTeamIds(homeId, awayId, actuals);
   if (!found) return null;
 
   await registerExternalMapping(found.id, provider, providerId);

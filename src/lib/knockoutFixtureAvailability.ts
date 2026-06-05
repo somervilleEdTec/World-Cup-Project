@@ -32,7 +32,7 @@ export function assertKnockoutFixtureConfirmed(
 ): void {
   if (!isKnockoutFixtureConfirmed(matchId, actuals)) {
     throw new Error(
-      'This knockout fixture is not available yet. It unlocks once the official group results are in and both teams are confirmed.'
+      'This knockout fixture is not available yet. It unlocks once both teams are confirmed from official group or knockout results.'
     );
   }
 }

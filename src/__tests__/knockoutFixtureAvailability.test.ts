@@ -5,6 +5,7 @@ import {
   isGroupCompleteInResults,
   isKnockoutFixtureConfirmed
 } from '../lib/knockoutFixtureAvailability';
+import { explainMappingFailure } from '../server/services/matchMapping';
 import { ActualResult } from '../types';
 
 function finishGroup(groupId: string, actuals: Record<string, ActualResult>) {
@@ -34,12 +35,39 @@ describe('knockoutFixtureAvailability', () => {
     expect(isKnockoutFixtureConfirmed('r32-1', {})).toBe(false);
   });
 
-  it('confirms R32 fixtures once all feeding groups have official results', () => {
+  it('confirms an R32 fixture once its feeding groups have all official results', () => {
+    const actuals: Record<string, ActualResult> = {};
+    finishGroup('A', actuals);
+    finishGroup('B', actuals);
+
+    expect(isKnockoutFixtureConfirmed('r32-1', actuals)).toBe(true);
+    expect(buildConfirmedKnockoutFixtures(actuals)).toEqual([
+      expect.objectContaining({ id: 'r32-1', stage: 'R32' })
+    ]);
+  });
+
+  it('confirms a later knockout fixture once feeder matches have FT results', () => {
     const actuals: Record<string, ActualResult> = {};
     'ABCDEFGHIJKL'.split('').forEach((groupId) => finishGroup(groupId, actuals));
-    const confirmed = buildConfirmedKnockoutFixtures(actuals);
-    expect(confirmed.length).toBeGreaterThan(0);
-    expect(confirmed.some((m) => m.id === 'r32-1')).toBe(true);
-    expect(isKnockoutFixtureConfirmed('r32-1', actuals)).toBe(true);
+    actuals['r32-1'] = { matchId: 'r32-1', homeScore: 2, awayScore: 0 };
+    actuals['r32-3'] = { matchId: 'r32-3', homeScore: 1, awayScore: 0 };
+
+    expect(isKnockoutFixtureConfirmed('r16-2', actuals)).toBe(true);
+    expect(buildConfirmedKnockoutFixtures(actuals).some((m) => m.id === 'r16-2')).toBe(true);
+  });
+});
+
+describe('match mapping with official results', () => {
+  it('maps a confirmed R32 fixture from provider team names once bracket teams are known', () => {
+    const actuals: Record<string, ActualResult> = {};
+    finishGroup('A', actuals);
+    finishGroup('B', actuals);
+
+    expect(
+      explainMappingFailure('South Africa', 'Bosnia and Herzegovina', null, actuals)
+    ).toBe('mappable');
+    expect(explainMappingFailure('South Africa', 'Bosnia and Herzegovina', null, {})).toBe(
+      'no_matching_internal_fixture'
+    );
   });
 });
