@@ -1,7 +1,9 @@
 import { fetchLatestResults, PROVIDER } from '../../services/footballDataService';
 import { getMatches } from '../../lib/matchResolver';
+import { ActualResult } from '../../types';
 import { getDb } from '../database';
 import { resolveInternalMatchId, teamIdFromProviderName } from './matchMapping';
+import { getResultsMap } from './leaderboard';
 import { syncKickoffsFromFootballData } from './fixtureSync';
 
 function progressingTeamId(
@@ -21,9 +23,10 @@ function progressingTeamId(
 function fixtureTeamIds(
   internalId: string,
   homeName: string | null | undefined,
-  awayName: string | null | undefined
+  awayName: string | null | undefined,
+  actuals: Record<string, ActualResult> = {}
 ): { home: string; away: string } | null {
-  const match = getMatches().find((m) => m.id === internalId);
+  const match = getMatches({}, actuals).find((m) => m.id === internalId);
   if (match && match.homeTeamId !== 'tbd' && match.awayTeamId !== 'tbd') {
     return { home: match.homeTeamId, away: match.awayTeamId };
   }
@@ -39,24 +42,32 @@ export async function syncFootballData(apiToken: string) {
   await db.run(`UPDATE sync_status SET last_attempt_at = ? WHERE id = 1`, [now]);
 
   try {
-    const results = await fetchLatestResults(apiToken);
+    const apiResults = await fetchLatestResults(apiToken);
+    const storedActuals = await getResultsMap();
+    const syncActuals: Record<string, ActualResult> = { ...storedActuals };
     let updated = 0;
     let skipped = 0;
 
     await db.transaction(async (tx) => {
-      for (const result of results) {
+      for (const result of apiResults) {
         const internalId = await resolveInternalMatchId(
           PROVIDER,
           result.providerId,
           result.homeName,
-          result.awayName
+          result.awayName,
+          syncActuals
         );
         if (!internalId) {
           skipped += 1;
           continue;
         }
 
-        const teamsInFixture = fixtureTeamIds(internalId, result.homeName, result.awayName);
+        const teamsInFixture = fixtureTeamIds(
+          internalId,
+          result.homeName,
+          result.awayName,
+          syncActuals
+        );
         if (!teamsInFixture) {
           skipped += 1;
           continue;
@@ -70,6 +81,13 @@ export async function syncFootballData(apiToken: string) {
           result.progressingTeamId
         );
 
+        const actual: ActualResult = {
+          matchId: internalId,
+          homeScore: result.homeScore,
+          awayScore: result.awayScore,
+          progressingTeamId: prog
+        };
+
         await tx.run(
           `INSERT INTO results (match_id, home_score, away_score, progressing_team_id, status, source, updated_at)
            VALUES (?, ?, ?, ?, 'FINISHED', 'football-data.org', ?)
@@ -82,6 +100,7 @@ export async function syncFootballData(apiToken: string) {
              updated_at=excluded.updated_at`,
           [internalId, result.homeScore, result.awayScore, prog ?? null, now]
         );
+        syncActuals[internalId] = actual;
         updated += 1;
       }
     });
@@ -98,7 +117,8 @@ export async function syncFootballData(apiToken: string) {
 }
 
 export async function runFullFootballDataSync(apiToken: string) {
-  const kickoffs = await syncKickoffsFromFootballData(apiToken);
+  const storedActuals = await getResultsMap();
+  const kickoffs = await syncKickoffsFromFootballData(apiToken, storedActuals);
   const results = await syncFootballData(apiToken);
   return { kickoffs, results };
 }
