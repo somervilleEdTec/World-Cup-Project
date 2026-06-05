@@ -182,6 +182,13 @@ if ! npm run migrate; then
   exit 1
 fi
 
+echo "==> maintenance: remove duplicate non-admin organiser player (if present)"
+if sqlite3 "${SQLITE_PATH:-data.db}" "SELECT 1 FROM users WHERE LOWER(display_name) = LOWER('Admin Tomsom') AND is_admin = 0 LIMIT 1;" 2>/dev/null | grep -q 1; then
+  npm run db:remove-player -- "Admin Tomsom"
+else
+  echo "No duplicate Admin Tomsom player account — skip."
+fi
+
 echo "==> build"
 if [[ -z "${VITE_API_BASE_URL:-}" ]]; then
   echo "WARNING: VITE_API_BASE_URL not set in .env — frontend may call wrong API origin."
