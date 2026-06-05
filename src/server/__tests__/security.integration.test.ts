@@ -397,4 +397,90 @@ describe('security and tamper resistance', () => {
     expect(me.status).toBe(200);
     expect(me.body.user.mustChangePassword).toBe(true);
   });
+
+  it('rejects string scores sent instead of integers', async () => {
+    await createPlayer(app, 'TypeCoerce');
+    const token = await loginPlayerReady(app, 'TypeCoerce');
+
+    const res = await request(app)
+      .post('/api/predictions/draft')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ matchId: 'g-a-1', homeScore: '2', awayScore: '1' });
+    expect(res.status).toBe(400);
+  });
+
+  it('rejects knockout draw without progressing team via API', async () => {
+    await createPlayer(app, 'KoDraw');
+    const token = await loginPlayerReady(app, 'KoDraw');
+    const admin = await adminToken(app);
+
+    const { saveAllGroupPicks, insertGroupResults } = await import('./testDbHelpers');
+    await saveAllGroupPicks(app, token);
+    const db = (await import('../database')).getDb();
+    await insertGroupResults(db, 'A');
+    await insertGroupResults(db, 'B');
+
+    const res = await request(app)
+      .post('/api/predictions/draft')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ matchId: 'r32-1', homeScore: 1, awayScore: 1 });
+    expect(res.status).toBe(400);
+    expect(String(res.body.error)).toMatch(/Draw selected|progress/i);
+  });
+
+  it('rejects forged progressing team outside the fixture', async () => {
+    await createPlayer(app, 'ForgeProg');
+    const token = await loginPlayerReady(app, 'ForgeProg');
+    const { saveAllGroupPicks, insertGroupResults } = await import('./testDbHelpers');
+    await saveAllGroupPicks(app, token);
+    const db = (await import('../database')).getDb();
+    await insertGroupResults(db, 'A');
+    await insertGroupResults(db, 'B');
+
+    const res = await request(app)
+      .post('/api/predictions/draft')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        matchId: 'r32-1',
+        homeScore: 1,
+        awayScore: 1,
+        progressingTeamId: 'brazil'
+      });
+    expect(res.status).toBe(400);
+    expect(String(res.body.error)).toMatch(/fixture/i);
+  });
+
+  it('rejects invalid group lock letters', async () => {
+    await createPlayer(app, 'BadGroup');
+    const token = await loginPlayerReady(app, 'BadGroup');
+
+    const res = await request(app)
+      .post('/api/predictions/groups/Z/lock')
+      .set('Authorization', `Bearer ${token}`);
+    expect(res.status).toBe(400);
+    expect(String(res.body.error)).toMatch(/Invalid group/i);
+  });
+
+  it('rejects login with empty credentials', async () => {
+    const res = await request(app).post('/api/auth/login').send({ displayName: '', password: '' });
+    expect(res.status).toBe(401);
+  });
+
+  it('rejects admin result override with negative scores', async () => {
+    const token = await adminToken(app);
+    const res = await request(app)
+      .post('/api/admin/results/override')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ matchId: 'g-a-1', homeScore: -1, awayScore: 0, status: 'FINISHED' });
+    expect(res.status).toBe(400);
+  });
+
+  it('stores display names safely and returns them verbatim in leaderboard', async () => {
+    const xssName = '<script>alert(1)</script>';
+    await createPlayer(app, xssName);
+    const board = await request(app).get('/api/leaderboard');
+    const entry = board.body.entries.find((e: { name: string }) => e.name === xssName);
+    expect(entry).toBeTruthy();
+    expect(entry.name).toBe(xssName);
+  });
 });

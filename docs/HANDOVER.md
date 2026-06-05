@@ -128,7 +128,7 @@ Historical docs: [archive/README.md](./archive/README.md)
 - [x] All kickoff times shown in **BST** (`src/lib/formatDateTime.ts`)
 - [x] `TeamSelect` — flags + alphabetical teams
 - [x] SVG flags (`CountryFlag`, `public/flags/4x3/`)
-- [x] **121 tests**; `npm run build`; Windows `scripts/Test-LocalSite.ps1`; `npm run seed:ko-environment`; `npm run seed:complete-teams`
+- [x] **154 tests** across unit + integration (validation, scoring, DB, sync mapping, security); `npm run build`; Windows `scripts/Test-LocalSite.ps1`; `npm run seed:ko-environment`; `npm run seed:complete-teams`
 
 ### Ops / partial
 
@@ -168,7 +168,11 @@ Jobs: src/server/jobs.ts (locks, sync poll)
 | `src/lib/comparisonVisibility.ts` | When others’ predictions are visible |
 | `src/lib/formatDateTime.ts` | BST kickoff formatting |
 | `src/components/TeamSelect.tsx` | Flag + name picker |
-| `scripts/seed-ko-environment.ts` | `npm run seed:ko-environment` |
+| `src/server/__tests__/tournament.integration.test.ts` | Leaderboard, KO unlock, DB upsert, multi-player stress |
+| `src/server/__tests__/database.integration.test.ts` | Migrations, data-protection row counts, reset guards |
+| `src/server/__tests__/syncMapping.test.ts` | football-data → internal KO mapping with stored results |
+| `src/server/__tests__/security.integration.test.ts` | Auth, tampering, admin isolation, concurrent saves |
+| `src/__tests__/tournamentRobustness.test.ts` | Validation, scoring invariants, bracket stress |
 | `src/server/services/predictions.ts` | Saves, locks, bonus |
 | `src/server/services/auth.ts` | Admin creates players; login; password change |
 | `src/lib/pickLocks.ts` | Lock rules, 72-group gate |

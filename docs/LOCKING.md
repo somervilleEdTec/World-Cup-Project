@@ -77,6 +77,10 @@ See [KO_ENVIRONMENT.md](./KO_ENVIRONMENT.md) (`seed:before-final` for final-pick
 | `src/__tests__/lockingPolicy.test.ts` | Policy assertions vs this doc |
 | `src/__tests__/knockoutFixtureAvailability.test.ts` | Per-fixture KO unlock, API mapping with stored results |
 | `src/server/__tests__/api.integration.test.ts` | Lock/unlock API, 72 gate, global lock |
+| `src/server/__tests__/tournament.integration.test.ts` | Leaderboard scoring, KO unlock, DB upsert |
+| `src/server/__tests__/database.integration.test.ts` | Migrations and data-protection guards |
+| `src/server/__tests__/security.integration.test.ts` | Tamper resistance and admin isolation |
+| `src/__tests__/tournamentRobustness.test.ts` | Validation and scoring invariants |
 
 ---
 

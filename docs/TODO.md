@@ -64,7 +64,7 @@
 
 - [x] Postgres + migrations
 - [x] Deploy docs ([PRODUCTION.md](./PRODUCTION.md), [GO_LIVE.md](./GO_LIVE.md))
-- [x] API integration tests (121 tests)
+- [x] API integration tests (154 tests)
 - [x] football-data seed + sync
 - [x] Windows `scripts/Test-LocalSite.ps1`
 - [x] SVG team flags

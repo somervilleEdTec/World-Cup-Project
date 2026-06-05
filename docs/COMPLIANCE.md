@@ -36,6 +36,14 @@ Verified against [FINAL_PLAN.md](./FINAL_PLAN.md). **Last reviewed:** 2026-06-05
 - **Comparison — knockout:** others’ predictions hidden until fixture kickoff (not visible pre-kickoff).
 - User-facing label **prediction**; API/DB still use `committed` state naming.
 
-**Tests:** 121 tests (`npm test`) — includes `matchScoring.test.ts`, `knockoutFixtureAvailability.test.ts`, lock/unlock integration tests.
+**Tests:** 154 tests (`npm test`) — unit logic, API integration, DB/data-protection, sync mapping, security/tamper, and tournament stress scenarios.
+
+| Area | Key files |
+|------|-----------|
+| Scoring / bracket | `matchScoring.test.ts`, `tournamentRobustness.test.ts`, `bracketEngine.test.ts` |
+| Locks / KO gating | `pickLocks.test.ts`, `knockoutFixtureAvailability.test.ts`, `lockingPolicy.test.ts` |
+| API + DB | `api.integration.test.ts`, `tournament.integration.test.ts`, `database.integration.test.ts` |
+| Security | `security.integration.test.ts` |
+| Sync | `syncMapping.test.ts` |
 
 **Deferred (P3):** OAuth, PWA, PDF export, E2E tests, production CORS hardening.
