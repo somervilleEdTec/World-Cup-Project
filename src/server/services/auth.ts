@@ -33,8 +33,17 @@ function normalizeName(name: string): string {
   return name.trim();
 }
 
+/** Collapse spaces for reserved-name checks (blocks "Admin Tomsom" vs AdminTomsom). */
+function compactDisplayName(name: string): string {
+  return normalizeName(name).replace(/\s+/g, '').toLowerCase();
+}
+
 export function normalizeDisplayName(name: string): string {
   return normalizeName(name);
+}
+
+export function isReservedOrganiserDisplayName(name: string): boolean {
+  return compactDisplayName(name) === compactDisplayName(BOOTSTRAP_ADMIN_USERNAME);
 }
 
 type UserRow = {
@@ -100,7 +109,7 @@ export async function createPlayerAccount(
   if (name.length < 2) {
     throw new Error('Name must be at least 2 characters');
   }
-  if (name.toLowerCase() === normalizeName(BOOTSTRAP_ADMIN_USERNAME).toLowerCase()) {
+  if (isReservedOrganiserDisplayName(name)) {
     throw new Error('That username is reserved for the organiser account');
   }
   if (initialPassword.length < 1 || initialPassword.length > PLAYER_PASSWORD_MAX_LENGTH) {
