@@ -69,6 +69,24 @@ if [[ "${health_ok}" -ne 1 ]]; then
   exit 1
 fi
 
+echo "==> nginx (public HTTPS → :${PORT})"
+if command -v nginx >/dev/null 2>&1; then
+  if sudo nginx -t 2>/dev/null; then
+    sudo systemctl restart nginx 2>/dev/null || sudo systemctl start nginx 2>/dev/null || true
+    nginx_state="$(systemctl is-active nginx.service 2>/dev/null || echo unknown)"
+    echo "nginx: ${nginx_state}"
+    if [[ "${nginx_state}" != "active" ]]; then
+      echo "WARNING: nginx is not active — public URL may return Cloudflare 530."
+      journalctl -u nginx -n 30 --no-pager 2>/dev/null || true
+    fi
+  else
+    echo "WARNING: nginx config test failed — fix /etc/nginx before public URL works."
+    sudo nginx -t 2>&1 || true
+  fi
+else
+  echo "WARNING: nginx not installed — Cloudflare cannot reach Node on :${PORT}."
+fi
+
 echo "==> Health"
 curl -sf "http://127.0.0.1:${PORT}/api/health" && echo ""
 echo "==> Index JS"

@@ -77,6 +77,21 @@ if command -v systemctl >/dev/null 2>&1; then
   done
 fi
 
+# --- nginx (Cloudflare → origin) ---
+if command -v nginx >/dev/null 2>&1; then
+  nginx_state="$(systemctl is-active nginx.service 2>/dev/null || echo unknown)"
+  if [[ "${nginx_state}" != "active" ]]; then
+    note_fail "nginx.service is not active (state=${nginx_state}) — public URL will show Cloudflare 530"
+  else
+    echo "OK: nginx.service active"
+    if ! curl -sf --max-time 10 -k "https://127.0.0.1/api/health" -H "Host: worldcup.dosums.uk" >/dev/null 2>&1; then
+      note_fail "nginx is active but https://127.0.0.1/api/health (Host: worldcup.dosums.uk) failed"
+    else
+      echo "OK: nginx proxies /api/health to Node"
+    fi
+  fi
+fi
+
 # --- git HEAD on server ---
 actual_head="$(git rev-parse HEAD 2>/dev/null || echo unknown)"
 if [[ "${actual_head}" != "${EXPECTED}" ]]; then
