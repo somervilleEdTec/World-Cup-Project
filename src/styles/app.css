@@ -19,9 +19,18 @@ a {
 }
 
 .app-shell {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
+  min-height: 100dvh;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+}
+
+.app-main {
+  padding: 1rem;
+  max-width: 1100px;
+  width: 100%;
+  margin: 0 auto;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 .app-header {
@@ -57,19 +66,7 @@ button {
   cursor: pointer;
 }
 
-.app-main {
-  flex: 1;
-  padding: 1rem;
-  max-width: 1100px;
-  width: 100%;
-  margin: 0 auto 7rem;
-}
-
 .mobile-nav {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
   background: #0f2f56;
   padding: 0.65rem 0.5rem calc(0.65rem + env(safe-area-inset-bottom, 0px));
   display: grid;
@@ -247,6 +244,20 @@ select {
   margin: 0.15rem 0 0.5rem;
 }
 
+.fixture-schedule {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 1rem;
+  font-size: 0.85rem;
+  color: #4a6278;
+  margin: 0.15rem 0 0.55rem;
+}
+
+.fixture-schedule-deadline {
+  font-weight: 600;
+  color: #ad4b00;
+}
+
 .fixture-scores-locked p {
   margin: 0.35rem 0;
 }
@@ -311,8 +322,13 @@ td {
     display: none;
   }
 
+  .app-shell {
+    display: flex;
+    flex-direction: column;
+  }
+
   .app-main {
-    margin-bottom: 1rem;
+    overflow-y: visible;
   }
 }
 

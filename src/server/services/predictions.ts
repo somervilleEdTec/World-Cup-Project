@@ -16,6 +16,7 @@ import {
   predictionLockReached,
   shouldLockGroup
 } from '../../lib/pickLocks';
+import { defaultDrawPick } from '../../lib/pickUtils';
 import { Pick, TournamentBonusPick } from '../../types';
 import {
   assertKnockoutFixtureConfirmed,
@@ -194,16 +195,12 @@ export async function setGroupAccepted(
   const mergedPicks = { ...state.committedPicks, ...state.draftPicks };
   const groupMatchIds = groupMatches.filter((m) => m.group === groupId);
 
-  const complete = groupMatchIds.every((m) => mergedPicks[m.id] !== undefined);
-  if (!complete) throw new Error(`Complete all matches in Group ${groupId} before locking.`);
-
   const results = await getResultsMap();
   const db = getDb();
 
   await db.transaction(async (tx) => {
     for (const match of groupMatchIds) {
-      const pick = mergedPicks[match.id];
-      if (!pick) continue;
+      const pick = mergedPicks[match.id] ?? defaultDrawPick(match.id);
 
       const matchObj = getMatches(mergedPicks, results).find((m) => m.id === match.id);
       if (!matchObj) continue;
@@ -341,12 +338,35 @@ export async function commitDraft(userId: string, nowIso: string) {
   });
 }
 
+async function applyDefaultGroupPicksForUser(userId: string, nowIso: string) {
+  const db = getDb();
+  const state = await getUserPredictionState(userId);
+  const mergedPicks = { ...state.committedPicks, ...state.draftPicks };
+
+  for (const match of groupMatches) {
+    if (mergedPicks[match.id] !== undefined) continue;
+
+    const pick = defaultDrawPick(match.id);
+    await db.run(
+      `INSERT INTO predictions (user_id, match_id, state, home_score, away_score, progressing_team_id, reviewed, updated_at)
+       VALUES (?, ?, 'committed', ?, ?, NULL, 1, ?)
+       ON CONFLICT(user_id, match_id, state) DO UPDATE SET home_score=excluded.home_score, away_score=excluded.away_score, progressing_team_id=excluded.progressing_team_id, reviewed=1, updated_at=excluded.updated_at`,
+      [userId, pick.matchId, pick.homeScore, pick.awayScore, nowIso]
+    );
+    await db.run(`DELETE FROM predictions WHERE user_id = ? AND match_id = ? AND state = 'draft'`, [
+      userId,
+      pick.matchId
+    ]);
+  }
+}
+
 export async function runAutoLocks(nowIso: string) {
   const db = getDb();
   const lockGroup = shouldLockGroup(nowIso);
   const userRows = await db.all<{ user_id: string }>(`SELECT user_id FROM prediction_meta`);
   if (lockGroup) {
     for (const row of userRows) {
+      await applyDefaultGroupPicksForUser(row.user_id, nowIso);
       await db.run(`UPDATE prediction_meta SET group_locked = 1 WHERE user_id = ?`, [row.user_id]);
     }
   }

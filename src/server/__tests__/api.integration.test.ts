@@ -185,6 +185,11 @@ describe('API integration', () => {
     const { runAutoLocks } = await import('../services/predictions');
     await runAutoLocks('2026-06-12T00:00:00Z');
 
+    const state = await request(app)
+      .get('/api/predictions/state')
+      .set('Authorization', `Bearer ${token}`);
+    expect(state.body.committedPicks['g-a-1']).toMatchObject({ homeScore: 0, awayScore: 0 });
+
     const draft = await request(app)
       .post('/api/predictions/draft')
       .set('Authorization', `Bearer ${token}`)

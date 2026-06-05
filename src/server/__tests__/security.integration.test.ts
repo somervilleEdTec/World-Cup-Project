@@ -229,7 +229,7 @@ describe('security and tamper resistance', () => {
     expect(stateB.body.committedPicks['g-a-1']).toMatchObject({ homeScore: 0, awayScore: 5 });
   });
 
-  it('rejects group lock until all six group matches are saved', async () => {
+  it('locks a group with implicit 0-0 draws for untouched matches', async () => {
     await createPlayer(app, 'PartialLock');
     const token = await loginPlayerReady(app, 'PartialLock');
 
@@ -241,8 +241,13 @@ describe('security and tamper resistance', () => {
     const lock = await request(app)
       .post('/api/predictions/groups/A/lock')
       .set('Authorization', `Bearer ${token}`);
-    expect(lock.status).toBe(400);
-    expect(String(lock.body.error)).toMatch(/Complete all matches/i);
+    expect(lock.status).toBe(200);
+
+    const state = await request(app)
+      .get('/api/predictions/state')
+      .set('Authorization', `Bearer ${token}`);
+    expect(state.body.acceptedGroups).toContain('A');
+    expect(state.body.committedPicks['g-a-2']).toMatchObject({ homeScore: 0, awayScore: 0 });
   });
 
   it('blocks edits after global auto-lock', async () => {

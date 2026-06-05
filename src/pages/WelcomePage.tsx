@@ -5,9 +5,18 @@ export function WelcomePage() {
         <h2>Welcome</h2>
         <p>
           World Cup Predictions for friends and family. Pick tournament winners, predict scores and
-          don&apos;t finish last! Please read the rules carefully. All group stage games MUST be
-          predicted 15 minutes before the start of the tournament, and KO games will be locked
-          15mins before kick off. If you have any further questions, you can fuck off.
+          don&apos;t finish last! Please read the rules carefully.
+        </p>
+        <p className="warning">
+          <strong>Important:</strong> All group-stage matches must be predicted and locked before
+          the deadline (15 minutes before the first match kickoff). Any group match you leave
+          untouched when you lock a group counts as a <strong>0-0 draw</strong>. If you have not
+          predicted and locked your group picks before the deadline, every missing group match will
+          automatically be recorded as a <strong>0-0 draw</strong>.
+        </p>
+        <p>
+          Knockout games lock 15 minutes before each fixture&apos;s kickoff. If you have any
+          questions, ask another player.
         </p>
       </article>
 
@@ -58,6 +67,10 @@ export function WelcomePage() {
           <li>
             Tournament result predictions and all group-stage predictions lock 15 minutes before the
             first match kickoff.
+          </li>
+          <li>
+            Unpredicted group matches are treated as <strong>0-0 draws</strong> when you lock a
+            group, or automatically at the group-stage deadline if still missing.
           </li>
           <li>Each knockout fixture locks 15 minutes before that fixture&apos;s kickoff.</li>
           <li>Knockout draws require choosing which team progresses (extra time / penalties).</li>

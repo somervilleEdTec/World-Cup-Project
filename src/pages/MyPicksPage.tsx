@@ -4,7 +4,7 @@ import { groupMatches, teams } from '../data/tournament';
 import { FixturePickCard } from '../components/FixturePickCard';
 import { GroupStandingsTable } from '../components/GroupStandingsTable';
 import { TeamLabel } from '../components/TeamLabel';
-import { picksFromActuals } from '../lib/pickUtils';
+import { picksFromActuals, defaultDrawPick, effectiveGroupPick } from '../lib/pickUtils';
 import {
   fetchPredictionState,
   isAuthErrorMessage,
@@ -42,14 +42,6 @@ const KNOCKOUT_PHASES = [
 ];
 
 type PicksPhase = 'bonus' | 'group' | (typeof KNOCKOUT_PHASES)[number]['id'];
-
-function formatCountdown(targetIso: string, nowIso: string): string {
-  const diff = new Date(targetIso).getTime() - new Date(nowIso).getTime();
-  if (diff <= 0) return 'Locked';
-  const hours = Math.floor(diff / (1000 * 60 * 60));
-  const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-  return `${hours}h ${minutes}m`;
-}
 
 function isKnockoutPhase(phase: PicksPhase): phase is (typeof KNOCKOUT_PHASES)[number]['id'] {
   return KNOCKOUT_PHASES.some((entry) => entry.id === phase);
@@ -154,10 +146,16 @@ export function MyPicksPage() {
   const mergedPicks = { ...savedPicks, ...pendingGroupPicks };
   const confirmedKnockoutFixtures = state.confirmedKnockoutFixtures ?? [];
   const officialResults = state.officialResults ?? {};
-  const groupStandings = useMemo(
-    () => computeGroupStandings(activeGroup, { ...savedPicks, ...pendingGroupPicks }),
-    [activeGroup, pendingGroupPicks, savedPicks]
-  );
+  const groupStandings = useMemo(() => {
+    if (!userGroupLocked) return [];
+    const picksForStandings = Object.fromEntries(
+      activeGroupMatches.map((match) => [
+        match.id,
+        effectiveGroupPick(match.id, { ...savedPicks, ...pendingGroupPicks })
+      ])
+    );
+    return computeGroupStandings(activeGroup, picksForStandings);
+  }, [activeGroup, activeGroupMatches, pendingGroupPicks, savedPicks, userGroupLocked]);
 
   const actualPicksForGroup = useMemo(() => {
     const fromActuals = picksFromActuals(officialResults);
@@ -183,7 +181,6 @@ export function MyPicksPage() {
     [mergedPicks, state.bonusCommitted, confirmedKnockoutFixtures]
   );
 
-  const groupComplete = activeGroupMatches.every((match) => mergedPicks[match.id] !== undefined);
   const canToggleGroupLock = !calendarGroupLocked;
   const allGroupPicksCommitted = state.allGroupPicksCommitted ?? false;
   const koPicksAllowed = allGroupPicksCommitted || tournamentLocked;
@@ -241,6 +238,35 @@ export function MyPicksPage() {
   const handleGroupScoreChange = useCallback((matchId: string, updated: Pick) => {
     setPendingGroupPicks((current) => ({ ...current, [matchId]: updated }));
   }, []);
+
+  const ensureDefaultPicksForGroup = useCallback(async () => {
+    const matches = groupMatches.filter((match) => match.group === activeGroup);
+    for (const match of matches) {
+      if (mergedPicks[match.id] !== undefined) continue;
+      await saveDraftPick(defaultDrawPick(match.id));
+    }
+    setPendingGroupPicks((current) => {
+      const next = { ...current };
+      for (const match of matches) {
+        delete next[match.id];
+      }
+      return next;
+    });
+    setState((prev) => {
+      const committedPicks = { ...prev.committedPicks };
+      for (const match of matches) {
+        if (committedPicks[match.id] === undefined && prev.draftPicks[match.id] === undefined) {
+          committedPicks[match.id] = defaultDrawPick(match.id);
+        }
+      }
+      return {
+        ...prev,
+        committedPicks,
+        groupPicksCommittedCount: countCommittedGroupPicks(committedPicks),
+        allGroupPicksCommitted: computeAllGroupPicksCommitted(committedPicks)
+      };
+    });
+  }, [activeGroup, mergedPicks]);
 
   const flushPendingForGroup = async (options?: { refresh?: boolean }) => {
     const matches = groupMatches.filter((match) => match.group === activeGroup);
@@ -312,7 +338,7 @@ export function MyPicksPage() {
         <p>
           {tournamentLocked
             ? 'Group-stage and tournament result predictions are now locked.'
-            : 'Scores save automatically. Lock a group when you are happy with it.'}
+            : 'Scores save automatically. Lock a group when you are happy with it — untouched matches count as 0-0 draws.'}
         </p>
         <div className="missing-picks">
           <h3>You have the following missing predictions:</h3>
@@ -396,9 +422,17 @@ export function MyPicksPage() {
             );
           })}
 
-          <h4>Projected table (Group {activeGroup})</h4>
-          <p className="fixture-meta">Based on your score predictions for this group.</p>
-          <GroupStandingsTable standings={groupStandings} />
+          {userGroupLocked ? (
+            <>
+              <h4>Projected table (Group {activeGroup})</h4>
+              <p className="fixture-meta">Based on your score predictions for this group.</p>
+              <GroupStandingsTable standings={groupStandings} />
+            </>
+          ) : (
+            <p className="fixture-meta">
+              Lock this group to see projected league positions from your predictions.
+            </p>
+          )}
 
           <h4>Actual table (Group {activeGroup})</h4>
           {hasActualGroupResults ? (
@@ -414,9 +448,7 @@ export function MyPicksPage() {
             <button
               type="button"
               disabled={
-                userGroupLocked
-                  ? !canToggleGroupLock || groupResultsLocked
-                  : !canToggleGroupLock || !groupComplete
+                userGroupLocked ? !canToggleGroupLock || groupResultsLocked : !canToggleGroupLock
               }
               onClick={async () => {
                 const unlocking = userGroupLocked;
@@ -432,6 +464,7 @@ export function MyPicksPage() {
                     setGroupMessage(`Group ${activeGroup} unlocked.`);
                   } else {
                     await flushPendingForGroup({ refresh: false });
+                    await ensureDefaultPicksForGroup();
                     await lockGroup(activeGroup);
                     setGroupMessage(`Group ${activeGroup} locked.`);
                   }
@@ -564,11 +597,6 @@ export function MyPicksPage() {
                   inputsDisabled={!koPicksAllowed}
                   showLockedSummary={koFixtureLocked}
                   onSave={saveMatchPick}
-                  kickoffHint={
-                    koFixtureLocked
-                      ? undefined
-                      : `Locks in: ${formatCountdown(match.kickoff, nowIso)}`
-                  }
                 />
               );
             })

@@ -9,7 +9,8 @@ import {
 import { teams } from '../data/tournament';
 import { knockoutStageHeading, knockoutStageMultiplierLabel } from '../lib/knockoutStageMultiplier';
 import { computeMatchPoints } from '../lib/matchScoring';
-import { isKnockout, predictionLockReached } from '../lib/tournamentLogic';
+import { formatKickoffBst } from '../lib/formatDateTime';
+import { isKnockout, predictionLockReached, predictionLockTimeIso } from '../lib/tournamentLogic';
 import { ActualResult, Match, Pick } from '../types';
 import { TeamLabel } from './TeamLabel';
 import { formatFixtureScore } from './FixtureScoreSummary';
@@ -257,6 +258,8 @@ export function FixturePickCard({
   const inputsSaveDisabled = inputsDisabled || kickoffLocked;
   const points = computeMatchPoints(pick, actual, match.stage);
   const multiplierLabel = knockoutStageMultiplierLabel(match.stage);
+  const kickoffLabel = formatKickoffBst(match.kickoff);
+  const deadlineLabel = formatKickoffBst(predictionLockTimeIso(match.kickoff));
 
   return (
     <div className="fixture-card">
@@ -265,10 +268,18 @@ export function FixturePickCard({
         {homeOk ? <TeamLabel team={homeTeam!} /> : <span>TBD</span>} <strong>vs</strong>{' '}
         {awayOk ? <TeamLabel team={awayTeam!} /> : <span>TBD</span>}
       </div>
+      <p className="fixture-schedule">
+        <span className="fixture-schedule-kickoff">Kickoff: {kickoffLabel}</span>
+        {isKnockout(match) && !kickoffLocked && (
+          <span className="fixture-schedule-deadline">Predict by: {deadlineLabel}</span>
+        )}
+      </p>
       {kickoffHint && <p className="fixture-meta">{kickoffHint}</p>}
 
       {groupUserLocked && match.stage === 'GROUP' ? (
-        <p className="fixture-score-plain">{formatPickLine(pick, match)}</p>
+        <p className="fixture-score-plain">
+          {formatPickLine(pick ?? { matchId: match.id, homeScore: 0, awayScore: 0 }, match)}
+        </p>
       ) : showLockedSummary ? (
         <div className="fixture-scores-summary fixture-scores-locked">
           {match.stage === 'GROUP' && !actual ? (
