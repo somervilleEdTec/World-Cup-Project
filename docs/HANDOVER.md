@@ -71,6 +71,7 @@ See **[README.md](./README.md)** for the full map. Active docs:
 |------|------|
 | [BRANCHING.md](./BRANCHING.md) | **`main`** vs **`Debug`** workflow |
 | [PRODUCTION.md](./PRODUCTION.md) | Live ops, auto-deploy, wipe DB |
+| [OUTAGE_RECOVERY.md](./OUTAGE_RECOVERY.md) | Site down / Cloudflare 530–1033 recovery |
 | [DATA_PROTECTION.md](./DATA_PROTECTION.md) | Prediction preservation, retrieval archive, blocked destructive ops |
 | [DATABASE_BACKUP.md](./DATABASE_BACKUP.md) | Operational + retrieval-only backups |
 | [GO_LIVE.md](./GO_LIVE.md) | Smoke tests and in-tournament ops |

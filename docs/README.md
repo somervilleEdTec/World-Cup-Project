@@ -13,6 +13,7 @@
 |-----|-------------|
 | [BRANCHING.md](./BRANCHING.md) | Merge Debug → main; what deploys live |
 | [DEPLOY_CONTROL_PLANE.md](./DEPLOY_CONTROL_PLANE.md) | **Automated deploy** — merge to `main`, CI, VM pull timer, verify health |
+| [OUTAGE_RECOVERY.md](./OUTAGE_RECOVERY.md) | **Site down / 530 / 1033** — tunnel triage and fast restore |
 | [PRODUCTION.md](./PRODUCTION.md) | Live URL, VM, `.env`, auto-deploy, systemd, wipe DB |
 | [DATA_PROTECTION.md](./DATA_PROTECTION.md) | **Prediction preservation** — blocked destructive ops, retrieval archive |
 | [DATABASE_BACKUP.md](./DATABASE_BACKUP.md) | Operational backups + retrieval-only archive |

@@ -133,7 +133,11 @@ jobs:
             http_code="$(curl -s -o /tmp/health.json -w '%{http_code}' --max-time 15 "${url}" 2>/dev/null || echo 000)"
             body="$(cat /tmp/health.json 2>/dev/null || true)"
             if [ "${http_code}" = "530" ] || [ "${http_code}" = "502" ] || [ "${http_code}" = "503" ]; then
-              echo "Attempt ${attempt}: HTTP ${http_code} — Cloudflare/origin down (worldcup.service or nginx → :8787)."
+              if printf '%s' "${body}" | grep -q '1033'; then
+                echo "Attempt ${attempt}: HTTP ${http_code} (1033) — Cloudflare Tunnel (cloudflared) likely down; Node may still be healthy on :8787."
+              else
+                echo "Attempt ${attempt}: HTTP ${http_code} — origin unreachable (check cloudflared, worldcup.service, nginx)."
+              fi
             elif [ -n "${body}" ]; then
               echo "Response (HTTP ${http_code}): ${body}"
               if printf '%s' "${body}" | grep -qF '"ok":true' && printf '%s' "${body}" | grep -qF "\"commit\":\"${expected}\""; then
@@ -146,8 +150,11 @@ jobs:
             sleep 30
           done
           echo "ERROR: ${url} did not return ok:true with commit ${expected} within ~30 min."
-          echo "If SSH deploy succeeded but health failed: on VM run bash scripts/restart-production-services.sh"
-          echo "If SSH failed with 'handshake failed: EOF': re-run workflow; check VM sshd and Oracle security lists."
+          echo "Recovery guide: docs/OUTAGE_RECOVERY.md"
+          echo "1. Re-run this workflow (restarts cloudflared + worldcup via deploy-production.sh)."
+          echo "2. If SSH deploy succeeded but health failed: on VM run bash scripts/restart-production-services.sh"
+          echo "3. If body contains 1033: sudo systemctl restart cloudflared on the VM."
+          echo "If SSH failed with 'handshake failed: EOF': wait for pull timer (~3 min) or re-run workflow."
           exit 1
 
   report:

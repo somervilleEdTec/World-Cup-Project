@@ -1,7 +1,8 @@
 # GitHub as the deployment control plane
 
 **Last updated:** 2026-06-05  
-**Production status:** **Live** — https://worldcup.dosums.uk/api/health returns `ok:true` with matching `commit` (verified 2026-06-05).
+**Production status:** **Live** — https://worldcup.dosums.uk/api/health returns `ok:true` with matching `commit`.  
+**Outages:** see **[OUTAGE_RECOVERY.md](./OUTAGE_RECOVERY.md)** — Cloudflare **1033/530** is usually `cloudflared` down, not Node.
 
 Production releases are **fully driven from GitHub**. You do not need to SSH to the Oracle VM for normal deploys — use **Actions** logs and re-runs.
 
@@ -21,8 +22,13 @@ You / Cursor Agent → work on Debug → merge to main → git push origin main
               poll-deploy-from-github.sh → deploy-production.sh
         │
         ▼
+Cloudflare → cloudflared (outbound tunnel) → Node :8787
+        │
+        ▼
 https://worldcup.dosums.uk
 ```
+
+Oracle **does not expose inbound :443** to the internet. Public HTTPS depends on **`cloudflared.service`** staying active. See [OUTAGE_RECOVERY.md](./OUTAGE_RECOVERY.md).
 
 | Branch | Workflow | Deploys live? |
 |--------|----------|---------------|
@@ -91,8 +97,8 @@ Success: `{"ok":true,"commit":"<full-sha-matching-main>"}`
 | `npm run migrate` | Additive schema only — **blocked** if migration would destroy stored predictions ([DATA_PROTECTION.md](./DATA_PROTECTION.md)) |
 | `npm run build` | SPA → `dist/` |
 | `DEPLOY_COMMIT` in `.env` | `/api/health` reports commit |
-| `restart-production-services.sh` | systemd units (`node` + `tsx/cli.mjs`), health retries |
-| `verify-production-deploy.sh` | Fails if health/commit/dist/systemd wrong |
+| `restart-production-services.sh` | `worldcup` + `worldcup-jobs`, nginx ensure, **cloudflared restart** |
+| `verify-production-deploy.sh` | Fails if Node/tunnel/nginx/commit/dist checks fail |
 | Resume `worldcup-deploy.timer` | Pull deploy enabled again |
 
 Later deploys **skip `npm ci`** when `package-lock.json` is unchanged and `better_sqlite3.node`, `tsx`, and dependency integrity checks pass.
@@ -145,6 +151,22 @@ Runs `scripts/poll-deploy-from-github.sh` every **3 minutes** when `origin/main`
 
 ---
 
+## Outage recovery (site down / HTTP 530 / error 1033)
+
+**Start here:** [OUTAGE_RECOVERY.md](./OUTAGE_RECOVERY.md)
+
+**Fastest path (no SSH):** Actions → **Deploy main (production)** → **Run workflow** (`main`).
+
+**One-liner SSH (owner):**
+
+```powershell
+ssh -i "C:\Users\tomso\Desktop\ssh-key-2026-06-02.key" -o HostKeyAlgorithms=+ssh-rsa -o PubkeyAcceptedAlgorithms=+ssh-rsa ubuntu@84.8.146.237 "cd /home/ubuntu/World-Cup-Project && git pull origin main && bash scripts/restart-production-services.sh"
+```
+
+Typical cause: **`cloudflared` stopped** while Node on `:8787` was still healthy.
+
+---
+
 ## Recovery (rare — SSH once)
 
 ### Corrupt `node_modules` / `better-sqlite3`
@@ -174,7 +196,9 @@ bash scripts/restart-production-services.sh
 | Symptom | Fix |
 |---------|-----|
 | **`ssh: handshake failed: EOF`** / **banner timeout** | Normal on this VM. Ensure `worldcup-deploy.timer` is active; re-run workflow or wait ~3 min after push. |
-| **HTTP 530/502** on public URL | `bash scripts/restart-production-services.sh` on VM |
+| **HTTP 530 + 1033** | **`cloudflared` down** — re-run **Deploy main** or `sudo systemctl restart cloudflared` on VM ([OUTAGE_RECOVERY.md](./OUTAGE_RECOVERY.md)) |
+| **HTTP 530/502** (no 1033) | `bash scripts/restart-production-services.sh` on VM |
+| **SSH OK + DEPLOY_OK but verify 530** | Tunnel not running — check deploy log for `cloudflared: active` |
 | **`better-sqlite3` / corrupt `node_modules`** | `FORCE_NPM_REPAIR=1 bash scripts/repair-npm-on-server.sh` |
 | **`sudo: a password is required`** | `bash scripts/ensure-deploy-sudoers.sh` |
 | **Health commit mismatch** | `bash scripts/deploy-production.sh` |
@@ -200,12 +224,15 @@ Cloud agents should:
 
 1. Edit on **`Debug`**, push → wait for **CI Debug** green.
 2. Merge to **`main`** and push when the user confirms production release.
-3. Rely on **Deploy main** + public health check — **do not** ask the owner to SSH unless bootstrap, `.env`, or `repair-npm-on-server.sh` is needed.
+3. Wait for **Deploy main** → green **Verify live site**; confirm `curl https://worldcup.dosums.uk/api/health` commit matches merge SHA.
+4. If the site is down (**530 / 1033**): follow [OUTAGE_RECOVERY.md](./OUTAGE_RECOVERY.md) — re-run **Deploy main** first; SSH only if that fails.
+5. **Do not** ask the owner to SSH for routine releases. SSH only for bootstrap, `.env`, `repair-npm-on-server.sh`, or tunnel recovery after re-run deploy.
 
 ---
 
 ## Related docs
 
-- [PRODUCTION.md](./PRODUCTION.md) — VM details, nginx, wipe DB  
+- [OUTAGE_RECOVERY.md](./OUTAGE_RECOVERY.md) — 530/1033 triage and fast restore  
+- [PRODUCTION.md](./PRODUCTION.md) — VM details, tunnel, nginx, wipe DB  
 - [BRANCHING.md](./BRANCHING.md) — `main` vs `Debug`  
 - [DEBUG.md](./DEBUG.md) — local policy

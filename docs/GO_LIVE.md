@@ -45,8 +45,11 @@ Backups: [DATABASE_BACKUP.md](./DATABASE_BACKUP.md) · `npm run db:backup`
 
 | Process | Command / unit |
 |---------|----------------|
-| API + SPA | `worldcup.service` or `npm run server` (:8787) |
-| Locks + sync | `worldcup-jobs.service` or `npm run jobs` |
+| **Cloudflare Tunnel** | `cloudflared.service` — **required** for public HTTPS |
+| API + SPA | `worldcup.service` (:8787) |
+| Locks + sync | `worldcup-jobs.service` |
+
+**Outage:** [OUTAGE_RECOVERY.md](./OUTAGE_RECOVERY.md)
 
 ---
 

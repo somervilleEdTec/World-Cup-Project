@@ -33,7 +33,7 @@
 | **Public IP** | `84.8.146.237` |
 | **SSH user** | `ubuntu` |
 | **App path** | `/home/ubuntu/World-Cup-Project` |
-| **API port (internal)** | `8787` (nginx → Node) |
+| **API port (internal)** | `8787` (`worldcup.service` — tunnel → Node; optional nginx local proxy) |
 | **OS** | Ubuntu 22.04 |
 
 **Owner SSH from Windows (PowerShell):**
@@ -189,11 +189,21 @@ bash scripts/deploy-production.sh
 
 ---
 
-## nginx / HTTPS
+## Public routing (Cloudflare Tunnel)
 
-Public traffic: **https://worldcup.dosums.uk** → proxy to **http://127.0.0.1:8787**.
+Public traffic does **not** hit the VM’s public IP on `:443` (Oracle NSG blocks inbound). Path:
 
-TLS certificate must cover `worldcup.dosums.uk`. **All** paths (`/` and `/api`) must `proxy_pass http://127.0.0.1:8787;` — Node serves `dist/` + API. Do **not** set `root /var/www/...` for the SPA or deploys will not update the public site. Example: [deploy/nginx/worldcup.conf.example](../deploy/nginx/worldcup.conf.example).
+```text
+https://worldcup.dosums.uk → Cloudflare → cloudflared (outbound) → http://127.0.0.1:8787
+```
+
+**Outage triage:** [OUTAGE_RECOVERY.md](./OUTAGE_RECOVERY.md) — error **1033** means restart `cloudflared`.
+
+---
+
+## nginx (optional on VM)
+
+nginx may proxy locally to **http://127.0.0.1:8787** if installed. It is **not** the primary public path when Cloudflare Tunnel is in use. If nginx serves the SPA, **all** paths must `proxy_pass http://127.0.0.1:8787;` — do **not** set `root /var/www/...`. Example: [deploy/nginx/worldcup.conf.example](../deploy/nginx/worldcup.conf.example).
 
 **Login rate limit (recommended):** see `deploy/nginx/worldcup-rate-limit.conf.snippet` — limits `/api/auth/login` to ~10 requests/minute per IP.
 
@@ -247,10 +257,14 @@ Log in as `ADMIN_USERNAME`, then add players via **Admin → Players**.
 
 ## Processes that must stay running
 
-| Process | Command | Role |
-|---------|---------|------|
-| API + SPA | `npm run server` or `worldcup.service` | Serves app on :8787 |
-| Jobs | `npm run jobs` or `worldcup-jobs.service` | Locks + football-data sync |
+| Process | Command / unit | Role |
+|---------|----------------|------|
+| **Cloudflare Tunnel** | `cloudflared.service` | Public HTTPS path to Cloudflare |
+| API + SPA | `worldcup.service` | Serves app on :8787 |
+| Jobs | `worldcup-jobs.service` | Locks + football-data sync |
+| nginx (optional) | `nginx.service` | Local reverse proxy if configured |
+
+Deploy restarts all of the above via `scripts/restart-production-services.sh`. See [OUTAGE_RECOVERY.md](./OUTAGE_RECOVERY.md).
 
 ---
 

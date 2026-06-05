@@ -60,7 +60,9 @@ npm run build
 npm run lint
 ```
 
-Production: merge to **`main`** and push — VM pull timer (~3 min) + **Deploy main** verify live health. See [DEPLOY_CONTROL_PLANE.md](./DEPLOY_CONTROL_PLANE.md). **Do not** ask the owner to SSH for routine releases. Recovery only: `scripts/repair-npm-on-server.sh`, `scripts/restart-production-services.sh` (on the VM via SSH, not Windows Desktop).
+Production: merge to **`main`** and push — VM pull timer (~3 min) + **Deploy main** verify live health. See [DEPLOY_CONTROL_PLANE.md](./DEPLOY_CONTROL_PLANE.md).
+
+**If live site is down (530 / error 1033):** [OUTAGE_RECOVERY.md](./OUTAGE_RECOVERY.md) — re-run **Deploy main** first; then `scripts/restart-production-services.sh` on the VM via SSH if needed. Do **not** assume Node crashed; check `cloudflared` first.
 
 ## Rules
 

@@ -2,7 +2,9 @@
 
 | Workflow | Branch / trigger | Purpose |
 |----------|------------------|---------|
-| **[deploy-main.yml](./deploy-main.yml)** | Push to **`main`**, manual | CI → SSH deploy (`ci-ssh-setup.sh` + retries) → **verify live `/api/health`** |
+| **[deploy-main.yml](./deploy-main.yml)** | Push to **`main`**, manual | CI → SSH deploy → **verify live `/api/health`** (must match commit) |
+
+**If verify fails with HTTP 530 / error 1033:** usually `cloudflared` down — see [docs/OUTAGE_RECOVERY.md](../docs/OUTAGE_RECOVERY.md). Re-run this workflow before SSH.
 | **[ci-debug.yml](./ci-debug.yml)** | Push/PR **`Debug`**, PR to **`main`** | `npm test` + build (no deploy) |
 | **[bootstrap-production.yml](./bootstrap-production.yml)** | Manual (`BOOTSTRAP_PRODUCTION`) | One-time VM: build tools, systemd, sudoers |
 | **[wipe-live-database.yml](./wipe-live-database.yml)** | Manual (`WIPE_LIVE_DATABASE`) | Wipe live DB |
