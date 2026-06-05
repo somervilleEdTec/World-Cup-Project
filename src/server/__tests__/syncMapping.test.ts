@@ -2,7 +2,7 @@
 import { describe, it, expect, afterAll, beforeEach } from 'vitest';
 import type { Express } from 'express';
 import { setupTestServer, teardownTestServer } from '../testHarness';
-import { explainMappingFailure, resolveInternalMatchId } from '../services/matchMapping';
+import { explainMappingFailure, parseProviderGroup, resolveInternalMatchId } from '../services/matchMapping';
 import { PROVIDER } from '../../services/footballDataService';
 import { groupMatches, teams } from '../../data/tournament';
 import { getDb } from '../database';
@@ -26,6 +26,16 @@ describe('sync mapping with stored results', () => {
     const homeTeam = teams.find((t) => t.id === match.homeTeamId);
     const awayTeam = teams.find((t) => t.id === match.awayTeamId);
     expect(explainMappingFailure(homeTeam!.name, awayTeam!.name, null, {})).toBe('mappable');
+    expect(explainMappingFailure(homeTeam!.name, awayTeam!.name, null, {}, 'GROUP_A')).toBe(
+      'mappable'
+    );
+  });
+
+  it('parses football-data group codes', () => {
+    expect(parseProviderGroup('GROUP_A')).toBe('A');
+    expect(parseProviderGroup('GROUP_L')).toBe('L');
+    expect(parseProviderGroup('A')).toBe('A');
+    expect(parseProviderGroup(undefined)).toBeNull();
   });
 
   it('registers provider mapping for confirmed knockout fixture teams', async () => {

@@ -74,7 +74,13 @@ export async function buildMappingDiagnostics(
 
   for (const fixture of fixtures) {
     const existing = await internalIdFromProvider(PROVIDER, fixture.providerId);
-    const reason = explainMappingFailure(fixture.homeName, fixture.awayName, existing);
+    const reason = explainMappingFailure(
+      fixture.homeName,
+      fixture.awayName,
+      existing,
+      {},
+      fixture.group
+    );
     const groupStage = isGroupStageFixture(fixture.stage, fixture.group);
 
     if (groupStage) groupStageTotal += 1;
@@ -85,7 +91,9 @@ export async function buildMappingDiagnostics(
         PROVIDER,
         fixture.providerId,
         fixture.homeName,
-        fixture.awayName
+        fixture.awayName,
+        {},
+        fixture.group
       );
       if (internalId) {
         mapped += 1;
