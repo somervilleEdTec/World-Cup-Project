@@ -32,15 +32,26 @@ export npm_config_jobs=1
 
 sqlite_node="node_modules/better-sqlite3/build/Release/better_sqlite3.node"
 
-if [[ -f "${sqlite_node}" && -f node_modules/tsx/dist/cli.mjs ]]; then
-  echo "==> better_sqlite3.node and tsx already present — skip full reinstall"
-else
-  echo "==> Deep clean npm artifacts"
-  rm -rf node_modules
-  rm -rf "${HOME}/.cache/node-gyp" 2>/dev/null || true
-  npm cache clean --force
+node_modules_healthy() {
+  [[ -f "${sqlite_node}" ]] \
+    && [[ -f node_modules/tsx/dist/cli.mjs ]] \
+    && [[ -f node_modules/xtend/mutable.js ]] \
+    && npm ls xtend pg better-sqlite3 --depth=0 >/dev/null 2>&1
+}
 
-  echo "==> npm ci --ignore-scripts (avoids flaky better-sqlite3 postinstall on small VMs)"
+if [[ "${FORCE_NPM_REPAIR:-}" != "1" ]] && node_modules_healthy; then
+  echo "==> node_modules integrity OK — skip reinstall"
+else
+  if [[ -f "${sqlite_node}" && "${FORCE_NPM_REPAIR:-}" != "1" ]]; then
+    echo "==> Native modules present but dependency tree incomplete — reinstalling packages (keeping rebuild minimal)"
+  else
+    echo "==> Deep clean npm artifacts"
+    rm -rf node_modules
+    rm -rf "${HOME}/.cache/node-gyp" 2>/dev/null || true
+    npm cache clean --force
+  fi
+
+  echo "==> npm ci --ignore-scripts"
   npm ci --ignore-scripts
 
   echo "==> npm rebuild better-sqlite3"
@@ -60,6 +71,11 @@ if [[ ! -f "${sqlite_node}" ]]; then
   exit 1
 fi
 echo "OK: ${sqlite_node}"
+
+if ! node_modules_healthy; then
+  echo "ERROR: node_modules still incomplete after repair (try: FORCE_NPM_REPAIR=1 bash scripts/repair-npm-on-server.sh)"
+  exit 1
+fi
 
 echo "==> Verify toolchain can see devDependencies"
 /usr/bin/node node_modules/tsx/dist/cli.mjs --version

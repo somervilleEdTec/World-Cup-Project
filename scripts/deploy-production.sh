@@ -116,9 +116,11 @@ lock_hash="$(sha256sum package-lock.json | awk '{print $1}')"
 skip_ci=0
 if [[ -f node_modules/tsx/dist/cli.mjs \
   && -f node_modules/better-sqlite3/build/Release/better_sqlite3.node \
+  && -f node_modules/xtend/mutable.js \
   && -f .deploy-deps-hash \
-  && "$(cat .deploy-deps-hash)" == "${lock_hash}" ]]; then
-  echo "==> npm ci skipped (package-lock.json unchanged, native deps OK)"
+  && "$(cat .deploy-deps-hash)" == "${lock_hash}" ]] \
+  && npm ls xtend pg better-sqlite3 --depth=0 >/dev/null 2>&1; then
+  echo "==> npm ci skipped (package-lock.json unchanged, deps integrity OK)"
   skip_ci=1
 fi
 
