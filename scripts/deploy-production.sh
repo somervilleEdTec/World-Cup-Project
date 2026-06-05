@@ -76,7 +76,7 @@ verify_native_build_prereqs() {
   if [[ "${missing}" -ne 0 ]]; then
     echo "==> Attempting passwordless install of build-essential (bootstrap sudoers)"
     if sudo -n true 2>/dev/null; then
-      if sudo -n apt-get update -qq && sudo -n DEBIAN_FRONTEND=noninteractive apt-get install -y -qq build-essential python3; then
+      if sudo -n apt-get update -qq && sudo -n apt-get install -y -qq build-essential python3; then
         echo "==> build-essential installed"
         missing=0
       fi

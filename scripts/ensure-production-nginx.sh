@@ -25,7 +25,7 @@ install_nginx() {
     exit 1
   fi
   sudo -n apt-get update -qq
-  sudo -n DEBIAN_FRONTEND=noninteractive apt-get install -y -qq nginx
+  sudo -n apt-get install -y -qq nginx
 }
 
 write_site_config() {
