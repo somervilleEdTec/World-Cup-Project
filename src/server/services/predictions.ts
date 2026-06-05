@@ -23,6 +23,7 @@ import {
   buildConfirmedKnockoutFixtures
 } from '../../lib/knockoutFixtureAvailability';
 import { getResultsMap } from './leaderboard';
+import { competitionUserWhere, competitionUserBindParams } from './competitionUsers';
 
 const VALID_GROUPS = new Set(['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L']);
 
@@ -86,6 +87,7 @@ export async function getUserPredictionState(userId: string) {
   const results = await getResultsMap();
   const confirmedIds = new Set(buildConfirmedKnockoutFixtures(results).map((m) => m.id));
   const confirmedKnockoutFixtures = getMatches({}, results).filter((m) => confirmedIds.has(m.id));
+  const groupStageFixtures = getMatches({}, results).filter((m) => m.stage === 'GROUP');
   return {
     committedPicks,
     draftPicks,
@@ -95,6 +97,7 @@ export async function getUserPredictionState(userId: string) {
     groupPicksRequired: GROUP_MATCH_COUNT,
     allGroupPicksCommitted: allGroupPicksCommitted(committedPicks),
     confirmedKnockoutFixtures,
+    groupStageFixtures,
     officialResults: results,
     commitState: {
       version: meta?.commit_version ?? 1,
@@ -367,7 +370,8 @@ export async function runAutoLocks(nowIso: string) {
     `SELECT pm.user_id AS user_id
      FROM prediction_meta pm
      JOIN users u ON u.id = pm.user_id
-     WHERE u.is_admin = 0`
+     WHERE ${competitionUserWhere('u')}`,
+    competitionUserBindParams()
   );
   if (lockGroup) {
     for (const row of userRows) {

@@ -75,6 +75,7 @@ interface RemoteState {
   bonusCommitted?: TournamentBonusPick;
   commitState: { groupLocked: boolean };
   confirmedKnockoutFixtures?: Match[];
+  groupStageFixtures?: Match[];
   officialResults?: Record<string, ActualResult>;
 }
 
@@ -135,8 +136,9 @@ export function MyPicksPage() {
     void refresh();
   }, []);
 
+  const groupStageFixtures = state.groupStageFixtures ?? groupMatches;
   const activeGroup = groupSequence[groupIndex];
-  const activeGroupMatches = groupMatches.filter((match) => match.group === activeGroup);
+  const activeGroupMatches = groupStageFixtures.filter((match) => match.group === activeGroup);
   const calendarGroupLocked = shouldLockGroup(nowIso);
   const tournamentLocked = calendarGroupLocked;
 
@@ -240,7 +242,7 @@ export function MyPicksPage() {
   }, []);
 
   const ensureDefaultPicksForGroup = useCallback(async () => {
-    const matches = groupMatches.filter((match) => match.group === activeGroup);
+    const matches = groupStageFixtures.filter((match) => match.group === activeGroup);
     for (const match of matches) {
       if (mergedPicks[match.id] !== undefined) continue;
       await saveDraftPick(defaultDrawPick(match.id));
@@ -266,10 +268,10 @@ export function MyPicksPage() {
         allGroupPicksCommitted: computeAllGroupPicksCommitted(committedPicks)
       };
     });
-  }, [activeGroup, mergedPicks]);
+  }, [activeGroup, groupStageFixtures, mergedPicks]);
 
   const flushPendingForGroup = async (options?: { refresh?: boolean }) => {
-    const matches = groupMatches.filter((match) => match.group === activeGroup);
+    const matches = groupStageFixtures.filter((match) => match.group === activeGroup);
     for (const match of matches) {
       const pick = pendingGroupPicks[match.id];
       if (pick) {

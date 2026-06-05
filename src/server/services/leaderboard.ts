@@ -10,6 +10,7 @@ import {
   virtualCoinFlipOutcome,
   virtualCoinFlipPriority
 } from '../../lib/tieBreakCoinFlip';
+import { COMPETITION_USER_SQL, competitionUserBindParams } from './competitionUsers';
 
 export async function getResultsMap(): Promise<Record<string, ActualResult>> {
   const db = getDb();
@@ -38,7 +39,8 @@ export async function getResultsMap(): Promise<Record<string, ActualResult>> {
 export async function computeLeaderboard() {
   const db = getDb();
   const users = await db.all<{ id: string; display_name: string }>(
-    `SELECT id, display_name FROM users WHERE is_admin = 0`
+    `SELECT id, display_name FROM users WHERE ${COMPETITION_USER_SQL}`,
+    competitionUserBindParams()
   );
   const results = await getResultsMap();
   const finalPlacings = deriveFinalPlacings(picksFromActuals(results), results);

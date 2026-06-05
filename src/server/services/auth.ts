@@ -33,6 +33,10 @@ function normalizeName(name: string): string {
   return name.trim();
 }
 
+export function normalizeDisplayName(name: string): string {
+  return normalizeName(name);
+}
+
 type UserRow = {
   id: string;
   password_hash: string;
