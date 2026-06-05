@@ -1,30 +1,30 @@
 import { scaledMatchPointsForStage } from './knockoutStageMultiplier';
-import { ActualResult, Match, Pick, Stage } from '../types';
+import { ActualResult, Match, Pick as MatchPick, Stage } from '../types';
 
 const resultKey = (home: number, away: number): 'H' | 'A' | 'D' =>
   home > away ? 'H' : home < away ? 'A' : 'D';
 
 export type PickAccuracy = 'exact' | 'result' | 'miss' | 'none';
 
+type FixtureTeams = Pick<Match, 'homeTeamId' | 'awayTeamId'>;
+type ScoreLine = Pick<MatchPick, 'homeScore' | 'awayScore' | 'progressingTeamId'>;
+
 function isKnockoutStage(stage: Stage): boolean {
   return stage !== 'GROUP';
 }
 
 /** Team that advances from a pick or official 90-minute result (ET/pens via progressingTeamId on draws). */
-export function advancingTeamId(
-  match: Pick<Match, 'homeTeamId' | 'awayTeamId'>,
-  scores: Pick<Pick, 'homeScore' | 'awayScore' | 'progressingTeamId'>
-): string | null {
+export function advancingTeamId(match: FixtureTeams, scores: ScoreLine): string | null {
   if (scores.homeScore > scores.awayScore) return match.homeTeamId;
   if (scores.awayScore > scores.homeScore) return match.awayTeamId;
   return scores.progressingTeamId ?? null;
 }
 
 export function evaluateMatchScoring(
-  pick: Pick,
+  pick: MatchPick,
   actual: ActualResult,
   stage: Stage,
-  match?: Pick<Match, 'homeTeamId' | 'awayTeamId'>
+  match?: FixtureTeams
 ): { correctResult: boolean; exactScore: boolean } {
   const exactScore = pick.homeScore === actual.homeScore && pick.awayScore === actual.awayScore;
 
@@ -45,9 +45,9 @@ export function evaluateMatchScoring(
 
 /** Compares a prediction to the official result for comparison highlighting. */
 export function classifyPickAccuracy(
-  pick: Pick | undefined,
+  pick: MatchPick | undefined,
   actual: ActualResult | undefined,
-  options?: { stage?: Stage; match?: Pick<Match, 'homeTeamId' | 'awayTeamId'> }
+  options?: { stage?: Stage; match?: FixtureTeams }
 ): PickAccuracy {
   if (!pick || !actual) return 'none';
 
@@ -66,10 +66,10 @@ export function classifyPickAccuracy(
 
 /** Match-level points (+2/+4 base; QF 1.5×, SF 2×, final/third-place 3×). */
 export function computeMatchPoints(
-  pick: Pick | undefined,
+  pick: MatchPick | undefined,
   actual: ActualResult | undefined,
   stage: Stage = 'GROUP',
-  match?: Pick<Match, 'homeTeamId' | 'awayTeamId'>
+  match?: FixtureTeams
 ): number | null {
   if (!pick || !actual) return null;
 
