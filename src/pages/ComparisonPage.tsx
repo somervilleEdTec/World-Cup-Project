@@ -11,7 +11,7 @@ import {
 import { formatFixtureScore } from '../components/FixtureScoreSummary';
 import { formatKickoffBst } from '../lib/formatDateTime';
 import { classifyPickAccuracy } from '../lib/matchScoring';
-import { MatchComparisonView } from '../types';
+import { MatchComparisonView, Stage } from '../types';
 
 function formatPick(entry: MatchComparisonView['entries'][number], stage: string): string {
   if (entry.hidden) {
@@ -29,7 +29,8 @@ function formatPick(entry: MatchComparisonView['entries'][number], stage: string
 
 function pickCellClass(
   entry: MatchComparisonView['entries'][number],
-  actual: MatchComparisonView['actualResult']
+  actual: MatchComparisonView['actualResult'],
+  match: MatchComparisonView['match']
 ): string | undefined {
   if (entry.hidden || !entry.pick || !actual) return undefined;
   const accuracy = classifyPickAccuracy(
@@ -44,7 +45,8 @@ function pickCellClass(
       homeScore: actual.homeScore,
       awayScore: actual.awayScore,
       progressingTeamId: actual.progressingTeamId
-    }
+    },
+    { stage: match.stage as Stage, match }
   );
   if (accuracy === 'exact') return 'comparison-pick-exact';
   if (accuracy === 'result') return 'comparison-pick-result';
@@ -176,7 +178,7 @@ export function ComparisonPage() {
                   {entry.displayName}
                   {entry.isCurrentUser ? ' (you)' : ''}
                 </td>
-                <td className={pickCellClass(entry, data.actualResult)}>
+                <td className={pickCellClass(entry, data.actualResult, data.match)}>
                   {formatPick(entry, data.match.stage)}
                 </td>
               </tr>

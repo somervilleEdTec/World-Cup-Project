@@ -37,6 +37,29 @@ describe('computeMatchPoints', () => {
       )
     ).toBe(0);
   });
+
+  it('knockout result points use advancing team, not draw alone', () => {
+    const match = {
+      homeTeamId: 'mexico',
+      awayTeamId: 'canada'
+    };
+    expect(
+      computeMatchPoints(
+        { matchId: 'r32-1', homeScore: 1, awayScore: 1, progressingTeamId: 'mexico' },
+        { matchId: 'r32-1', homeScore: 1, awayScore: 1, progressingTeamId: 'canada' },
+        'R32',
+        match
+      )
+    ).toBe(4);
+    expect(
+      computeMatchPoints(
+        { matchId: 'r32-1', homeScore: 1, awayScore: 1, progressingTeamId: 'mexico' },
+        { matchId: 'r32-1', homeScore: 1, awayScore: 1, progressingTeamId: 'mexico' },
+        'R32',
+        match
+      )
+    ).toBe(6);
+  });
 });
 
 describe('classifyPickAccuracy', () => {

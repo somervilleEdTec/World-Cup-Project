@@ -61,13 +61,14 @@ Rules:
 
 ### Knockout match points
 
-- Correct W/D/L (regulation): **+2** (base); exact score bonus: **+4** (base)
+- **Correct advancing team:** **+2** (base) — pick the team that goes through (winner after 90 minutes, or **team to progress** on a draw after ET/pens).
+- **Exact score bonus:** **+4** (base) — predicted **90-minute scoreline** matches official result; extra time and penalty-shootout goals do **not** count toward this bonus.
 - **Round multipliers** (applied to both result and exact bonus for that fixture):
   - Round of 32 / Round of 16: **1×**
   - Quarter-finals: **1.5×**
   - Semi-finals: **2×**
   - Final and third-place play-off: **3×**
-- Knockout draw: must select **team to progress** (ET/pens); no extra scoreline required.
+- Knockout draw: must select **team to progress** (ET/pens).
 
 ### Tournament preselection bonuses
 

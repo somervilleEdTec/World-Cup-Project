@@ -256,7 +256,7 @@ export function FixturePickCard({
   const awayOk = awayTeam && awayTeam.id !== 'tbd';
   const kickoffLocked = predictionLockReached(match.kickoff, nowIso);
   const inputsSaveDisabled = inputsDisabled || kickoffLocked;
-  const points = computeMatchPoints(pick, actual, match.stage);
+  const points = computeMatchPoints(pick, actual, match.stage, match);
   const multiplierLabel = knockoutStageMultiplierLabel(match.stage);
   const kickoffLabel = formatKickoffBst(match.kickoff);
   const deadlineLabel = formatKickoffBst(predictionLockTimeIso(match.kickoff));

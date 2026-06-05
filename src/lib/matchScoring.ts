@@ -1,23 +1,66 @@
 import { scaledMatchPointsForStage } from './knockoutStageMultiplier';
-import { ActualResult, Pick, Stage } from '../types';
+import { ActualResult, Match, Pick, Stage } from '../types';
 
 const resultKey = (home: number, away: number): 'H' | 'A' | 'D' =>
   home > away ? 'H' : home < away ? 'A' : 'D';
 
 export type PickAccuracy = 'exact' | 'result' | 'miss' | 'none';
 
+function isKnockoutStage(stage: Stage): boolean {
+  return stage !== 'GROUP';
+}
+
+/** Team that advances from a pick or official 90-minute result (ET/pens via progressingTeamId on draws). */
+export function advancingTeamId(
+  match: Pick<Match, 'homeTeamId' | 'awayTeamId'>,
+  scores: Pick<Pick, 'homeScore' | 'awayScore' | 'progressingTeamId'>
+): string | null {
+  if (scores.homeScore > scores.awayScore) return match.homeTeamId;
+  if (scores.awayScore > scores.homeScore) return match.awayTeamId;
+  return scores.progressingTeamId ?? null;
+}
+
+export function evaluateMatchScoring(
+  pick: Pick,
+  actual: ActualResult,
+  stage: Stage,
+  match?: Pick<Match, 'homeTeamId' | 'awayTeamId'>
+): { correctResult: boolean; exactScore: boolean } {
+  const exactScore = pick.homeScore === actual.homeScore && pick.awayScore === actual.awayScore;
+
+  if (isKnockoutStage(stage) && match) {
+    const predictedAdvancer = advancingTeamId(match, pick);
+    const actualAdvancer = advancingTeamId(match, actual);
+    const correctResult =
+      predictedAdvancer !== null &&
+      actualAdvancer !== null &&
+      predictedAdvancer === actualAdvancer;
+    return { correctResult, exactScore };
+  }
+
+  const correctResult =
+    resultKey(pick.homeScore, pick.awayScore) === resultKey(actual.homeScore, actual.awayScore);
+  return { correctResult, exactScore };
+}
+
 /** Compares a prediction to the official result for comparison highlighting. */
 export function classifyPickAccuracy(
   pick: Pick | undefined,
-  actual: ActualResult | undefined
+  actual: ActualResult | undefined,
+  options?: { stage?: Stage; match?: Pick<Match, 'homeTeamId' | 'awayTeamId'> }
 ): PickAccuracy {
   if (!pick || !actual) return 'none';
-  if (pick.homeScore === actual.homeScore && pick.awayScore === actual.awayScore) {
-    return 'exact';
-  }
-  if (resultKey(pick.homeScore, pick.awayScore) === resultKey(actual.homeScore, actual.awayScore)) {
-    return 'result';
-  }
+
+  const stage = options?.stage ?? 'GROUP';
+  const { correctResult, exactScore } = evaluateMatchScoring(
+    pick,
+    actual,
+    stage,
+    options?.match
+  );
+
+  if (exactScore) return 'exact';
+  if (correctResult) return 'result';
   return 'miss';
 }
 
@@ -25,13 +68,12 @@ export function classifyPickAccuracy(
 export function computeMatchPoints(
   pick: Pick | undefined,
   actual: ActualResult | undefined,
-  stage: Stage = 'GROUP'
+  stage: Stage = 'GROUP',
+  match?: Pick<Match, 'homeTeamId' | 'awayTeamId'>
 ): number | null {
   if (!pick || !actual) return null;
 
-  const correctResult =
-    resultKey(pick.homeScore, pick.awayScore) === resultKey(actual.homeScore, actual.awayScore);
-  const exactScore = pick.homeScore === actual.homeScore && pick.awayScore === actual.awayScore;
+  const { correctResult, exactScore } = evaluateMatchScoring(pick, actual, stage, match);
   if (!correctResult && !exactScore) return 0;
 
   return scaledMatchPointsForStage(stage, { correctResult, exactScore }).total;

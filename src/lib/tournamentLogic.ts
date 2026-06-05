@@ -3,6 +3,7 @@ import { getDownstreamKnockoutMatchIds } from './bracketEngine';
 import { computeGroupPositions } from './groupStandings';
 import { getMatches } from './matchResolver';
 import { scaledMatchPointsForStage } from './knockoutStageMultiplier';
+import { evaluateMatchScoring } from './matchScoring';
 import { picksFromActuals } from './pickUtils';
 import { isKnockout, predictionLockReached } from './pickLocks';
 import { ActualResult, Match, Pick, TournamentBonusPick } from '../types';
@@ -107,7 +108,6 @@ export function computeScore(
   let exactScores = 0;
   let correctResults = 0;
 
-  const resultKey = (h: number, a: number): 'H' | 'A' | 'D' => (h > a ? 'H' : h < a ? 'A' : 'D');
   const matchesById = Object.fromEntries(getMatches(picks, actuals).map((m) => [m.id, m]));
 
   Object.values(actuals).forEach((actual) => {
@@ -115,9 +115,8 @@ export function computeScore(
     if (!pick) return;
 
     const stage = matchesById[actual.matchId]?.stage ?? 'GROUP';
-    const correctResult =
-      resultKey(pick.homeScore, pick.awayScore) === resultKey(actual.homeScore, actual.awayScore);
-    const exactScore = pick.homeScore === actual.homeScore && pick.awayScore === actual.awayScore;
+    const match = matchesById[actual.matchId];
+    const { correctResult, exactScore } = evaluateMatchScoring(pick, actual, stage, match);
     const scaled = scaledMatchPointsForStage(stage, { correctResult, exactScore });
 
     if (scaled.resultPoints > 0) {

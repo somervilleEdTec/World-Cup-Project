@@ -10,9 +10,7 @@ export function WelcomePage() {
         <p className="warning">
           <strong>Important:</strong> All group-stage matches must be predicted and locked before
           the deadline (15 minutes before the first match kickoff). Any group match you leave
-          untouched when you lock a group counts as a <strong>0-0 draw</strong>. If you have not
-          predicted and locked your group picks before the deadline, every missing group match will
-          automatically be recorded as a <strong>0-0 draw</strong>.
+          untouched when you lock a group counts as a <strong>0-0 draw</strong>.
         </p>
         <p>
           Knockout games lock 15 minutes before each fixture&apos;s kickoff. If you have any
@@ -43,14 +41,35 @@ export function WelcomePage() {
       </article>
 
       <article className="card">
-        <h3>Match Points</h3>
+        <h3>Group-stage match points</h3>
         <ul>
           <li>Correct win/draw/loss: +2 points</li>
           <li>Exact score bonus: +4 additional points (6 total when exact)</li>
+        </ul>
+      </article>
+
+      <article className="card">
+        <h3>Knockout match points</h3>
+        <ul>
+          <li>
+            <strong>Correct advancing team:</strong> +2 points (base). You must pick the team that
+            goes through — after 90 minutes if there is a winner, or via your &quot;team to
+            progress&quot; pick on a draw (extra time / penalties).
+          </li>
+          <li>
+            <strong>Exact score bonus:</strong> +4 additional points (base) when your predicted{' '}
+            <strong>90-minute scoreline</strong> matches the official result. Extra time and
+            penalty-shootout goals are <strong>not</strong> included in this bonus.
+          </li>
           <li>Quarter-finals: 1.5× match points</li>
           <li>Semi-finals: 2× match points</li>
           <li>Final and third-place play-off: 3× match points</li>
         </ul>
+        <p>
+          Example: official result 1-1 after 90 minutes with Team A advancing on penalties — result
+          points if you picked Team A to progress; exact bonus only if you predicted 1-1 (not the
+          post-90 score if it differed).
+        </p>
       </article>
 
       <article className="card">
