@@ -72,6 +72,9 @@ fi
 echo "==> nginx (public HTTPS → :${PORT})"
 bash scripts/ensure-production-nginx.sh
 
+echo "==> Cloudflare Tunnel (cloudflared — fixes 1033/530 when NSG blocks inbound)"
+bash scripts/ensure-production-cloudflared.sh
+
 echo "==> Health"
 curl -sf "http://127.0.0.1:${PORT}/api/health" && echo ""
 echo "==> Index JS"

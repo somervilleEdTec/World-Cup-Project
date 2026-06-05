@@ -43,5 +43,23 @@ if command -v nginx >/dev/null 2>&1; then
 fi
 
 echo ""
+echo "==> Cloudflare Tunnel (cloudflared — error 1033 when down)"
+if command -v cloudflared >/dev/null 2>&1; then
+  if pgrep -x cloudflared >/dev/null 2>&1; then
+    pgrep -a cloudflared | head -3 || true
+  else
+    echo "(cloudflared installed but NOT running — public site may show 1033/530)"
+  fi
+  for unit in cloudflared cloudflare-tunnel cf-tunnel; do
+    if systemctl list-unit-files "${unit}.service" --no-legend 2>/dev/null | grep -q "${unit}.service"; then
+      printf '%s: ' "${unit}"
+      systemctl is-active "${unit}.service" 2>/dev/null || echo "unknown"
+    fi
+  done
+else
+  echo "(cloudflared not installed — using DNS A record origin)"
+fi
+
+echo ""
 echo "If public JS != local JS, nginx is likely serving a stale static root."
 echo "Fix: proxy ALL locations to :8787 — see deploy/nginx/worldcup.conf.example"

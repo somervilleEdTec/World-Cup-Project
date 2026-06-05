@@ -125,7 +125,7 @@ ssh -i "C:\Users\tomso\Desktop\ssh-key-2026-06-02.key" -o HostKeyAlgorithms=+ssh
 | Symptom | Fix |
 |---------|-----|
 | **`ssh: handshake failed: EOF`** / **banner exchange timeout** | GitHub may not reach VM port 22. On VM once: `bash scripts/ensure-poll-deploy-timer.sh` (pull deploy every 3 min). Re-run **Deploy main** — verify waits up to 30 min. |
-| **Cloudflare HTTP 530 / 1033** on public URL | Origin not reachable — `worldcup.service` down or nothing on `:8787`. VM: `bash scripts/restart-production-services.sh`; then green **Deploy main**. |
+| **Cloudflare HTTP 530 / 1033** on public URL | **1033 = Cloudflare Tunnel down** — on VM: `sudo systemctl restart cloudflared` (or `bash scripts/ensure-production-cloudflared.sh`). If no tunnel: `bash scripts/restart-production-services.sh` (nginx → :8787). |
 | `ssh.ParsePrivateKey: ssh: no key found` | Re-paste full private key into `DEPLOY_SSH_KEY` |
 | Permission denied (publickey) | Private key in secret; matching public key on server |
 | `tsx: not found` | `deploy-production.sh` unsets `NODE_ENV` during `npm ci` / build |

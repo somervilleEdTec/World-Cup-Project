@@ -104,6 +104,25 @@ else
   echo "OK: git HEAD matches expected commit"
 fi
 
+# --- Cloudflare Tunnel (when Oracle blocks inbound :443) ---
+if command -v cloudflared >/dev/null 2>&1; then
+  if pgrep -x cloudflared >/dev/null 2>&1; then
+    echo "OK: cloudflared process running"
+  else
+    note_fail "cloudflared installed but not running — public site shows Cloudflare 1033/530"
+  fi
+  for unit in cloudflared cloudflare-tunnel cf-tunnel; do
+    if systemctl list-unit-files "${unit}.service" --no-legend 2>/dev/null | grep -q "${unit}.service"; then
+      state="$(systemctl is-active "${unit}.service" 2>/dev/null || echo unknown)"
+      if [[ "${state}" != "active" ]]; then
+        note_fail "${unit}.service is not active (state=${state})"
+      else
+        echo "OK: ${unit}.service active"
+      fi
+    fi
+  done
+fi
+
 if [[ "${failures}" -gt 0 ]]; then
   echo ""
   echo "ERROR: ${failures} verification check(s) failed."
