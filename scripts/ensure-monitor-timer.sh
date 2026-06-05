@@ -2,7 +2,11 @@
 # Enable on-VM health monitor + auto-recovery timer.
 set -euo pipefail
 
+cd "$(dirname "$0")/.."
+
 echo "==> ensure-monitor-timer.sh"
+
+chmod +x scripts/monitor-live-site.sh scripts/recover-live-connectivity.sh
 
 sudo -n mkdir -p /var/lib/worldcup-monitor
 sudo -n chown ubuntu:ubuntu /var/lib/worldcup-monitor
