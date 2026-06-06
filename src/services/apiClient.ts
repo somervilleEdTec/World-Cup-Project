@@ -117,6 +117,30 @@ export async function listPlayers() {
   }>('/api/admin/players');
 }
 
+export async function deletePlayer(userId: string) {
+  return request<{ ok: true }>(`/api/admin/players/${encodeURIComponent(userId)}`, {
+    method: 'DELETE'
+  });
+}
+
+export async function fetchAdminFixtures() {
+  return request<{
+    fixtures: Array<{
+      id: string;
+      stage: string;
+      group?: string;
+      kickoff: string;
+      homeTeamId: string;
+      awayTeamId: string;
+      hasResult: boolean;
+    }>;
+  }>('/api/admin/fixtures');
+}
+
+export async function runPredictionLocks() {
+  return request<{ ok: true }>('/api/system/locks/run', { method: 'POST' });
+}
+
 export async function fetchPredictionState() {
   return request('/api/predictions/state');
 }
