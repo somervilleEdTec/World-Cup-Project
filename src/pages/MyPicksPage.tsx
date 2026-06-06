@@ -315,6 +315,12 @@ export function MyPicksPage() {
     void flushPendingForGroup().finally(() => setGroupIndex(wrapped));
   };
 
+  const selectGroup = (groupId: string) => {
+    const nextIndex = groupSequence.indexOf(groupId);
+    if (nextIndex < 0 || nextIndex === groupIndex) return;
+    changeGroupIndex(nextIndex);
+  };
+
   const changePhase = (nextPhase: PicksPhase) => {
     if (phase === 'group' && nextPhase !== 'group') {
       void flushPendingForGroup();
@@ -420,6 +426,22 @@ export function MyPicksPage() {
             );
           })}
         </div>
+        {phase === 'group' && (
+          <div className="group-stage-tabs" role="tablist" aria-label="Group stage groups">
+            {groupSequence.map((groupId) => (
+              <button
+                key={groupId}
+                type="button"
+                role="tab"
+                aria-selected={groupId === activeGroup}
+                className={groupId === activeGroup ? 'active-tab' : ''}
+                onClick={() => selectGroup(groupId)}
+              >
+                {groupId}
+              </button>
+            ))}
+          </div>
+        )}
       </article>
 
       {phase === 'group' && (

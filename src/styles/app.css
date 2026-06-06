@@ -205,6 +205,25 @@ select {
   background: #19a974;
 }
 
+.group-stage-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-top: 0.75rem;
+}
+
+.group-stage-tabs button {
+  min-width: 2.25rem;
+  font-size: 0.9rem;
+  font-weight: 700;
+  padding: 0.5rem 0.65rem;
+  background: #1c4d7f;
+}
+
+.group-stage-tabs button.active-tab {
+  background: #19a974;
+}
+
 .button-row {
   display: flex;
   flex-wrap: wrap;
