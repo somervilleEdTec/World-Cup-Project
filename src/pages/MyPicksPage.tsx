@@ -294,7 +294,9 @@ export function MyPicksPage() {
   };
 
   const changeGroupIndex = (nextIndex: number) => {
-    void flushPendingForGroup().finally(() => setGroupIndex(nextIndex));
+    const wrapped =
+      ((nextIndex % groupSequence.length) + groupSequence.length) % groupSequence.length;
+    void flushPendingForGroup().finally(() => setGroupIndex(wrapped));
   };
 
   const changePhase = (nextPhase: PicksPhase) => {
@@ -489,18 +491,10 @@ export function MyPicksPage() {
             >
               {userGroupLocked ? 'Unlock group' : 'Lock group'}
             </button>
-            <button
-              type="button"
-              disabled={groupIndex === 0}
-              onClick={() => changeGroupIndex(groupIndex - 1)}
-            >
+            <button type="button" onClick={() => changeGroupIndex(groupIndex - 1)}>
               Previous Group
             </button>
-            <button
-              type="button"
-              disabled={groupIndex === groupSequence.length - 1}
-              onClick={() => changeGroupIndex(groupIndex + 1)}
-            >
+            <button type="button" onClick={() => changeGroupIndex(groupIndex + 1)}>
               Next Group
             </button>
           </div>
