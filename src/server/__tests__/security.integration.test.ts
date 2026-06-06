@@ -157,6 +157,8 @@ describe('security and tamper resistance', () => {
     const routes = [
       ['get', '/api/admin/players'],
       ['post', '/api/admin/players', { displayName: 'Hack', initialPassword: 'ab' }],
+      ['delete', '/api/admin/players/player-id'],
+      ['get', '/api/admin/fixtures'],
       ['get', '/api/admin/sync-status'],
       ['post', '/api/admin/sync/run'],
       ['get', '/api/admin/mapping-diagnostics'],
@@ -356,6 +358,16 @@ describe('security and tamper resistance', () => {
     expect(String(res.body.error)).toMatch(/reserved/i);
   });
 
+  it('rejects spaced variants of the reserved admin username', async () => {
+    const token = await adminToken(app);
+    const res = await request(app)
+      .post('/api/admin/players')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ displayName: 'Admin Tomsom', initialPassword: 'x' });
+    expect(res.status).toBe(400);
+    expect(String(res.body.error)).toMatch(/reserved/i);
+  });
+
   it('blocks admin from prediction APIs and leaderboard inclusion', async () => {
     const token = await adminToken(app);
     const draft = await request(app)
@@ -473,6 +485,38 @@ describe('security and tamper resistance', () => {
       .set('Authorization', `Bearer ${token}`)
       .send({ matchId: 'g-a-1', homeScore: -1, awayScore: 0, status: 'FINISHED' });
     expect(res.status).toBe(400);
+  });
+
+  it('allows admin to list fixtures and delete a player account', async () => {
+    const token = await adminToken(app);
+    await createPlayer(app, 'Delete Me');
+
+    const fixtures = await request(app)
+      .get('/api/admin/fixtures')
+      .set('Authorization', `Bearer ${token}`);
+    expect(fixtures.status).toBe(200);
+    expect(fixtures.body.fixtures.length).toBeGreaterThan(70);
+    expect(fixtures.body.fixtures.some((fixture: { id: string }) => fixture.id === 'g-a-1')).toBe(
+      true
+    );
+
+    const players = await request(app)
+      .get('/api/admin/players')
+      .set('Authorization', `Bearer ${token}`);
+    const target = players.body.players.find(
+      (player: { displayName: string }) => player.displayName === 'Delete Me'
+    );
+    expect(target).toBeTruthy();
+
+    const deleted = await request(app)
+      .delete(`/api/admin/players/${target.id}`)
+      .set('Authorization', `Bearer ${token}`);
+    expect(deleted.status).toBe(200);
+
+    const after = await request(app)
+      .get('/api/admin/players')
+      .set('Authorization', `Bearer ${token}`);
+    expect(after.body.players.some((player: { id: string }) => player.id === target.id)).toBe(false);
   });
 
   it('stores display names safely and returns them verbatim in leaderboard', async () => {

@@ -4,12 +4,14 @@ import { z } from 'zod';
 import {
   changePassword,
   createPlayerAccount,
+  deletePlayerAccount,
   listPlayers,
   login,
   requireAdmin,
   requireUser,
   assertPlayerCanPredict
 } from './services/auth';
+import { getMatches } from '../lib/matchResolver';
 import {
   commitDraft,
   getUserPredictionState,
@@ -20,7 +22,7 @@ import {
   setGroupAccepted,
   unlockGroupAccepted
 } from './services/predictions';
-import { computeLeaderboard } from './services/leaderboard';
+import { computeLeaderboard, getResultsMap } from './services/leaderboard';
 import { getFootballDataToken } from '../lib/runtimeConfig';
 import { buildMappingDiagnostics } from './services/mappingDiagnostics';
 import {
@@ -345,6 +347,41 @@ export function createApp(): Express {
       return res
         .status(adminRouteFailureStatus(error))
         .json({ error: error instanceof Error ? error.message : 'Could not create player' });
+    }
+  });
+
+  app.delete('/api/admin/players/:userId', async (req: Request, res: Response) => {
+    try {
+      await requireAdmin(authToken(req));
+      await deletePlayerAccount(String(req.params.userId));
+      return res.json({ ok: true });
+    } catch (error) {
+      return res
+        .status(adminRouteFailureStatus(error))
+        .json({ error: error instanceof Error ? error.message : 'Could not delete player' });
+    }
+  });
+
+  app.get('/api/admin/fixtures', async (req: Request, res: Response) => {
+    try {
+      await requireAdmin(authToken(req));
+      const results = await getResultsMap();
+      const fixtures = getMatches({}, results)
+        .sort((a, b) => new Date(a.kickoff).getTime() - new Date(b.kickoff).getTime())
+        .map((match) => ({
+          id: match.id,
+          stage: match.stage,
+          group: match.group,
+          kickoff: match.kickoff,
+          homeTeamId: match.homeTeamId,
+          awayTeamId: match.awayTeamId,
+          hasResult: Boolean(results[match.id])
+        }));
+      return res.json({ fixtures });
+    } catch (error) {
+      return res
+        .status(authFailureStatus(error))
+        .json({ error: error instanceof Error ? error.message : 'Unauthorized' });
     }
   });
 

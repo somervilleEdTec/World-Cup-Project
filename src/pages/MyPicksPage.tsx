@@ -23,10 +23,13 @@ import {
   groupHasOfficialResults
 } from '../lib/pickLocks';
 import { computeMissingPicks } from '../lib/missingPicks';
+import { formatKickoffBst } from '../lib/formatDateTime';
+import { getFirstMatchKickoff } from '../lib/kickoffOverrides';
 import {
   computeGroupStandings,
   isKnockoutFixtureLocked,
   predictionLockReached,
+  predictionLockTimeIso,
   shouldLockGroup
 } from '../lib/tournamentLogic';
 import { ActualResult, Match, Pick, Stage, TournamentBonusPick } from '../types';
@@ -144,6 +147,13 @@ export function MyPicksPage() {
   const activeGroupMatches = groupStageFixtures.filter((match) => match.group === activeGroup);
   const calendarGroupLocked = shouldLockGroup(nowIso);
   const tournamentLocked = calendarGroupLocked;
+
+  const firstKickoffIso = useMemo(() => {
+    if (groupStageFixtures.length === 0) return getFirstMatchKickoff();
+    return [...groupStageFixtures].sort((a, b) => a.kickoff.localeCompare(b.kickoff))[0]!.kickoff;
+  }, [groupStageFixtures]);
+  const tournamentDeadlineIso = predictionLockTimeIso(firstKickoffIso);
+  const groupStageDeadlineIso = predictionLockTimeIso(firstKickoffIso);
 
   const userGroupLocked = acceptedGroupsLocal.includes(activeGroup);
 
@@ -294,7 +304,9 @@ export function MyPicksPage() {
   };
 
   const changeGroupIndex = (nextIndex: number) => {
-    void flushPendingForGroup().finally(() => setGroupIndex(nextIndex));
+    const wrapped =
+      ((nextIndex % groupSequence.length) + groupSequence.length) % groupSequence.length;
+    void flushPendingForGroup().finally(() => setGroupIndex(wrapped));
   };
 
   const changePhase = (nextPhase: PicksPhase) => {
@@ -340,10 +352,25 @@ export function MyPicksPage() {
     <section className="stack">
       <article className="card">
         <h2>My Predictions</h2>
+        {(!tournamentLocked || !calendarGroupLocked) && (
+          <div className="prediction-deadlines">
+            {!tournamentLocked && (
+              <p className="prediction-deadline">
+                <strong>Tournament Predictions deadline:</strong>{' '}
+                {formatKickoffBst(tournamentDeadlineIso)}
+              </p>
+            )}
+            {!calendarGroupLocked && (
+              <p className="prediction-deadline">
+                <strong>Group Stage deadline:</strong> {formatKickoffBst(groupStageDeadlineIso)}
+              </p>
+            )}
+          </div>
+        )}
         <p>
           {tournamentLocked
             ? 'Group-stage and tournament result predictions are now locked.'
-            : 'Scores save automatically. Lock a group when you are happy with it — untouched matches count as 0-0 draws.'}
+            : 'Scores save automatically. Lock a group to see your predicted standings.'}
         </p>
         <div className="missing-picks">
           <h3>You have the following missing predictions:</h3>
@@ -489,18 +516,10 @@ export function MyPicksPage() {
             >
               {userGroupLocked ? 'Unlock group' : 'Lock group'}
             </button>
-            <button
-              type="button"
-              disabled={groupIndex === 0}
-              onClick={() => changeGroupIndex(groupIndex - 1)}
-            >
+            <button type="button" onClick={() => changeGroupIndex(groupIndex - 1)}>
               Previous Group
             </button>
-            <button
-              type="button"
-              disabled={groupIndex === groupSequence.length - 1}
-              onClick={() => changeGroupIndex(groupIndex + 1)}
-            >
+            <button type="button" onClick={() => changeGroupIndex(groupIndex + 1)}>
               Next Group
             </button>
           </div>

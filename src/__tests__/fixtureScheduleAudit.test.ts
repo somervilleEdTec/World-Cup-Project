@@ -69,9 +69,9 @@ describe('BST display audit', () => {
     expect(src).not.toMatch(/toLocaleString/);
   });
 
-  it('ComparisonPage uses formatKickoffBst for all fixture kickoffs', () => {
+  it('ComparisonPage uses shared fixture labels and BST kickoffs', () => {
     const src = readFileSync(join(process.cwd(), 'src/pages/ComparisonPage.tsx'), 'utf8');
-    expect(src).toMatch(/formatKickoffBst\(fixture\.kickoff\)/);
+    expect(src).toMatch(/formatFixtureOptionLabel\(fixture, teams\)/);
     expect(src).toMatch(/formatKickoffBst\(data\.match\.kickoff\)/);
   });
 

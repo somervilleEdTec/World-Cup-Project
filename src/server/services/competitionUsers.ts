@@ -1,3 +1,5 @@
+import { isReservedOrganiserDisplayName } from './auth';
+
 const BOOTSTRAP_ADMIN_USERNAME = process.env.ADMIN_USERNAME?.trim() || 'AdminTomsom';
 
 function normalizeDisplayName(name: string): string {
@@ -16,10 +18,7 @@ export function competitionUserBindParams(): [string] {
 
 export function isExcludedFromCompetition(displayName: string, isAdmin: boolean): boolean {
   if (isAdmin) return true;
-  return (
-    normalizeDisplayName(displayName).toLowerCase() ===
-    normalizeDisplayName(BOOTSTRAP_ADMIN_USERNAME).toLowerCase()
-  );
+  return isReservedOrganiserDisplayName(displayName);
 }
 
 /** @deprecated use competitionUserWhere() */

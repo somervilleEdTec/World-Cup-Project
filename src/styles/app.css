@@ -218,6 +218,69 @@ select {
   border-color: #0b3d6e;
 }
 
+.admin-quick-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+.admin-quick-links a {
+  display: inline-block;
+  padding: 0.55rem 0.85rem;
+  border-radius: 0.6rem;
+  background: #eef4fb;
+  font-weight: 600;
+}
+
+.admin-summary {
+  margin: 0.75rem 0 0;
+  padding-left: 1.1rem;
+}
+
+.admin-banner {
+  margin: 0.75rem 0 0;
+  padding: 0.75rem 0.9rem;
+  border-radius: 0.65rem;
+  background: #e8f8ef;
+  color: #145c3a;
+}
+
+.admin-banner-error {
+  background: #fdecec;
+  color: #8a1f1f;
+}
+
+.admin-table-wrap {
+  overflow-x: auto;
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 0.75rem;
+  font-size: 0.92rem;
+}
+
+.admin-table th,
+.admin-table td {
+  border-bottom: 1px solid #dce5ef;
+  padding: 0.55rem 0.35rem;
+  text-align: left;
+  vertical-align: top;
+}
+
+.admin-button-danger {
+  background: #b42318;
+  font-size: 0.85rem;
+  padding: 0.45rem 0.7rem;
+}
+
+.admin-diagnostics h3,
+.admin-diagnostics h4 {
+  margin-bottom: 0.35rem;
+}
+
 .fixture-row {
   display: flex;
   flex-wrap: wrap;
@@ -263,6 +326,21 @@ select {
   font-size: 0.85rem;
   color: #4a6278;
   margin: 0.15rem 0 0.55rem;
+}
+
+.prediction-deadlines {
+  display: grid;
+  gap: 0.35rem;
+  margin-bottom: 0.75rem;
+}
+
+.prediction-deadline {
+  margin: 0;
+  padding: 0.65rem 0.75rem;
+  border-radius: 0.55rem;
+  background: #fff8e6;
+  color: #6b4e00;
+  font-size: 0.95rem;
 }
 
 .fixture-schedule-deadline {
