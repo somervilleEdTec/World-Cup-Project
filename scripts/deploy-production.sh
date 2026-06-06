@@ -42,8 +42,9 @@ set -a
 source .env
 set +a
 
-if [[ -z "${FOOTBALL_DATA_TOKEN:-}" ]]; then
-  echo "FOOTBALL_DATA_TOKEN is required in .env for live results."
+# shellcheck disable=SC1091
+source "$(dirname "$0")/lib/footballToken.sh"
+if ! require_football_data_token; then
   exit 1
 fi
 

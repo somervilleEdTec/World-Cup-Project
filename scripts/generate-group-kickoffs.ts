@@ -1,10 +1,11 @@
 /**
  * Fetches group-stage kickoffs from football-data.org and prints a TypeScript map
- * for src/data/groupStageKickoffs.ts. Requires FOOTBALL_DATA_TOKEN.
+ * for src/data/groupStageKickoffs.ts. Requires FOOTBALL_DATA_TOKEN or FOOTBALL_API_KEY.
  *
  * Usage: FOOTBALL_DATA_TOKEN=... npx tsx scripts/generate-group-kickoffs.ts
  */
 import 'dotenv/config';
+import { getFootballDataToken } from '../src/lib/runtimeConfig.js';
 import { groupMatches } from '../src/data/tournament';
 import { fetchCompetitionFixtures } from '../src/services/footballDataService';
 import {
@@ -14,9 +15,9 @@ import {
 } from '../src/server/services/matchMapping';
 
 async function main() {
-  const token = process.env.FOOTBALL_DATA_TOKEN;
+  const token = getFootballDataToken();
   if (!token) {
-    console.error('FOOTBALL_DATA_TOKEN is required');
+    console.error('FOOTBALL_DATA_TOKEN or FOOTBALL_API_KEY is required');
     process.exit(1);
   }
 
