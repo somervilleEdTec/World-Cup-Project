@@ -144,7 +144,13 @@ export function MyPicksPage() {
   const groupStageFixtures =
     state.groupStageFixtures ?? (fixturesLoaded ? [] : groupMatches);
   const activeGroup = groupSequence[groupIndex];
-  const activeGroupMatches = groupStageFixtures.filter((match) => match.group === activeGroup);
+  const activeGroupMatches = useMemo(
+    () =>
+      groupStageFixtures
+        .filter((match) => match.group === activeGroup)
+        .sort((a, b) => a.kickoff.localeCompare(b.kickoff) || a.id.localeCompare(b.id)),
+    [groupStageFixtures, activeGroup]
+  );
   const calendarGroupLocked = shouldLockGroup(nowIso);
   const tournamentLocked = calendarGroupLocked;
 

@@ -1,4 +1,5 @@
 import { fetchLatestResults, PROVIDER } from '../../services/footballDataService';
+import { normalizeScoresToInternalFixture } from '../../lib/fixtureOrientation';
 import { getMatches } from '../../lib/matchResolver';
 import { ActualResult } from '../../types';
 import { getDb } from '../database';
@@ -73,18 +74,28 @@ export async function syncFootballData(apiToken: string) {
           continue;
         }
 
-        const prog = progressingTeamId(
+        const normalized = normalizeScoresToInternalFixture(
           teamsInFixture.home,
           teamsInFixture.away,
+          result.homeName,
+          result.awayName,
           result.homeScore,
           result.awayScore,
           result.progressingTeamId
         );
 
+        const prog = progressingTeamId(
+          teamsInFixture.home,
+          teamsInFixture.away,
+          normalized.homeScore,
+          normalized.awayScore,
+          normalized.progressingTeamHint
+        );
+
         const actual: ActualResult = {
           matchId: internalId,
-          homeScore: result.homeScore,
-          awayScore: result.awayScore,
+          homeScore: normalized.homeScore,
+          awayScore: normalized.awayScore,
           progressingTeamId: prog
         };
 
@@ -98,7 +109,7 @@ export async function syncFootballData(apiToken: string) {
              status=excluded.status,
              source=excluded.source,
              updated_at=excluded.updated_at`,
-          [internalId, result.homeScore, result.awayScore, prog ?? null, now]
+          [internalId, normalized.homeScore, normalized.awayScore, prog ?? null, now]
         );
         syncActuals[internalId] = actual;
         updated += 1;
