@@ -34,12 +34,13 @@ export const teams: Team[] = Object.entries(groupTeamNames).flatMap(([group, nam
 
 function groupMatchesForGroup(group: string, teamIds: string[]): Match[] {
   const [a, b, c, d] = teamIds;
+  // FIFA designates the fourth drawn team (d) as home in matchday-2 fixture 2 and matchday-3 fixture 1.
   const pairs: Array<[string, string]> = [
     [a, b],
     [c, d],
     [a, c],
-    [b, d],
-    [a, d],
+    [d, b],
+    [d, a],
     [b, c]
   ];
   return pairs.map(([homeTeamId, awayTeamId], idx) => {
