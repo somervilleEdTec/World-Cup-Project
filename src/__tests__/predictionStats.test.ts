@@ -7,7 +7,9 @@ import {
   computeGroupConsensus,
   computeTournamentOutlook,
   computeFunFacts,
+  buildMysteryStatPool,
   computeMysteryStats,
+  MYSTERY_STATS_DISPLAY_COUNT,
   sortMatchConsensusForDisplay,
   UserPicks
 } from '../lib/predictionStats';
@@ -223,8 +225,33 @@ describe('computeMysteryStats', () => {
 
     const facts = computeMysteryStats(users);
     expect(facts.length).toBeGreaterThan(0);
+    expect(facts.length).toBeLessThanOrEqual(MYSTERY_STATS_DISPLAY_COUNT);
     expect(facts.every((f) => !f.text.includes('Brazil') && !f.text.includes('Mexico'))).toBe(true);
-    expect(facts.some((f) => f.text.includes('unlock'))).toBe(true);
+    const pool = buildMysteryStatPool(users);
+    expect(pool.length).toBeGreaterThanOrEqual(8);
+    expect(pool.some((f) => f.text.includes('unlock'))).toBe(true);
+  });
+
+  it('returns up to five shuffled stats from a larger pool', async () => {
+    const { groupMatches } = await import('../data/tournament');
+    const allGroupPicks = Object.fromEntries(
+      groupMatches.map((m) => [m.id, { matchId: m.id, homeScore: 2, awayScore: 1 }])
+    );
+
+    const users: UserPicks[] = Array.from({ length: 6 }, (_, i) => ({
+      userId: `u${i}`,
+      displayName: `Player ${i}`,
+      picks: allGroupPicks,
+      bonus: {
+        winnerTeamId: 'brazil',
+        runnerUpTeamId: 'france',
+        thirdTeamId: 'germany',
+        fourthTeamId: 'spain'
+      }
+    }));
+
+    const facts = computeMysteryStats(users);
+    expect(facts.length).toBe(MYSTERY_STATS_DISPLAY_COUNT);
   });
 
   it('includes bald stat when requested', () => {
@@ -240,8 +267,8 @@ describe('computeMysteryStats', () => {
         picks: { 'g-a-1': { matchId: 'g-a-1', homeScore: 2, awayScore: 1 } }
       }
     ];
-    const facts = computeMysteryStats(users, { includeBaldStat: true });
-    expect(facts.some((f) => f.text.includes('bald head'))).toBe(true);
+    const pool = buildMysteryStatPool(users, { includeBaldStat: true });
+    expect(pool.some((f) => f.text.includes('bald head'))).toBe(true);
   });
 
   it('omits bald stat when not requested', () => {
@@ -252,8 +279,8 @@ describe('computeMysteryStats', () => {
         picks: { 'g-a-1': { matchId: 'g-a-1', homeScore: 1, awayScore: 0 } }
       }
     ];
-    const facts = computeMysteryStats(users, { includeBaldStat: false });
-    expect(facts.some((f) => f.text.includes('bald head'))).toBe(false);
+    const pool = buildMysteryStatPool(users, { includeBaldStat: false });
+    expect(pool.some((f) => f.text.includes('bald head'))).toBe(false);
   });
 });
 

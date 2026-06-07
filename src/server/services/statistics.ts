@@ -132,7 +132,7 @@ export async function computeStatistics(nowIso = new Date().toISOString()) {
 
   const mysteryStats = groupPhaseLocked
     ? []
-    : computeMysteryStats(userPicks, { includeBaldStat: Math.random() < 0.25 });
+    : computeMysteryStats(userPicks, { includeBaldStat: Math.random() < 0.05 });
 
   return {
     meta: {

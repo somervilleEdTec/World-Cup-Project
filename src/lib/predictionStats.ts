@@ -305,17 +305,56 @@ export interface MysteryStat {
   text: string;
 }
 
+export const MYSTERY_STATS_DISPLAY_COUNT = 5;
+
 export interface MysteryStatsOptions {
-  /** When true, may include the bald-head easter egg (caller rolls ~25% on refresh). */
+  /** When true, may include the bald-head easter egg (caller rolls ~5% on refresh). */
   includeBaldStat?: boolean;
+  /** When false, returns the first N pool entries (for tests). Default true. */
+  shuffle?: boolean;
 }
 
-/** Teaser stats before group lock — percentages only, no team or scoreline names. */
-export function computeMysteryStats(
+function shuffleMysteryStats<T>(items: T[]): T[] {
+  const copy = [...items];
+  for (let i = copy.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+}
+
+function bonusPickConsensus(
+  userPicks: UserPicks[],
+  selector: (bonus: TournamentBonusPick) => string,
+  icon: string,
+  label: string
+): MysteryStat | null {
+  const bonusUsers = userPicks.filter((u) => selector(u.bonus!));
+  if (bonusUsers.length < 2) return null;
+
+  const counts = new Map<string, number>();
+  for (const user of bonusUsers) {
+    const id = selector(user.bonus!);
+    counts.set(id, (counts.get(id) ?? 0) + 1);
+  }
+  const top = [...counts.entries()].sort((a, b) => b[1] - a[1])[0];
+  if (!top) return null;
+
+  const pct = Math.round((top[1] / bonusUsers.length) * 100);
+  if (pct < 50) return null;
+
+  return {
+    icon,
+    text: `${pct}% of players have picked the same tournament ${label}.`
+  };
+}
+
+/** Build the full mystery-stat candidate pool (typically 10+ items). */
+export function buildMysteryStatPool(
   userPicks: UserPicks[],
   options: MysteryStatsOptions = {}
 ): MysteryStat[] {
-  const facts: MysteryStat[] = [];
+  const pool: MysteryStat[] = [];
   const groupConsensus = buildGroupConsensusForUsers(userPicks);
 
   const groupPicks = userPicks.flatMap((user) =>
@@ -323,15 +362,52 @@ export function computeMysteryStats(
       (pick) => pick.matchId.startsWith('g-') && pick.homeScore >= 0 && pick.awayScore >= 0
     )
   );
+
+  const withPicks = userPicks.filter((u) => Object.keys(u.picks).length > 0);
+  const playersWithPicks = withPicks.length;
+
   if (groupPicks.length > 0) {
     const draws = groupPicks.filter((p) => p.homeScore === p.awayScore).length;
     const drawPct = Math.round((draws / groupPicks.length) * 100);
     if (drawPct > 0) {
-      facts.push({
+      pool.push({
         icon: '🤝',
         text: `${drawPct}% of submitted group-stage picks are draws — the crowd ${drawPct >= 35 ? 'loves a stalemate' : 'is split on goals'}.`
       });
     }
+
+    const homeWins = groupPicks.filter((p) => p.homeScore > p.awayScore).length;
+    const homePct = Math.round((homeWins / groupPicks.length) * 100);
+    pool.push({
+      icon: '🏠',
+      text: `${homePct}% of submitted group picks back the home team to win.`
+    });
+
+    const awayWins = groupPicks.filter((p) => p.homeScore < p.awayScore).length;
+    const awayPct = Math.round((awayWins / groupPicks.length) * 100);
+    pool.push({
+      icon: '✈️',
+      text: `${awayPct}% of submitted group picks back an away win.`
+    });
+
+    const cleanSheets = groupPicks.filter((p) => p.homeScore === 0 || p.awayScore === 0).length;
+    const cleanPct = Math.round((cleanSheets / groupPicks.length) * 100);
+    pool.push({
+      icon: '🧤',
+      text: `${cleanPct}% of submitted group picks include at least one clean sheet.`
+    });
+
+    const totalGoals = groupPicks.reduce((sum, p) => sum + p.homeScore + p.awayScore, 0);
+    const avgGoals = (totalGoals / groupPicks.length).toFixed(1);
+    pool.push({
+      icon: '⚽',
+      text: `The crowd averages ${avgGoals} goals per submitted group-stage pick.`
+    });
+
+    pool.push({
+      icon: '📝',
+      text: `${groupPicks.length} group-stage picks have been submitted so far.`
+    });
   }
 
   const withWinnerConsensus = groupConsensus
@@ -339,14 +415,21 @@ export function computeMysteryStats(
       groupId: g.groupId,
       pct: g.positionPopularity[0]?.teams[0]?.pct ?? 0
     }))
-    .filter((g) => g.pct >= 50)
-    .sort((a, b) => b.pct - a.pct);
+    .filter((g) => g.pct > 0);
 
-  if (withWinnerConsensus[0]) {
-    const top = withWinnerConsensus[0];
-    facts.push({
+  const topWinner = [...withWinnerConsensus].sort((a, b) => b.pct - a.pct)[0];
+  if (topWinner && topWinner.pct >= 50) {
+    pool.push({
       icon: '👥',
-      text: `${top.pct}% of players who've completed Group ${top.groupId} picked the same group winner.`
+      text: `${topWinner.pct}% of players who've completed Group ${topWinner.groupId} picked the same group winner.`
+    });
+  }
+
+  const splitWinner = [...withWinnerConsensus].sort((a, b) => a.pct - b.pct)[0];
+  if (splitWinner && splitWinner.pct > 0 && splitWinner.pct < topWinner?.pct) {
+    pool.push({
+      icon: '🔀',
+      text: `Group ${splitWinner.groupId} is the most divided on who wins — only ${splitWinner.pct}% agree on top spot.`
     });
   }
 
@@ -354,7 +437,7 @@ export function computeMysteryStats(
     .filter((g) => g.modalCount > 0)
     .sort((a, b) => b.modalPct - a.modalPct)[0];
   if (orderConsensus && orderConsensus.modalPct >= 40) {
-    facts.push({
+    pool.push({
       icon: '📊',
       text: `Group ${orderConsensus.groupId} has the strongest standings consensus — ${orderConsensus.modalPct}% predict the same full top 4.`
     });
@@ -362,53 +445,66 @@ export function computeMysteryStats(
 
   const chaos = [...groupConsensus].sort((a, b) => b.distinctWinners - a.distinctWinners)[0];
   if (chaos && chaos.distinctWinners >= 3) {
-    facts.push({
+    pool.push({
       icon: '🎲',
       text: `Group ${chaos.groupId} is the wild card — ${chaos.distinctWinners} different teams are tipped to win it.`
     });
   }
 
-  const bonusUsers = userPicks.filter((u) => u.bonus?.winnerTeamId);
-  if (bonusUsers.length >= 2) {
-    const championCounts = new Map<string, number>();
-    for (const user of bonusUsers) {
-      const id = user.bonus!.winnerTeamId;
-      championCounts.set(id, (championCounts.get(id) ?? 0) + 1);
-    }
-    const topChampion = [...championCounts.entries()].sort((a, b) => b[1] - a[1])[0];
-    if (topChampion) {
-      const pct = Math.round((topChampion[1] / bonusUsers.length) * 100);
-      if (pct >= 50) {
-        facts.push({
-          icon: '🏆',
-          text: `${pct}% of players have picked the same tournament champion.`
-        });
-      }
-    }
+  const championStat = bonusPickConsensus(
+    userPicks.filter((u) => u.bonus?.winnerTeamId),
+    (b) => b.winnerTeamId,
+    '🏆',
+    'champion'
+  );
+  if (championStat) pool.push(championStat);
+
+  const runnerUpStat = bonusPickConsensus(
+    userPicks.filter((u) => u.bonus?.runnerUpTeamId),
+    (b) => b.runnerUpTeamId,
+    '🥈',
+    'runner-up'
+  );
+  if (runnerUpStat) pool.push(runnerUpStat);
+
+  const bonusSubmitted = userPicks.filter((u) => u.bonus).length;
+  if (bonusSubmitted > 0 && playersWithPicks > 0) {
+    const bonusPct = Math.round((bonusSubmitted / playersWithPicks) * 100);
+    pool.push({
+      icon: '🎯',
+      text: `${bonusPct}% of players with picks have locked in their tournament podium predictions.`
+    });
   }
 
-  const playersWithPicks = userPicks.filter((u) => Object.keys(u.picks).length > 0).length;
   if (playersWithPicks > 0) {
-    facts.push({
+    pool.push({
       icon: '🔒',
       text: `${playersWithPicks} player${playersWithPicks === 1 ? '' : 's'} have submitted picks — full crowd stats unlock after the first kickoff.`
     });
   }
 
   if (options.includeBaldStat && playersWithPicks > 0) {
-    const withPicks = userPicks.filter((u) => Object.keys(u.picks).length > 0);
     const baldWithPicks = withPicks.filter((u) => isBaldPlayer(u.displayName)).length;
     if (baldWithPicks > 0) {
       const baldPct = Math.round((baldWithPicks / withPicks.length) * 100);
-      const insertAt = Math.floor(Math.random() * (facts.length + 1));
-      facts.splice(insertAt, 0, {
+      pool.push({
         icon: '🧑‍🦲',
         text: `${baldPct}% of players with picks have a bald head.`
       });
     }
   }
 
-  return facts.slice(0, 5);
+  return pool;
+}
+
+/** Teaser stats before group lock — shuffles pool and returns five per refresh. */
+export function computeMysteryStats(
+  userPicks: UserPicks[],
+  options: MysteryStatsOptions = {}
+): MysteryStat[] {
+  const pool = buildMysteryStatPool(userPicks, options);
+  const ordered = options.shuffle === false ? pool : shuffleMysteryStats(pool);
+  return ordered.slice(0, MYSTERY_STATS_DISPLAY_COUNT);
 }
 
 export interface TournamentOutlookData {

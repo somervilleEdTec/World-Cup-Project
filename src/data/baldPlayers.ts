@@ -1,6 +1,6 @@
 /** Competition players designated as bald for Mystery Stats easter egg. */
 const BALD_PLAYER_DISPLAY_NAMES = new Set(
-  ['Big Bald Ben', 'Little Bald Rob', 'Tom', 'AndyB'].map((name) => name.toLowerCase())
+  ['Big Bald Ben', 'Little Bald Rob', 'AndyB'].map((name) => name.toLowerCase())
 );
 
 export function isBaldPlayer(displayName: string): boolean {
