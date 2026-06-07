@@ -7,6 +7,7 @@ import {
   computeGroupConsensus,
   computeTournamentOutlook,
   computeFunFacts,
+  computeMysteryStats,
   sortMatchConsensusForDisplay,
   UserPicks
 } from '../lib/predictionStats';
@@ -204,6 +205,26 @@ describe('sortMatchConsensusForDisplay', () => {
     const sorted = sortMatchConsensusForDisplay(items);
     expect(sorted.mostUnanimous[0].matchId).toBe('b');
     expect(sorted.mostSplit[0].matchId).toBe('a');
+  });
+});
+
+describe('computeMysteryStats', () => {
+  it('returns teaser facts without team names before lock', async () => {
+    const { groupMatches } = await import('../data/tournament');
+    const groupAMatches = groupMatches.filter((m) => m.group === 'A');
+    const picksA = Object.fromEntries(
+      groupAMatches.map((m) => [m.id, { matchId: m.id, homeScore: 2, awayScore: 1 }])
+    );
+
+    const users: UserPicks[] = [
+      { userId: 'u1', displayName: 'Alice', picks: picksA, bonus: { winnerTeamId: 'brazil', runnerUpTeamId: 'france', thirdTeamId: 'germany', fourthTeamId: 'spain' } },
+      { userId: 'u2', displayName: 'Bob', picks: picksA, bonus: { winnerTeamId: 'brazil', runnerUpTeamId: 'argentina', thirdTeamId: 'germany', fourthTeamId: 'spain' } }
+    ];
+
+    const facts = computeMysteryStats(users);
+    expect(facts.length).toBeGreaterThan(0);
+    expect(facts.every((f) => !f.text.includes('Brazil') && !f.text.includes('Mexico'))).toBe(true);
+    expect(facts.some((f) => f.text.includes('unlock'))).toBe(true);
   });
 });
 

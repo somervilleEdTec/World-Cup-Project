@@ -1,15 +1,14 @@
-import { useEffect, useState } from 'react';
-import { teams } from '../data/tournament';
-import { TeamLabel } from '../components/TeamLabel';
-import { StatHeroCard } from '../components/stats/StatHeroCard';
-import { ConsensusBar } from '../components/stats/ConsensusBar';
-import { ResultDonut } from '../components/stats/ResultDonut';
-import { GroupConsensusPanel } from '../components/stats/GroupConsensusPanel';
-import { TournamentOutlook } from '../components/stats/TournamentOutlook';
-import { FunFactsList } from '../components/stats/FunFactsList';
-import { fetchStatistics, userFacingError } from '../services/apiClient';
-import { StatisticsResponse } from '../types';
-import { formatFixtureStageLabel } from '../lib/fixtureLabels';
+import { teams } from '../../data/tournament';
+import { TeamLabel } from '../TeamLabel';
+import { StatHeroCard } from './StatHeroCard';
+import { ConsensusBar } from './ConsensusBar';
+import { ResultDonut } from './ResultDonut';
+import { GroupConsensusPanel } from './GroupConsensusPanel';
+import { TournamentOutlook } from './TournamentOutlook';
+import { FunFactsList } from './FunFactsList';
+import { MysteryStatsList } from './MysteryStatsList';
+import { StatisticsResponse } from '../../types';
+import { formatFixtureStageLabel } from '../../lib/fixtureLabels';
 
 function fixtureLabel(homeTeamId: string, awayTeamId: string): string {
   const home = teams.find((t) => t.id === homeTeamId);
@@ -17,45 +16,31 @@ function fixtureLabel(homeTeamId: string, awayTeamId: string): string {
   return `${home?.name ?? homeTeamId} vs ${away?.name ?? awayTeamId}`;
 }
 
-export function StatisticsPage() {
-  const [data, setData] = useState<StatisticsResponse | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+interface CrowdStatsPanelProps {
+  data: StatisticsResponse;
+}
 
-  useEffect(() => {
-    fetchStatistics()
-      .then((response) => {
-        setData(response);
-        setError(null);
-      })
-      .catch((err) => setError(userFacingError(err, 'Unable to load statistics')))
-      .finally(() => setLoading(false));
-  }, []);
+export function CrowdStatsPanel({ data }: CrowdStatsPanelProps) {
+  const { headlines, meta, matchConsensus, groupConsensus, tournamentOutlook, funFacts, mysteryStats } =
+    data;
 
-  if (loading) {
-    return <section className="card">Loading statistics…</section>;
-  }
-
-  if (error) {
+  if (!meta.groupPhaseLocked) {
     return (
-      <section className="card">
-        <h2>Statistics</h2>
-        <p className="warning">{error}</p>
+      <section className="stack">
+        <article className="card stats-locked-notice">
+          <h3>Crowd Predictions</h3>
+          <p>{meta.message}</p>
+        </article>
+        <MysteryStatsList stats={mysteryStats} />
       </section>
     );
   }
 
-  if (!data) {
-    return <section className="card">No statistics available.</section>;
-  }
-
-  const { headlines, meta, matchConsensus, groupConsensus, tournamentOutlook, funFacts } = data;
-
   return (
     <section className="stack">
       <article className="card">
-        <h2>Statistics</h2>
-        <p className="kicker">What the crowd is predicting</p>
+        <h3>Crowd Predictions</h3>
+        <p className="kicker">What the league is predicting</p>
         <p>
           Based on {meta.playerCount} player{meta.playerCount === 1 ? '' : 's'}
           {meta.viewableMatchCount > 0
@@ -63,10 +48,7 @@ export function StatisticsPage() {
             : ''}
           .
         </p>
-        {!meta.groupPhaseLocked && (
-          <p className="stats-locked-notice-inline">{meta.message}</p>
-        )}
-        {meta.groupPhaseLocked && <p className="kicker">{meta.message}</p>}
+        <p className="kicker">{meta.message}</p>
       </article>
 
       {(headlines.hiveMind || headlines.roomForDebate || headlines.scorelineKing) && (
@@ -134,17 +116,7 @@ export function StatisticsPage() {
         </article>
       )}
 
-      {meta.groupPhaseLocked && groupConsensus.length > 0 && (
-        <GroupConsensusPanel groups={groupConsensus} />
-      )}
-
-      {!meta.groupPhaseLocked && (
-        <article className="card stats-locked-notice">
-          <h3>Group Standings Consensus</h3>
-          <p>Group standings stats appear after the first tournament kickoff.</p>
-        </article>
-      )}
-
+      {groupConsensus.length > 0 && <GroupConsensusPanel groups={groupConsensus} />}
       <TournamentOutlook outlook={tournamentOutlook} />
       <FunFactsList facts={funFacts} />
     </section>

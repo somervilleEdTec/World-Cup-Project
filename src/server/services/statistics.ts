@@ -6,6 +6,7 @@ import {
   computeGroupConsensus,
   computeHeadlines,
   computeMatchConsensus,
+  computeMysteryStats,
   computeTournamentOutlook,
   MatchPickInput,
   sortMatchConsensusForDisplay,
@@ -127,7 +128,9 @@ export async function computeStatistics(nowIso = new Date().toISOString()) {
 
   const message = groupPhaseLocked
     ? 'Showing crowd prediction stats for unlocked fixtures.'
-    : 'Group-stage stats appear after the first tournament kickoff. Knockout stats unlock 15 minutes before each fixture.';
+    : 'Detailed stats unlock after the first tournament kickoff. Knockout stats unlock 15 minutes before each fixture.';
+
+  const mysteryStats = groupPhaseLocked ? [] : computeMysteryStats(userPicks);
 
   return {
     meta: {
@@ -136,10 +139,13 @@ export async function computeStatistics(nowIso = new Date().toISOString()) {
       groupPhaseLocked,
       message
     },
-    headlines,
-    matchConsensus: displayConsensus,
-    groupConsensus,
-    tournamentOutlook,
-    funFacts
+    headlines: groupPhaseLocked ? headlines : { hiveMind: null, roomForDebate: null, scorelineKing: null },
+    matchConsensus: groupPhaseLocked ? displayConsensus : [],
+    groupConsensus: groupPhaseLocked ? groupConsensus : [],
+    tournamentOutlook: groupPhaseLocked
+      ? tournamentOutlook
+      : { visible: false, champion: [], runnerUp: [], third: [], fourth: [], darkHorse: null },
+    funFacts: groupPhaseLocked ? funFacts : [],
+    mysteryStats
   };
 }

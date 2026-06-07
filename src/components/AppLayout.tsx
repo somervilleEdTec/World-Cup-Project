@@ -6,8 +6,7 @@ const baseLinks = [
   { to: '/', label: 'Welcome', mobileLabel: 'Home' },
   { to: '/my-picks', label: 'My Predictions', mobileLabel: 'Predict' },
   { to: '/league-table', label: 'League Table', mobileLabel: 'Table' },
-  { to: '/comparison', label: 'Comparison', mobileLabel: 'Compare' },
-  { to: '/statistics', label: 'Statistics', mobileLabel: 'Stats' }
+  { to: '/comparison', label: 'Stats', mobileLabel: 'Stats' }
 ];
 
 export function AppLayout() {

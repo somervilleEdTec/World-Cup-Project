@@ -165,6 +165,7 @@ export interface StatisticsResponse {
     darkHorse: { teamId: string; playerName: string } | null;
   };
   funFacts: Array<{ icon: string; text: string }>;
+  mysteryStats: Array<{ icon: string; text: string }>;
 }
 
 export interface MatchComparisonView {

@@ -223,12 +223,7 @@ export interface GroupConsensusItem {
 
 const GROUP_IDS = [...new Set(teams.map((t) => t.group))].sort();
 
-export function computeGroupConsensus(
-  userPicks: UserPicks[],
-  groupPhaseLocked: boolean
-): GroupConsensusItem[] {
-  if (!groupPhaseLocked) return [];
-
+function buildGroupConsensusForUsers(userPicks: UserPicks[]): GroupConsensusItem[] {
   return GROUP_IDS.map((groupId) => {
     const groupMatchIds = groupMatches.filter((m) => m.group === groupId).map((m) => m.id);
     const orderCounts = new Map<string, { order: string[]; count: number }>();
@@ -294,6 +289,104 @@ export function computeGroupConsensus(
       distinctWinners: winners.size
     };
   });
+}
+
+export function computeGroupConsensus(
+  userPicks: UserPicks[],
+  groupPhaseLocked: boolean
+): GroupConsensusItem[] {
+  if (!groupPhaseLocked) return [];
+  return buildGroupConsensusForUsers(userPicks);
+}
+
+export interface MysteryStat {
+  icon: string;
+  text: string;
+}
+
+/** Teaser stats before group lock — percentages only, no team or scoreline names. */
+export function computeMysteryStats(userPicks: UserPicks[]): MysteryStat[] {
+  const facts: MysteryStat[] = [];
+  const groupConsensus = buildGroupConsensusForUsers(userPicks);
+
+  const groupPicks = userPicks.flatMap((user) =>
+    Object.values(user.picks).filter(
+      (pick) => pick.matchId.startsWith('g-') && pick.homeScore >= 0 && pick.awayScore >= 0
+    )
+  );
+  if (groupPicks.length > 0) {
+    const draws = groupPicks.filter((p) => p.homeScore === p.awayScore).length;
+    const drawPct = Math.round((draws / groupPicks.length) * 100);
+    if (drawPct > 0) {
+      facts.push({
+        icon: '🤝',
+        text: `${drawPct}% of submitted group-stage picks are draws — the crowd ${drawPct >= 35 ? 'loves a stalemate' : 'is split on goals'}.`
+      });
+    }
+  }
+
+  const withWinnerConsensus = groupConsensus
+    .map((g) => ({
+      groupId: g.groupId,
+      pct: g.positionPopularity[0]?.teams[0]?.pct ?? 0
+    }))
+    .filter((g) => g.pct >= 50)
+    .sort((a, b) => b.pct - a.pct);
+
+  if (withWinnerConsensus[0]) {
+    const top = withWinnerConsensus[0];
+    facts.push({
+      icon: '👥',
+      text: `${top.pct}% of players who've completed Group ${top.groupId} picked the same group winner.`
+    });
+  }
+
+  const orderConsensus = [...groupConsensus]
+    .filter((g) => g.modalCount > 0)
+    .sort((a, b) => b.modalPct - a.modalPct)[0];
+  if (orderConsensus && orderConsensus.modalPct >= 40) {
+    facts.push({
+      icon: '📊',
+      text: `Group ${orderConsensus.groupId} has the strongest standings consensus — ${orderConsensus.modalPct}% predict the same full top 4.`
+    });
+  }
+
+  const chaos = [...groupConsensus].sort((a, b) => b.distinctWinners - a.distinctWinners)[0];
+  if (chaos && chaos.distinctWinners >= 3) {
+    facts.push({
+      icon: '🎲',
+      text: `Group ${chaos.groupId} is the wild card — ${chaos.distinctWinners} different teams are tipped to win it.`
+    });
+  }
+
+  const bonusUsers = userPicks.filter((u) => u.bonus?.winnerTeamId);
+  if (bonusUsers.length >= 2) {
+    const championCounts = new Map<string, number>();
+    for (const user of bonusUsers) {
+      const id = user.bonus!.winnerTeamId;
+      championCounts.set(id, (championCounts.get(id) ?? 0) + 1);
+    }
+    const topChampion = [...championCounts.entries()].sort((a, b) => b[1] - a[1])[0];
+    if (topChampion) {
+      const pct = Math.round((topChampion[1] / bonusUsers.length) * 100);
+      if (pct >= 50) {
+        facts.push({
+          icon: '🏆',
+          text: `${pct}% of players have picked the same tournament champion.`
+        });
+      }
+    }
+  }
+
+  const playersWithPicks = userPicks.filter((u) => Object.keys(u.picks).length > 0).length;
+  if (playersWithPicks > 0) {
+    facts.push({
+      icon: '🔒',
+      text: `${playersWithPicks} player${playersWithPicks === 1 ? '' : 's'} have submitted picks — full crowd stats unlock after the first kickoff.`
+    });
+  }
+
+  return facts.slice(0, 5);
 }
 
 export interface TournamentOutlookData {

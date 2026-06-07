@@ -252,7 +252,7 @@ export function AdminPage() {
         </p>
         <div className="admin-quick-links">
           <Link to="/leaderboard">View leaderboard</Link>
-          <Link to="/comparison">Open comparison</Link>
+          <Link to="/comparison">Open stats</Link>
         </div>
         <ul className="admin-summary">
           <li>{players.length} players ({activePlayers} active, {pendingPlayers} awaiting first login)</li>

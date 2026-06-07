@@ -129,21 +129,9 @@ button {
   }
 }
 
-@media (min-width: 520px) {
-  .mobile-nav:has(.mobile-nav-btn:nth-child(5)) {
-    grid-template-columns: repeat(5, minmax(0, 1fr));
-  }
-}
-
 @media (min-width: 640px) and (max-width: 839px) {
   .mobile-nav:has(.mobile-nav-btn:nth-child(5)) {
     grid-template-columns: repeat(5, minmax(0, 1fr));
-  }
-}
-
-@media (min-width: 840px) {
-  .mobile-nav:has(.mobile-nav-btn:nth-child(6)) {
-    grid-template-columns: repeat(6, minmax(0, 1fr));
   }
 }
 
@@ -848,4 +836,16 @@ td {
   font-size: 1.2rem;
   line-height: 1.2;
   flex-shrink: 0;
+}
+
+.stats-page-tabs {
+  margin-top: 0.5rem;
+}
+
+.stats-mystery-panel {
+  border: 1px dashed #c9b87a;
+}
+
+.stats-mystery-card {
+  background: #fff8e8;
 }

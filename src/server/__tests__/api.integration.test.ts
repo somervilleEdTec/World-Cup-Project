@@ -265,6 +265,8 @@ describe('API integration', () => {
     expect(beforeLock.body.matchConsensus).toEqual([]);
     expect(beforeLock.body.groupConsensus).toEqual([]);
     expect(beforeLock.body.tournamentOutlook.visible).toBe(false);
+    expect(beforeLock.body.headlines.hiveMind).toBeNull();
+    expect(Array.isArray(beforeLock.body.mysteryStats)).toBe(true);
 
     const { runAutoLocks } = await import('../services/predictions');
     await runAutoLocks('2026-06-12T00:00:00Z');
@@ -281,6 +283,7 @@ describe('API integration', () => {
     });
     expect(afterLock.body.groupConsensus.length).toBe(12);
     expect(Array.isArray(afterLock.body.funFacts)).toBe(true);
+    expect(afterLock.body.mysteryStats).toEqual([]);
   });
 
   it('returns health check', async () => {

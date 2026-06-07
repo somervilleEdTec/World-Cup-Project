@@ -2,10 +2,12 @@ import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { teams } from '../data/tournament';
 import { TeamLabel } from '../components/TeamLabel';
+import { CrowdStatsPanel } from '../components/stats/CrowdStatsPanel';
 import {
   fetchComparisonFixtures,
   fetchMatchComparison,
   fetchNextMatchComparison,
+  fetchStatistics,
   userFacingError
 } from '../services/apiClient';
 import { formatFixtureScore } from '../components/FixtureScoreSummary';
@@ -16,7 +18,9 @@ import {
   formatFixtureStageLabel
 } from '../lib/fixtureLabels';
 import { classifyPickAccuracy } from '../lib/matchScoring';
-import { MatchComparisonView, Stage } from '../types';
+import { MatchComparisonView, Stage, StatisticsResponse } from '../types';
+
+type StatsTab = 'fixture' | 'crowd';
 
 function formatPick(entry: MatchComparisonView['entries'][number], stage: string): string {
   if (entry.hidden) {
@@ -62,6 +66,7 @@ function pickCellClass(
 export function ComparisonPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [data, setData] = useState<MatchComparisonView | null>(null);
+  const [statsData, setStatsData] = useState<StatisticsResponse | null>(null);
   const [fixtures, setFixtures] = useState<
     Array<{
       id: string;
@@ -73,9 +78,22 @@ export function ComparisonPage() {
     }>
   >([]);
   const [error, setError] = useState<string | null>(null);
+  const [statsError, setStatsError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [statsLoading, setStatsLoading] = useState(true);
 
   const selectedMatchId = searchParams.get('matchId') ?? '';
+  const activeTab = (searchParams.get('tab') === 'crowd' ? 'crowd' : 'fixture') as StatsTab;
+
+  const setTab = (tab: StatsTab) => {
+    const next = new URLSearchParams(searchParams);
+    if (tab === 'fixture') {
+      next.delete('tab');
+    } else {
+      next.set('tab', tab);
+    }
+    setSearchParams(next);
+  };
 
   useEffect(() => {
     fetchComparisonFixtures()
@@ -96,32 +114,39 @@ export function ComparisonPage() {
       })
       .catch((err) => {
         setData(null);
-        setError(userFacingError(err, 'Unable to load comparison'));
+        setError(userFacingError(err, 'Unable to load stats'));
       })
       .finally(() => setLoading(false));
   }, [selectedMatchId]);
 
-  if (loading) {
-    return <section className="card">Loading comparison…</section>;
+  useEffect(() => {
+    setStatsLoading(true);
+    fetchStatistics()
+      .then((response) => {
+        setStatsData(response);
+        setStatsError(null);
+      })
+      .catch((err) => setStatsError(userFacingError(err, 'Unable to load crowd stats')))
+      .finally(() => setStatsLoading(false));
+  }, []);
+
+  if (loading && activeTab === 'fixture') {
+    return <section className="card">Loading stats…</section>;
   }
 
-  if (error) {
+  if (error && activeTab === 'fixture' && !data) {
     return (
       <section className="card">
-        <h2>Comparison</h2>
+        <h2>Stats</h2>
         <p className="warning">{error}</p>
-        <p>Log in to compare predictions with other players.</p>
+        <p>Log in to view predictions and crowd stats.</p>
       </section>
     );
   }
 
-  if (!data) {
-    return <section className="card">No upcoming matches.</section>;
-  }
-
-  const homeTeam = teams.find((team) => team.id === data.match.homeTeamId);
-  const awayTeam = teams.find((team) => team.id === data.match.awayTeamId);
-  const activeId = selectedMatchId || data.match.id;
+  const homeTeam = data ? teams.find((team) => team.id === data.match.homeTeamId) : undefined;
+  const awayTeam = data ? teams.find((team) => team.id === data.match.awayTeamId) : undefined;
+  const activeId = selectedMatchId || data?.match.id || '';
 
   const fixtureGroups = fixtures.reduce<
     Array<{ label: string; items: typeof fixtures }>
@@ -139,74 +164,116 @@ export function ComparisonPage() {
   return (
     <section className="stack">
       <article className="card">
-        <h2>Comparison</h2>
-        <label>
-          Choose fixture
-          <select
-            value={activeId}
-            onChange={(event) => {
-              const id = event.target.value;
-              setSearchParams({ matchId: id });
-            }}
+        <h2>Stats</h2>
+        <p className="kicker">Compare picks by fixture or explore crowd predictions</p>
+        <div className="picks-phase-tabs stats-page-tabs">
+          <button
+            type="button"
+            className={activeTab === 'fixture' ? 'active-tab' : undefined}
+            onClick={() => setTab('fixture')}
           >
-            {fixtureGroups.map((group) => (
-              <optgroup key={group.label} label={group.label}>
-                {group.items.map((fixture) => (
-                  <option key={fixture.id} value={fixture.id}>
-                    {formatFixtureOptionLabel(fixture, teams)}
-                  </option>
-                ))}
-              </optgroup>
-            ))}
-          </select>
-        </label>
-        <p className="kicker">{formatFixtureStageLabel(data.match.stage, data.match.group)}</p>
-        <div className="fixture-row">
-          {homeTeam && homeTeam.id !== 'tbd' ? <TeamLabel team={homeTeam} /> : <span>TBD</span>}
-          <strong>vs</strong>
-          {awayTeam && awayTeam.id !== 'tbd' ? <TeamLabel team={awayTeam} /> : <span>TBD</span>}
+            By fixture
+          </button>
+          <button
+            type="button"
+            className={activeTab === 'crowd' ? 'active-tab' : undefined}
+            onClick={() => setTab('crowd')}
+          >
+            Crowd predictions
+          </button>
         </div>
-        <p>Kickoff: {formatKickoffBst(data.match.kickoff)}</p>
-        {data.actualResult && (
-          <p className="fixture-actual">
-            <strong>Official result:</strong>{' '}
-            {formatFixtureScore(
-              data.actualResult.homeScore,
-              data.actualResult.awayScore,
-              data.actualResult.progressingTeamId
-            )}
-          </p>
-        )}
-        <p>{data.visibility.message}</p>
       </article>
 
-      <article className="card comparison-table-wrap">
-        <h3>Player predictions</h3>
-        <table className="comparison-table">
-          <thead>
-            <tr>
-              <th>Player</th>
-              <th>Prediction</th>
-            </tr>
-          </thead>
-          <tbody>
-            {data.entries.map((entry) => (
-              <tr
-                key={entry.userId}
-                className={entry.isCurrentUser ? 'comparison-row-you' : undefined}
+      {activeTab === 'crowd' && (
+        <>
+          {statsLoading && <section className="card">Loading crowd stats…</section>}
+          {statsError && (
+            <section className="card">
+              <p className="warning">{statsError}</p>
+            </section>
+          )}
+          {statsData && !statsLoading && <CrowdStatsPanel data={statsData} />}
+        </>
+      )}
+
+      {activeTab === 'fixture' && data && (
+        <>
+          <article className="card">
+            <label>
+              Choose fixture
+              <select
+                value={activeId}
+                onChange={(event) => {
+                  const id = event.target.value;
+                  const next = new URLSearchParams(searchParams);
+                  next.set('matchId', id);
+                  setSearchParams(next);
+                }}
               >
-                <td>
-                  {entry.displayName}
-                  {entry.isCurrentUser ? ' (you)' : ''}
-                </td>
-                <td className={pickCellClass(entry, data.actualResult, data.match)}>
-                  {formatPick(entry, data.match.stage)}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </article>
+                {fixtureGroups.map((group) => (
+                  <optgroup key={group.label} label={group.label}>
+                    {group.items.map((fixture) => (
+                      <option key={fixture.id} value={fixture.id}>
+                        {formatFixtureOptionLabel(fixture, teams)}
+                      </option>
+                    ))}
+                  </optgroup>
+                ))}
+              </select>
+            </label>
+            <p className="kicker">{formatFixtureStageLabel(data.match.stage, data.match.group)}</p>
+            <div className="fixture-row">
+              {homeTeam && homeTeam.id !== 'tbd' ? <TeamLabel team={homeTeam} /> : <span>TBD</span>}
+              <strong>vs</strong>
+              {awayTeam && awayTeam.id !== 'tbd' ? <TeamLabel team={awayTeam} /> : <span>TBD</span>}
+            </div>
+            <p>Kickoff: {formatKickoffBst(data.match.kickoff)}</p>
+            {data.actualResult && (
+              <p className="fixture-actual">
+                <strong>Official result:</strong>{' '}
+                {formatFixtureScore(
+                  data.actualResult.homeScore,
+                  data.actualResult.awayScore,
+                  data.actualResult.progressingTeamId
+                )}
+              </p>
+            )}
+            <p>{data.visibility.message}</p>
+          </article>
+
+          <article className="card comparison-table-wrap">
+            <h3>Player predictions</h3>
+            <table className="comparison-table">
+              <thead>
+                <tr>
+                  <th>Player</th>
+                  <th>Prediction</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.entries.map((entry) => (
+                  <tr
+                    key={entry.userId}
+                    className={entry.isCurrentUser ? 'comparison-row-you' : undefined}
+                  >
+                    <td>
+                      {entry.displayName}
+                      {entry.isCurrentUser ? ' (you)' : ''}
+                    </td>
+                    <td className={pickCellClass(entry, data.actualResult, data.match)}>
+                      {formatPick(entry, data.match.stage)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </article>
+        </>
+      )}
+
+      {activeTab === 'fixture' && !data && !loading && (
+        <section className="card">No upcoming matches.</section>
+      )}
     </section>
   );
 }
