@@ -83,11 +83,11 @@ export function ComparisonPage() {
   const [statsLoading, setStatsLoading] = useState(true);
 
   const selectedMatchId = searchParams.get('matchId') ?? '';
-  const activeTab = (searchParams.get('tab') === 'crowd' ? 'crowd' : 'fixture') as StatsTab;
+  const activeTab = (searchParams.get('tab') === 'fixture' ? 'fixture' : 'crowd') as StatsTab;
 
   const setTab = (tab: StatsTab) => {
     const next = new URLSearchParams(searchParams);
-    if (tab === 'fixture') {
+    if (tab === 'crowd') {
       next.delete('tab');
     } else {
       next.set('tab', tab);
@@ -169,17 +169,17 @@ export function ComparisonPage() {
         <div className="picks-phase-tabs stats-page-tabs">
           <button
             type="button"
-            className={activeTab === 'fixture' ? 'active-tab' : undefined}
-            onClick={() => setTab('fixture')}
-          >
-            By fixture
-          </button>
-          <button
-            type="button"
             className={activeTab === 'crowd' ? 'active-tab' : undefined}
             onClick={() => setTab('crowd')}
           >
-            Crowd predictions
+            Crowd Predictions
+          </button>
+          <button
+            type="button"
+            className={activeTab === 'fixture' ? 'active-tab' : undefined}
+            onClick={() => setTab('fixture')}
+          >
+            By Fixture
           </button>
         </div>
       </article>
