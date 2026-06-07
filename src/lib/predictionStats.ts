@@ -1,3 +1,4 @@
+import { isBaldPlayer } from '../data/baldPlayers';
 import { groupMatches, teams } from '../data/tournament';
 import { computeGroupPositions } from './groupStandings';
 import { advancingTeamId } from './matchScoring';
@@ -304,8 +305,16 @@ export interface MysteryStat {
   text: string;
 }
 
+export interface MysteryStatsOptions {
+  /** When true, may include the bald-head easter egg (caller rolls ~25% on refresh). */
+  includeBaldStat?: boolean;
+}
+
 /** Teaser stats before group lock — percentages only, no team or scoreline names. */
-export function computeMysteryStats(userPicks: UserPicks[]): MysteryStat[] {
+export function computeMysteryStats(
+  userPicks: UserPicks[],
+  options: MysteryStatsOptions = {}
+): MysteryStat[] {
   const facts: MysteryStat[] = [];
   const groupConsensus = buildGroupConsensusForUsers(userPicks);
 
@@ -384,6 +393,19 @@ export function computeMysteryStats(userPicks: UserPicks[]): MysteryStat[] {
       icon: '🔒',
       text: `${playersWithPicks} player${playersWithPicks === 1 ? '' : 's'} have submitted picks — full crowd stats unlock after the first kickoff.`
     });
+  }
+
+  if (options.includeBaldStat && playersWithPicks > 0) {
+    const withPicks = userPicks.filter((u) => Object.keys(u.picks).length > 0);
+    const baldWithPicks = withPicks.filter((u) => isBaldPlayer(u.displayName)).length;
+    if (baldWithPicks > 0) {
+      const baldPct = Math.round((baldWithPicks / withPicks.length) * 100);
+      const insertAt = Math.floor(Math.random() * (facts.length + 1));
+      facts.splice(insertAt, 0, {
+        icon: '🧑‍🦲',
+        text: `${baldPct}% of players with picks have a bald head.`
+      });
+    }
   }
 
   return facts.slice(0, 5);

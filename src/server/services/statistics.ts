@@ -130,7 +130,9 @@ export async function computeStatistics(nowIso = new Date().toISOString()) {
     ? 'Showing crowd prediction stats for unlocked fixtures.'
     : 'Detailed stats unlock after the first tournament kickoff. Knockout stats unlock 15 minutes before each fixture.';
 
-  const mysteryStats = groupPhaseLocked ? [] : computeMysteryStats(userPicks);
+  const mysteryStats = groupPhaseLocked
+    ? []
+    : computeMysteryStats(userPicks, { includeBaldStat: Math.random() < 0.25 });
 
   return {
     meta: {

@@ -226,6 +226,35 @@ describe('computeMysteryStats', () => {
     expect(facts.every((f) => !f.text.includes('Brazil') && !f.text.includes('Mexico'))).toBe(true);
     expect(facts.some((f) => f.text.includes('unlock'))).toBe(true);
   });
+
+  it('includes bald stat when requested', () => {
+    const users: UserPicks[] = [
+      {
+        userId: 'u1',
+        displayName: 'Big Bald Ben',
+        picks: { 'g-a-1': { matchId: 'g-a-1', homeScore: 1, awayScore: 0 } }
+      },
+      {
+        userId: 'u2',
+        displayName: 'Alice',
+        picks: { 'g-a-1': { matchId: 'g-a-1', homeScore: 2, awayScore: 1 } }
+      }
+    ];
+    const facts = computeMysteryStats(users, { includeBaldStat: true });
+    expect(facts.some((f) => f.text.includes('bald head'))).toBe(true);
+  });
+
+  it('omits bald stat when not requested', () => {
+    const users: UserPicks[] = [
+      {
+        userId: 'u1',
+        displayName: 'Big Bald Ben',
+        picks: { 'g-a-1': { matchId: 'g-a-1', homeScore: 1, awayScore: 0 } }
+      }
+    ];
+    const facts = computeMysteryStats(users, { includeBaldStat: false });
+    expect(facts.some((f) => f.text.includes('bald head'))).toBe(false);
+  });
 });
 
 describe('computeFunFacts', () => {
