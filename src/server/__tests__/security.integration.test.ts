@@ -3,6 +3,10 @@ import { describe, it, expect, afterAll, beforeEach } from 'vitest';
 import request from 'supertest';
 import { setupTestServer, teardownTestServer } from '../testHarness';
 import { adminToken, createPlayer, loginPlayer, loginPlayerReady } from './authHelpers';
+import { insertGroupResults, saveAllGroupPicks } from './testDbHelpers';
+import { buildConfirmedKnockoutFixtures } from '../../lib/knockoutFixtureAvailability';
+import { getDb } from '../database';
+import { getResultsMap } from '../services/leaderboard';
 import { groupMatches } from '../../data/tournament';
 import { teams } from '../../data/tournament';
 import type { Express } from 'express';
@@ -250,6 +254,32 @@ describe('security and tamper resistance', () => {
       .set('Authorization', `Bearer ${token}`);
     expect(state.body.acceptedGroups).toContain('A');
     expect(state.body.committedPicks['g-a-2']).toMatchObject({ homeScore: 0, awayScore: 0 });
+  });
+
+  it('locks knockout fixtures with implicit 0-0 draws and home team advance', async () => {
+    await createPlayer(app, 'KoImplicit');
+    const token = await loginPlayerReady(app, 'KoImplicit');
+
+    await saveAllGroupPicks(app, token);
+    const db = getDb();
+    await insertGroupResults(db, 'A');
+    await insertGroupResults(db, 'B');
+
+    const actuals = await getResultsMap();
+    const r32 = buildConfirmedKnockoutFixtures(actuals).find((m) => m.id === 'r32-1');
+    expect(r32).toBeTruthy();
+
+    const { runAutoLocks } = await import('../services/predictions');
+    await runAutoLocks('2026-06-28T18:45:00.000Z');
+
+    const state = await request(app)
+      .get('/api/predictions/state')
+      .set('Authorization', `Bearer ${token}`);
+    expect(state.body.committedPicks['r32-1']).toMatchObject({
+      homeScore: 0,
+      awayScore: 0,
+      progressingTeamId: r32!.homeTeamId
+    });
   });
 
   it('blocks edits after global auto-lock', async () => {
