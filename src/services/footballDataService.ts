@@ -1,7 +1,7 @@
 import { ActualResult } from '../types';
 
 const API_BASE = 'https://api.football-data.org/v4';
-const WORLD_CUP_CODE = 'WC';
+export const WORLD_CUP_CODE = 'WC';
 const PROVIDER = 'football-data.org';
 
 interface FootballDataTeam {

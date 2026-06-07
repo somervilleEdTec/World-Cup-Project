@@ -19,6 +19,7 @@
 | [DATABASE_BACKUP.md](./DATABASE_BACKUP.md) | Operational backups + retrieval-only archive |
 | [LAUNCH_RULES.md](./LAUNCH_RULES.md) | **Mandatory** live launch: wipe DB, admin-only organiser |
 | [GO_LIVE.md](./GO_LIVE.md) | Smoke tests and in-tournament ops |
+| [FOOTBALL_DATA_VERIFICATION.md](./FOOTBALL_DATA_VERIFICATION.md) | Confirm API token, mapping, FIFA cross-check |
 
 ### `Debug` — development (default)
 
