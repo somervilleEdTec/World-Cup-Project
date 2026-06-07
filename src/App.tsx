@@ -10,6 +10,7 @@ import { ComparisonPage } from './pages/ComparisonPage';
 import { LeagueTablePage } from './pages/LeagueTablePage';
 import { LoginPage } from './pages/LoginPage';
 import { MyPicksPage } from './pages/MyPicksPage';
+import { StatisticsPage } from './pages/StatisticsPage';
 import { WelcomePage } from './pages/WelcomePage';
 
 export function App() {
@@ -37,6 +38,7 @@ export function App() {
           <Route path="my-picks" element={<PlayerRoute><MyPicksPage /></PlayerRoute>} />
           <Route path="league-table" element={<LeagueTablePage />} />
           <Route path="comparison" element={<ComparisonPage />} />
+          <Route path="statistics" element={<StatisticsPage />} />
           <Route
             path="admin"
             element={

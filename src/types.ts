@@ -104,6 +104,69 @@ export interface ComparisonEntryView {
   hidden: boolean;
 }
 
+export interface StatisticsPickCount {
+  label: string;
+  count: number;
+  pct: number;
+}
+
+export interface StatisticsResponse {
+  meta: {
+    playerCount: number;
+    viewableMatchCount: number;
+    groupPhaseLocked: boolean;
+    message: string;
+  };
+  headlines: {
+    hiveMind: {
+      matchId: string;
+      homeTeamId: string;
+      awayTeamId: string;
+      scoreline: string;
+      count: number;
+      total: number;
+      pct: number;
+    } | null;
+    roomForDebate: {
+      matchId: string;
+      homeTeamId: string;
+      awayTeamId: string;
+      distinctScorelines: number;
+    } | null;
+    scorelineKing: { scoreline: string; count: number } | null;
+  };
+  matchConsensus: Array<{
+    matchId: string;
+    stage: Stage;
+    group?: string;
+    homeTeamId: string;
+    awayTeamId: string;
+    totalPicks: number;
+    topScorelines: StatisticsPickCount[];
+    resultSplit: StatisticsPickCount[];
+  }>;
+  groupConsensus: Array<{
+    groupId: string;
+    modalOrder: string[];
+    modalCount: number;
+    modalPct: number;
+    positionPopularity: Array<{
+      rank: 1 | 2 | 3 | 4;
+      teams: StatisticsPickCount[];
+    }>;
+    distinctWinners: number;
+  }>;
+  tournamentOutlook: {
+    visible: boolean;
+    champion: StatisticsPickCount[];
+    runnerUp: StatisticsPickCount[];
+    third: StatisticsPickCount[];
+    fourth: StatisticsPickCount[];
+    darkHorse: { teamId: string; playerName: string } | null;
+  };
+  funFacts: Array<{ icon: string; text: string }>;
+}
+
 export interface MatchComparisonView {
   actualResult?: {
     homeScore: number;

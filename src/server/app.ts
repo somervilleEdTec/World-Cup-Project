@@ -23,6 +23,7 @@ import {
   unlockGroupAccepted
 } from './services/predictions';
 import { computeLeaderboard, getResultsMap } from './services/leaderboard';
+import { computeStatistics } from './services/statistics';
 import { getFootballDataToken } from '../lib/runtimeConfig';
 import { buildMappingDiagnostics } from './services/mappingDiagnostics';
 import {
@@ -320,6 +321,10 @@ export function createApp(): Express {
 
   app.get('/api/leaderboard', async (_req: Request, res: Response) => {
     res.json(await computeLeaderboard());
+  });
+
+  app.get('/api/statistics', async (_req: Request, res: Response) => {
+    res.json(await computeStatistics());
   });
 
   app.get('/api/admin/players', async (req: Request, res: Response) => {
