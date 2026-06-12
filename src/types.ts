@@ -110,62 +110,54 @@ export interface StatisticsPickCount {
   pct: number;
 }
 
+export type CrowdStatCard =
+  | {
+      id: string;
+      kind: 'hero';
+      title: string;
+      value: string;
+      detail: string;
+      variant?: 'default' | 'consensus' | 'chaos';
+    }
+  | { id: string; kind: 'fact'; icon: string; text: string }
+  | {
+      id: string;
+      kind: 'match';
+      matchId: string;
+      stage: Stage;
+      group?: string;
+      homeTeamId: string;
+      awayTeamId: string;
+      totalPicks: number;
+      topScorelines: StatisticsPickCount[];
+      resultSplit: StatisticsPickCount[];
+    }
+  | {
+      id: string;
+      kind: 'group';
+      groupId: string;
+      modalPct: number;
+      modalCount: number;
+      distinctWinners: number;
+      topWinners: StatisticsPickCount[];
+    }
+  | {
+      id: string;
+      kind: 'outlook';
+      slot: 'champion' | 'runnerUp' | 'third' | 'fourth';
+      picks: StatisticsPickCount[];
+    }
+  | { id: string; kind: 'spotlight'; icon: string; text: string };
+
 export interface StatisticsResponse {
   meta: {
     playerCount: number;
-    viewableMatchCount: number;
+    upcomingFixtureCount: number;
     groupPhaseLocked: boolean;
     message: string;
+    cardCount: number;
   };
-  headlines: {
-    hiveMind: {
-      matchId: string;
-      homeTeamId: string;
-      awayTeamId: string;
-      scoreline: string;
-      count: number;
-      total: number;
-      pct: number;
-    } | null;
-    roomForDebate: {
-      matchId: string;
-      homeTeamId: string;
-      awayTeamId: string;
-      distinctScorelines: number;
-    } | null;
-    scorelineKing: { scoreline: string; count: number } | null;
-  };
-  matchConsensus: Array<{
-    matchId: string;
-    stage: Stage;
-    group?: string;
-    homeTeamId: string;
-    awayTeamId: string;
-    totalPicks: number;
-    topScorelines: StatisticsPickCount[];
-    resultSplit: StatisticsPickCount[];
-  }>;
-  groupConsensus: Array<{
-    groupId: string;
-    modalOrder: string[];
-    modalCount: number;
-    modalPct: number;
-    positionPopularity: Array<{
-      rank: 1 | 2 | 3 | 4;
-      teams: StatisticsPickCount[];
-    }>;
-    distinctWinners: number;
-  }>;
-  tournamentOutlook: {
-    visible: boolean;
-    champion: StatisticsPickCount[];
-    runnerUp: StatisticsPickCount[];
-    third: StatisticsPickCount[];
-    fourth: StatisticsPickCount[];
-    darkHorse: { teamId: string; playerName: string } | null;
-  };
-  funFacts: Array<{ icon: string; text: string }>;
-  mysteryStats: Array<{ icon: string; text: string }>;
+  crowdCards: CrowdStatCard[];
 }
 
 export interface MatchComparisonView {

@@ -1,21 +1,18 @@
 import { getMatches } from '../../lib/matchResolver';
-import { canViewOthersPicks } from '../../lib/comparisonVisibility';
-import { shouldLockGroup } from '../../lib/tournamentLogic';
+import { canViewOthersPicks, isUpcomingFixture } from '../../lib/comparisonVisibility';
 import {
-  computeFunFacts,
-  computeGroupConsensus,
-  computeHeadlines,
-  computeMatchConsensus,
-  computeMysteryStats,
-  computeTournamentOutlook,
-  MatchPickInput,
-  sortMatchConsensusForDisplay,
-  UserPicks
-} from '../../lib/predictionStats';
+  buildCrowdStatPool,
+  collectViewablePicks,
+  countUpcomingFixtures,
+  sampleCrowdStats
+} from '../../lib/crowdStatPool';
+import { computeMatchConsensus } from '../../lib/predictionStats';
+import { shouldLockGroup } from '../../lib/tournamentLogic';
 import { TournamentBonusPick } from '../../types';
 import { getDb } from '../database';
 import { getResultsMap } from './leaderboard';
 import { competitionUserBindParams, competitionUserWhere } from './competitionUsers';
+import { UserPicks } from '../../lib/predictionStats';
 
 async function isTournamentGroupPhaseLocked(db: ReturnType<typeof getDb>): Promise<boolean> {
   const row = await db.get<{ locked: number }>(
@@ -81,73 +78,43 @@ export async function computeStatistics(nowIso = new Date().toISOString()) {
     })
   );
 
-  const viewableMatchIds = new Set(
+  const viewableUpcomingMatchIds = new Set(
     matches
       .filter((match) => canViewOthersPicks(match, nowIso, groupPhaseLocked))
+      .filter((match) => isUpcomingFixture(match, nowIso, results))
       .map((match) => match.id)
   );
 
-  const matchConsensus = computeMatchConsensus(matches, userPicks, viewableMatchIds);
-  const { mostUnanimous, mostSplit } = sortMatchConsensusForDisplay(matchConsensus);
-  const displayConsensus = [...mostUnanimous];
-  for (const item of mostSplit) {
-    if (!displayConsensus.some((d) => d.matchId === item.matchId)) {
-      displayConsensus.push(item);
-    }
-  }
+  const matchConsensus = computeMatchConsensus(matches, userPicks, viewableUpcomingMatchIds);
+  const allViewablePicks = collectViewablePicks(matches, userPicks, viewableUpcomingMatchIds);
 
-  const allViewablePicks: MatchPickInput[] = [];
-  for (const match of matches) {
-    if (!viewableMatchIds.has(match.id)) continue;
-    for (const user of userPicks) {
-      const pick = user.picks[match.id];
-      if (!pick || pick.homeScore < 0 || pick.awayScore < 0) continue;
-      allViewablePicks.push({
-        matchId: match.id,
-        stage: match.stage,
-        group: match.group,
-        homeTeamId: match.homeTeamId,
-        awayTeamId: match.awayTeamId,
-        pick,
-        userId: user.userId,
-        displayName: user.displayName
-      });
-    }
-  }
-
-  const headlines = computeHeadlines(matchConsensus, allViewablePicks);
-  const groupConsensus = computeGroupConsensus(userPicks, groupPhaseLocked);
-  const tournamentOutlook = computeTournamentOutlook(userPicks, groupPhaseLocked);
-  const funFacts = computeFunFacts(
-    matchConsensus,
-    groupConsensus,
-    userPicks,
-    allViewablePicks,
-    tournamentOutlook
+  const pool = buildCrowdStatPool(
+    {
+      matches,
+      userPicks,
+      viewableUpcomingMatchIds,
+      allViewablePicks,
+      matchConsensus,
+      groupPhaseLocked,
+      includeBaldStat: Math.random() < 0.05
+    },
+    { revealNames: groupPhaseLocked }
   );
 
-  const message = groupPhaseLocked
-    ? 'Showing crowd prediction stats for unlocked fixtures.'
-    : 'Detailed stats unlock after the first tournament kickoff. Knockout stats unlock 15 minutes before each fixture.';
+  const crowdCards = sampleCrowdStats(pool);
 
-  const mysteryStats = groupPhaseLocked
-    ? []
-    : computeMysteryStats(userPicks, { includeBaldStat: Math.random() < 0.05 });
+  const message = groupPhaseLocked
+    ? 'Random crowd stats for upcoming fixtures — shuffle for a fresh mix.'
+    : 'Teasers until first kickoff — team names hidden. Shuffle for more.';
 
   return {
     meta: {
       playerCount: users.length,
-      viewableMatchCount: viewableMatchIds.size,
+      upcomingFixtureCount: countUpcomingFixtures(matches, nowIso, results),
       groupPhaseLocked,
-      message
+      message,
+      cardCount: crowdCards.length
     },
-    headlines: groupPhaseLocked ? headlines : { hiveMind: null, roomForDebate: null, scorelineKing: null },
-    matchConsensus: groupPhaseLocked ? displayConsensus : [],
-    groupConsensus: groupPhaseLocked ? groupConsensus : [],
-    tournamentOutlook: groupPhaseLocked
-      ? tournamentOutlook
-      : { visible: false, champion: [], runnerUp: [], third: [], fourth: [], darkHorse: null },
-    funFacts: groupPhaseLocked ? funFacts : [],
-    mysteryStats
+    crowdCards
   };
 }

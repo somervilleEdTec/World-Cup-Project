@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { teams } from '../data/tournament';
 import { TeamLabel } from '../components/TeamLabel';
@@ -81,6 +81,25 @@ export function ComparisonPage() {
   const [statsError, setStatsError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [statsLoading, setStatsLoading] = useState(true);
+  const [statsShuffling, setStatsShuffling] = useState(false);
+
+  const loadCrowdStats = useCallback((shuffling = false) => {
+    if (shuffling) {
+      setStatsShuffling(true);
+    } else {
+      setStatsLoading(true);
+    }
+    fetchStatistics()
+      .then((response) => {
+        setStatsData(response);
+        setStatsError(null);
+      })
+      .catch((err) => setStatsError(userFacingError(err, 'Unable to load crowd stats')))
+      .finally(() => {
+        setStatsLoading(false);
+        setStatsShuffling(false);
+      });
+  }, []);
 
   const selectedMatchId = searchParams.get('matchId') ?? '';
   const activeTab = (searchParams.get('tab') === 'fixture' ? 'fixture' : 'crowd') as StatsTab;
@@ -120,15 +139,8 @@ export function ComparisonPage() {
   }, [selectedMatchId]);
 
   useEffect(() => {
-    setStatsLoading(true);
-    fetchStatistics()
-      .then((response) => {
-        setStatsData(response);
-        setStatsError(null);
-      })
-      .catch((err) => setStatsError(userFacingError(err, 'Unable to load crowd stats')))
-      .finally(() => setStatsLoading(false));
-  }, []);
+    loadCrowdStats();
+  }, [loadCrowdStats]);
 
   if (loading && activeTab === 'fixture') {
     return <section className="card">Loading stats…</section>;
@@ -192,7 +204,13 @@ export function ComparisonPage() {
               <p className="warning">{statsError}</p>
             </section>
           )}
-          {statsData && !statsLoading && <CrowdStatsPanel data={statsData} />}
+          {statsData && !statsLoading && (
+            <CrowdStatsPanel
+              data={statsData}
+              shuffling={statsShuffling}
+              onShuffle={() => loadCrowdStats(true)}
+            />
+          )}
         </>
       )}
 

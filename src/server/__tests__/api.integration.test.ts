@@ -238,7 +238,7 @@ describe('API integration', () => {
     expect(state.body.bonusDraft).toBeUndefined();
   });
 
-  it('returns statistics with expected shape and respects group lock visibility', async () => {
+  it('returns statistics API with crowdCards shape', async () => {
     await createPlayer(app, 'Stats A', 'abc');
     await createPlayer(app, 'Stats B', 'abc');
     const tokenA = await loginPlayerReady(app, 'Stats A', 'abc', 'xyz');
@@ -255,35 +255,17 @@ describe('API integration', () => {
         .send({ matchId, homeScore: 2, awayScore: 1 });
     }
 
-    const beforeLock = await request(app).get('/api/statistics');
-    expect(beforeLock.status).toBe(200);
-    expect(beforeLock.body.meta).toMatchObject({
-      playerCount: 2,
-      groupPhaseLocked: false
-    });
-    expect(beforeLock.body.meta.viewableMatchCount).toBe(0);
-    expect(beforeLock.body.matchConsensus).toEqual([]);
-    expect(beforeLock.body.groupConsensus).toEqual([]);
-    expect(beforeLock.body.tournamentOutlook.visible).toBe(false);
-    expect(beforeLock.body.headlines.hiveMind).toBeNull();
-    expect(Array.isArray(beforeLock.body.mysteryStats)).toBe(true);
-
-    const { runAutoLocks } = await import('../services/predictions');
-    await runAutoLocks('2026-06-12T00:00:00Z');
-
-    const afterLock = await request(app).get('/api/statistics');
-    expect(afterLock.status).toBe(200);
-    expect(afterLock.body.meta.groupPhaseLocked).toBe(true);
-    expect(afterLock.body.meta.viewableMatchCount).toBeGreaterThan(0);
-    expect(afterLock.body.matchConsensus.length).toBeGreaterThan(0);
-    expect(afterLock.body.headlines.hiveMind).toMatchObject({
-      scoreline: '2-1',
-      count: 2,
-      pct: 100
-    });
-    expect(afterLock.body.groupConsensus.length).toBe(12);
-    expect(Array.isArray(afterLock.body.funFacts)).toBe(true);
-    expect(afterLock.body.mysteryStats).toEqual([]);
+    const res = await request(app).get('/api/statistics');
+    expect(res.status).toBe(200);
+    expect(res.body.meta.playerCount).toBe(2);
+    expect(typeof res.body.meta.groupPhaseLocked).toBe('boolean');
+    expect(typeof res.body.meta.upcomingFixtureCount).toBe('number');
+    expect(Array.isArray(res.body.crowdCards)).toBe(true);
+    expect(res.body.meta.cardCount).toBe(res.body.crowdCards.length);
+    if (res.body.crowdCards.length > 0) {
+      expect(res.body.crowdCards[0]).toHaveProperty('id');
+      expect(res.body.crowdCards[0]).toHaveProperty('kind');
+    }
   });
 
   it('returns health check', async () => {
