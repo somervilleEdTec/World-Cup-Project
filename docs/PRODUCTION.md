@@ -1,6 +1,6 @@
 # Production environment — World Cup Boys (live)
 
-**Last updated:** 2026-06-05  
+**Last updated:** 2026-06-12  
 **Status:** **Live and operational** — https://worldcup.dosums.uk (health `ok:true`, commit matches `main`).  
 **Automated deploy:** **Active** — push to **`main`** → GitHub Actions + VM pull timer (`worldcup-deploy.timer`, every 3 min). See [DEPLOY_CONTROL_PLANE.md](./DEPLOY_CONTROL_PLANE.md).
 

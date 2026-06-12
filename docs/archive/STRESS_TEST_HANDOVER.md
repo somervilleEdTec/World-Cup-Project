@@ -72,7 +72,7 @@ npm run lint    # optional
 | `/` | Welcome + **rules** (scoring, locks, tie-breakers) |
 | `/my-picks` | **My Predictions:** Tournament Results · Group Stage · R32 · R16 · QF · SF · Final / 3rd Place |
 | `/league-table` | Leaderboard |
-| `/comparison` | Multi-user fixture comparison |
+| `/comparison` | **Stats** — Crowd Predictions (random crowd stats) + By Fixture comparison |
 | `/admin` | Sync, diagnostics, overrides (admin only) |
 
 **No `/rules` route** — rules live on Welcome only.
@@ -116,7 +116,15 @@ npm run lint    # optional
 
 Shows green “None — all current predictions are complete.” when empty.
 
-### Comparison
+### Stats (`/comparison`)
+
+**Crowd Predictions tab (default):**
+
+- 5–8 random infographic cards per load or **Shuffle stats** click.
+- Match-level stats scoped to **upcoming fixtures** only.
+- Pre-lock: teaser facts without team names; post-lock: full infographics for unlocked upcoming fixtures.
+
+**By Fixture tab:**
 
 - Fixture picker includes all matches with known teams (not only future kickoffs).
 - **Group:** others’ predictions visible after tournament group lock (first kickoff).
@@ -218,7 +226,9 @@ Use **2+ browser profiles** or incognito + normal (different users).
 | Auth | `src/server/services/auth.ts`, `src/pages/LoginPage.tsx` |
 | Team picker | `src/components/TeamSelect.tsx` |
 | Styles | `src/styles/app.css` |
-| Integration tests | `src/server/__tests__/api.integration.test.ts` |
+| Crowd stats pool | `src/lib/crowdStatPool.ts`, `src/server/services/statistics.ts` |
+| Stats UI | `src/components/stats/CrowdStatsPanel.tsx`, `CrowdStatCard.tsx` |
+| Integration tests | `src/server/__tests__/api.integration.test.ts`, `statistics.service.test.ts` |
 
 ---
 
@@ -235,6 +245,8 @@ Use **2+ browser profiles** or incognito + normal (different users).
 | POST | `/api/predictions/groups/:groupId/unlock` | Unlocks group (if no official results in group) |
 | POST | `/api/predictions/commit` | Legacy — UI does not call |
 | GET | `/api/leaderboard` | Public |
+| GET | `/api/statistics` | Bearer — crowd prediction stats (`meta` + `crowdCards`; 5–8 random cards) |
+| GET | `/api/comparison/*` | Bearer — fixture comparison |
 | POST | `/api/system/locks/run` | Manual lock job |
 
 ---

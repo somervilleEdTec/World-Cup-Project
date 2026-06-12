@@ -1,6 +1,6 @@
 # UI / UX handover
 
-**Last updated:** 2026-06-05  
+**Last updated:** 2026-06-12  
 **Branches:** `main` (production) · `Debug` (development) — [BRANCHING.md](./BRANCHING.md)  
 **Status:** Owner polish + KO-environment UX **merged to `main`**. Group kickoffs + touch inputs fixed 2026-06-05. See [HANDOVER.md](./HANDOVER.md).
 
@@ -29,7 +29,9 @@
 | **Layout / nav** | `src/components/AppLayout.tsx`, `src/styles/app.css` | Mobile 2×2 bottom nav |
 | **Welcome + rules** | `src/pages/WelcomePage.tsx` | Rules on welcome; no `/rules` |
 | **Login** | `src/pages/LoginPage.tsx` | Name + password + join password |
-| **Comparison** | `src/pages/ComparisonPage.tsx` | Fixture picker |
+| **Stats** | `src/pages/ComparisonPage.tsx` | Route `/comparison` (nav label **Stats**). Two tabs: **Crowd Predictions** (default) and **By Fixture** |
+| **Crowd Predictions** | `src/components/stats/CrowdStatsPanel.tsx`, `CrowdStatsGrid.tsx`, `CrowdStatCard.tsx`, `CrowdStatsHeader.tsx` | Bento grid of 5–8 random cards; **Shuffle stats** re-fetches; pre-lock dashed border + hidden team names |
+| **By Fixture** | `src/pages/ComparisonPage.tsx` | Fixture picker; player prediction table with colour-coded accuracy |
 | **League table** | `src/pages/LeagueTablePage.tsx` | Leaderboard |
 | **Admin** | `src/pages/AdminPage.tsx` | Sync / diagnostics |
 
@@ -81,7 +83,8 @@ http://localhost:8787/login
 |------|---------|
 | My Predictions | Per-round KO tabs; locked fixtures as text; points per fixture |
 | Group Stage | Actual standings table below projected |
-| Comparison | BST times; green/amber/red; KO hidden until kickoff |
+| Stats — By Fixture | BST times; green/amber/red; KO hidden until kickoff |
+| Stats — Crowd Predictions | Random bento grid (hero, match bars/donut, facts, group, outlook); upcoming fixtures only; shuffle button |
 | League Table | Bonus Points column; total Points last and bold |
 | Terminology | User-facing **prediction** throughout |
 | Local testing | `npm run seed:ko-environment` — [KO_ENVIRONMENT.md](./KO_ENVIRONMENT.md) |
@@ -102,6 +105,24 @@ http://localhost:8787/login
 | 10 | Results lock (API) | Edit g-a-1 after official result | 400 — official result | Works | Verified (2026-06-03) |
 | 11 | Group kickoffs | View g-a-3, g-l-1 on My Picks | Matchday 2/1 FIFA dates (not staggered per group) | Was wrong from game 2+ | **Fixed** — PR #25, `groupStageKickoffs.ts` (2026-06-05) |
 | 12 | Touch score inputs | Tap score field on phone/tablet | Field clears for fresh entry | Hard to replace existing digits | **Fixed** — touch focus clear (2026-06-05) |
+| 13 | Stats — Crowd Predictions | Open Stats tab; click Shuffle stats | 5–8 mixed infographic cards for upcoming fixtures; fresh mix on shuffle | Fixed dashboard showed all matches/groups | **Fixed** — unified random pool + bento grid (2026-06-12) |
+
+---
+
+## 8. Crowd Predictions (Stats tab)
+
+**Route:** `/comparison` (default tab: Crowd Predictions). Legacy `/statistics` redirects here.
+
+| Behaviour | Detail |
+|-----------|--------|
+| Card count | 5–8 per page load or shuffle (stratified by card type) |
+| Fixture scope | **Upcoming only** — no kicked-off or resulted fixtures in match-level stats |
+| Pre-lock | Teaser facts and anonymized aggregates; no team names; dashed mystery border |
+| Post-lock | Full team names, match consensus bars, result donuts, group/outlook infographics |
+| Shuffle | **Shuffle stats** button re-calls `GET /api/statistics` for a new random subset |
+| API | `{ meta, crowdCards }` — card kinds: `hero`, `match`, `fact`, `group`, `outlook`, `spotlight` |
+
+**Key files:** `src/lib/crowdStatPool.ts`, `src/server/services/statistics.ts`, `src/components/stats/*`.
 
 ---
 

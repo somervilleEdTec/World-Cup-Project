@@ -119,12 +119,19 @@ Two states:
 2. **Welcome**
 3. **My Picks** (group wizard, bonus picks, KO panels)
 4. **League Table**
-5. **Comparison** (next fixture, all players’ committed picks)
+5. **Stats** (`/comparison`) — **Crowd Predictions** (random crowd stats for upcoming fixtures) and **By Fixture** (all players’ committed picks for a chosen match)
 
 ## Comparison visibility
 
 - **Group:** other players’ picks visible after first kickoff (group lock).
 - **Knockout:** other players’ predictions visible after that fixture’s kickoff (when locked).
+
+## Crowd Predictions (Stats tab)
+
+- **Random mix:** 5–8 cards per page load or shuffle — hero headlines, match infographics, fun facts, group snapshots, podium outlook.
+- **Upcoming fixtures only** for match-level stats (no kicked-off or resulted fixtures).
+- **Pre-lock:** teaser stats without team names until first kickoff.
+- **Post-lock:** full names and infographics for unlocked upcoming fixtures.
 
 ## Messaging (required in UI)
 

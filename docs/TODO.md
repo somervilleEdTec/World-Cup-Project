@@ -13,6 +13,7 @@
 
 ## Current focus
 
+- [x] **Crowd Predictions redesign** — unified random stat pool, bento grid UI, upcoming-fixture scope, shuffle button (2026-06-12, PR #35)
 - [ ] **Prediction locking audit** — [AGENT_PROMPT_LOCKING.md](./AGENT_PROMPT_LOCKING.md) · [LOCKING.md](./LOCKING.md) — when picks lock for all players vs per-user vs per-fixture
 - [x] Per-group lock/unlock + results-based edit lock (Debug, 2026-06-03)
 - [x] Knockout scoring — advancing team +2, FT exact +4 (PR #22, 2026-06-05)
@@ -61,6 +62,7 @@
 
 - [x] Auth-protected routes + logout
 - [x] Comparison fixture picker + visibility rules
+- [x] Crowd Predictions — random bento-grid stats for upcoming fixtures ([UI_HANDOVER.md](./UI_HANDOVER.md) §8)
 - [x] Rules on Welcome page
 - [x] Per-round knockout tabs + group actual tables
 - [x] Per-group lock + auto-save predictions

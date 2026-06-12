@@ -1,6 +1,6 @@
 # FINAL_PLAN compliance checklist
 
-Verified against [FINAL_PLAN.md](./FINAL_PLAN.md). **Last reviewed:** 2026-06-05 (all 104 official kickoffs, KO scoring, fixture sync mapping). See [LOCKING.md](./LOCKING.md).
+Verified against [FINAL_PLAN.md](./FINAL_PLAN.md). **Last reviewed:** 2026-06-12 (crowd predictions random pool, all 104 official kickoffs, KO scoring, fixture sync mapping). See [LOCKING.md](./LOCKING.md).
 
 > **Note:** UI no longer uses a draft/commit panel. Match picks are written **committed** on save; tournament picks use **bonus_committed**. See [UI_HANDOVER.md](./UI_HANDOVER.md) for current behaviour.
 
@@ -14,7 +14,7 @@ Verified against [FINAL_PLAN.md](./FINAL_PLAN.md). **Last reviewed:** 2026-06-05
 | +1 exact group-position scoring | Done | `computeScore`; only when all 6 group results exist |
 | Tournament bonus scoring | Done | `bonus_committed` in `computeScore` |
 | Comparison / leaderboard use committed only | Done | SQL `state = 'committed'` |
-| Required pages | Done | Login, Welcome, My Picks, League, Comparison, Admin |
+| Required pages | Done | Login, Welcome, My Picks, League, Stats (Comparison + Crowd Predictions), Admin |
 | Group lock / unlock (user) | Done | `POST .../groups/:id/lock` · `.../unlock` → `accepted_groups`; unlock blocked if group has official results |
 | Group / fixture lock on official result | Done | `assertMatchEditable` + `assertGroupUnlockAllowed` in `pickLocks.ts` |
 | All 72 group picks before KO saves | Done | `assertAllGroupPicksCommitted` in `saveDraftPick` for KO |
@@ -37,9 +37,10 @@ Verified against [FINAL_PLAN.md](./FINAL_PLAN.md). **Last reviewed:** 2026-06-05
 - Tournament predictions do not require all groups accepted first.
 - Auth uses **display name**, not email.
 - **Comparison — knockout:** others’ predictions hidden until fixture kickoff (not visible pre-kickoff).
+- **Crowd Predictions:** random 5–8 cards scoped to upcoming fixtures; pre-lock teasers hide team names ([UI_HANDOVER.md](./UI_HANDOVER.md) §8).
 - User-facing label **prediction**; API/DB still use `committed` state naming.
 
-**Tests:** 180 tests (`npm test`) — unit logic, API integration, DB/data-protection, sync mapping, full fixture schedule audit, security/tamper, and tournament stress scenarios.
+**Tests:** 190+ tests (`npm test`) — unit logic, crowd stat pool, API integration, DB/data-protection, sync mapping, full fixture schedule audit, security/tamper, and tournament stress scenarios.
 
 | Area | Key files |
 |------|-----------|
