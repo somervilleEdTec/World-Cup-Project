@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { groupMatches } from '../data/tournament';
 import {
   buildCrowdStatPool,
+  buildPinnedLadderCards,
   CROWD_STATS_COUNT,
   collectViewablePicks,
   countUpcomingFixtures,
@@ -99,7 +100,7 @@ describe('crowdStatPool', () => {
     );
 
     const allText = pool
-      .filter((c) => c.visualType === 'insight')
+      .filter((c) => c.visualType === 'insight' && (c.kind === 'fact' || c.kind === 'spotlight'))
       .map((c) => c.text)
       .join(' ');
 
@@ -108,7 +109,7 @@ describe('crowdStatPool', () => {
     expect(pool.some((c) => c.visualType === 'insight')).toBe(true);
   });
 
-  it('samples exactly six cards with distinct visual types when available', () => {
+  it('samples exactly six cards with pinned ladders first', () => {
     const pool = buildCrowdStatPool(
       {
         matches: groupMatches,
@@ -122,18 +123,26 @@ describe('crowdStatPool', () => {
       { revealNames: true }
     );
 
-    const sampled = sampleCrowdStats(pool);
+    const pinnedLadders = buildPinnedLadderCards(
+      groupMatches,
+      users,
+      {},
+      matchConsensus,
+      viewableIds
+    );
+    const sampled = sampleCrowdStats(pool, { pinnedLadders });
     expect(sampled.length).toBe(CROWD_STATS_COUNT);
+    expect(pinnedLadders.length).toBeGreaterThan(0);
+    expect(sampled[0].visualType).toBe('ladder');
+    if (pinnedLadders.length > 1) {
+      expect(sampled[1].visualType).toBe('ladder');
+    }
     const visualTypes = new Set(sampled.map((c) => c.visualType));
     expect(visualTypes.size).toBeGreaterThanOrEqual(4);
-    expect(sampled.map((c) => c.visualType)).toEqual(
-      expect.arrayContaining(
-        VISUAL_TYPE_ORDER.filter((type) => pool.some((card) => card.visualType === type)).slice(0, 6)
-      )
-    );
+    expect(VISUAL_TYPE_ORDER[0]).toBe('ladder');
   });
 
-  it('returns deterministic first N when shuffle is false', () => {
+  it('returns deterministic sample with pinned ladders prepended when shuffle is false', () => {
     const pool = buildCrowdStatPool(
       {
         matches: groupMatches,
@@ -146,9 +155,20 @@ describe('crowdStatPool', () => {
       },
       { revealNames: true }
     );
+    const pinnedLadders = buildPinnedLadderCards(
+      groupMatches,
+      users,
+      {},
+      matchConsensus,
+      viewableIds
+    );
 
-    const sampled = sampleCrowdStats(pool, { shuffle: false });
-    expect(sampled).toEqual(pool.slice(0, CROWD_STATS_COUNT));
+    const sampled = sampleCrowdStats(pool, { shuffle: false, pinnedLadders });
+    const nonLadder = pool.filter((card) => card.visualType !== 'ladder');
+    expect(sampled.slice(0, pinnedLadders.length)).toEqual(pinnedLadders);
+    expect(sampled.slice(pinnedLadders.length)).toEqual(
+      nonLadder.slice(0, CROWD_STATS_COUNT - pinnedLadders.length)
+    );
   });
 
   it('excludes past fixtures from upcoming count', () => {
@@ -205,7 +225,9 @@ describe('crowdStatPool', () => {
       { revealNames: true }
     );
 
-    const text = pool.map((c) => ('text' in c ? c.text : '')).join(' ');
+    const text = pool
+      .map((c) => ('text' in c ? c.text : ''))
+      .join(' ');
     expect(text.includes('locked in their tournament podium')).toBe(false);
     expect(text.includes('back the home team')).toBe(false);
     expect(text.includes('back an away win')).toBe(false);

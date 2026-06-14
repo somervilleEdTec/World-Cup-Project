@@ -3,6 +3,7 @@ import { isUpcomingFixture } from './comparisonVisibility';
 import { formatFixtureStageLabel } from './fixtureLabels';
 import {
   computeLadderSwingCandidates,
+  computePinnedLadderSwings,
   computePointsOnTheLine,
   computeRankClusterBattles
 } from './leagueImpact';
@@ -25,8 +26,8 @@ export const CROWD_STATS_MIN = CROWD_STATS_COUNT;
 export const CROWD_STATS_MAX = CROWD_STATS_COUNT;
 
 export const VISUAL_TYPE_ORDER: CrowdStatVisualType[] = [
-  'hero',
   'ladder',
+  'hero',
   'fixture',
   'standings',
   'podium',
@@ -50,6 +51,7 @@ export interface CrowdStatPoolOptions {
 
 export interface SampleCrowdStatsOptions {
   shuffle?: boolean;
+  pinnedLadders?: CrowdStatCard[];
 }
 
 function anonymizePickCounts(items: StatisticsPickCount[]): StatisticsPickCount[] {
@@ -208,19 +210,56 @@ function buildFixtureInsightCards(
     results,
     viewableUpcomingMatchIds
   );
-  for (const battle of battles.slice(0, 2)) {
+  for (const battle of battles.slice(0, 1)) {
     cards.push({
-      id: `insight-battle-${battle.match.id}-${battle.playerA}-${battle.playerB}`,
+      id: `battle-${battle.match.id}-${battle.playerA}-${battle.playerB}`,
       visualType: 'insight',
-      kind: 'fact',
-      icon: '⚔️',
-      text: revealNames
-        ? `${battle.playerA} (#${battle.rankA}) and ${battle.playerB} (#${battle.rankB}) picked differently on ${fixtureLabel(battle.match.homeTeamId, battle.match.awayTeamId, true)}.`
-        : `Two nearby rivals picked different outcomes on the same upcoming fixture.`
+      kind: 'battle',
+      matchId: battle.match.id,
+      stage: battle.match.stage,
+      group: battle.match.group,
+      homeTeamId: battle.match.homeTeamId,
+      awayTeamId: battle.match.awayTeamId,
+      playerA: battle.playerA,
+      playerB: battle.playerB,
+      rankA: battle.rankA,
+      rankB: battle.rankB,
+      pickA: battle.pickALabel,
+      pickB: battle.pickBLabel
     });
   }
 
   return cards;
+}
+
+export function buildPinnedLadderCards(
+  matches: Match[],
+  userPicks: UserPicks[],
+  results: Record<string, ActualResult>,
+  matchConsensus: MatchConsensusItem[],
+  viewableUpcomingMatchIds: Set<string>
+): CrowdStatCard[] {
+  const pinned = computePinnedLadderSwings(
+    matches,
+    userPicks,
+    results,
+    matchConsensus,
+    viewableUpcomingMatchIds
+  );
+
+  return pinned.map((candidate) => ({
+    id: `pinned-ladder-${candidate.matchId}-${candidate.scoreline}`,
+    visualType: 'ladder' as const,
+    kind: 'ladder' as const,
+    matchId: candidate.matchId,
+    stage: candidate.stage,
+    group: candidate.group,
+    homeTeamId: candidate.homeTeamId,
+    awayTeamId: candidate.awayTeamId,
+    scoreline: candidate.scoreline,
+    scorelinePct: candidate.scorelinePct,
+    movers: candidate.movers
+  }));
 }
 
 /** Build the full crowd-stat candidate pool from computed prediction data. */
@@ -423,23 +462,32 @@ export function sampleCrowdStats(
   pool: CrowdStatCard[],
   options: SampleCrowdStatsOptions = {}
 ): CrowdStatCard[] {
-  if (pool.length === 0) return [];
+  if (pool.length === 0 && (options.pinnedLadders?.length ?? 0) === 0) return [];
+
+  const pinnedLadders = options.pinnedLadders ?? [];
+  const pinnedIds = new Set(pinnedLadders.map((card) => card.id));
+  const poolWithoutPinnedLadders = pool.filter(
+    (card) => card.visualType !== 'ladder' || !pinnedIds.has(card.id)
+  );
+  const excludeLadderPool = poolWithoutPinnedLadders.filter((card) => card.visualType !== 'ladder');
 
   if (options.shuffle === false) {
-    return pool.slice(0, Math.min(CROWD_STATS_COUNT, pool.length));
+    const remainder = excludeLadderPool.slice(0, Math.max(0, CROWD_STATS_COUNT - pinnedLadders.length));
+    return [...pinnedLadders, ...remainder].slice(0, CROWD_STATS_COUNT);
   }
 
   const byVisual = new Map<CrowdStatVisualType, CrowdStatCard[]>();
-  for (const card of pool) {
+  for (const card of excludeLadderPool) {
     const list = byVisual.get(card.visualType) ?? [];
     list.push(card);
     byVisual.set(card.visualType, list);
   }
 
   const selected: CrowdStatCard[] = [];
-  const usedIds = new Set<string>();
+  const usedIds = new Set<string>(pinnedIds);
 
   for (const visualType of VISUAL_TYPE_ORDER) {
+    if (visualType === 'ladder') continue;
     const candidates = shuffleItems(byVisual.get(visualType) ?? []).filter(
       (card) => !usedIds.has(card.id)
     );
@@ -448,29 +496,31 @@ export function sampleCrowdStats(
     usedIds.add(candidates[0].id);
   }
 
-  const remaining = shuffleItems(pool.filter((card) => !usedIds.has(card.id)));
+  const remaining = shuffleItems(excludeLadderPool.filter((card) => !usedIds.has(card.id)));
+  const slotsLeft = Math.max(0, CROWD_STATS_COUNT - pinnedLadders.length);
   for (const card of remaining) {
-    if (selected.length >= CROWD_STATS_COUNT) break;
+    if (selected.length >= slotsLeft) break;
     selected.push(card);
     usedIds.add(card.id);
   }
 
-  const ordered = VISUAL_TYPE_ORDER.map((visualType) =>
-    selected.find((card) => card.visualType === visualType)
-  ).filter((card): card is CrowdStatCard => card !== undefined);
+  const ordered = VISUAL_TYPE_ORDER.filter((visualType) => visualType !== 'ladder')
+    .map((visualType) => selected.find((card) => card.visualType === visualType))
+    .filter((card): card is CrowdStatCard => card !== undefined);
 
   const extras = selected.filter((card) => !ordered.includes(card));
-  const combined = [...ordered, ...extras];
+  let combined = [...pinnedLadders, ...ordered, ...extras];
 
-  if (combined.length >= CROWD_STATS_COUNT) {
-    return combined.slice(0, CROWD_STATS_COUNT);
-  }
-
-  const insightPool = shuffleItems(pool.filter((card) => card.visualType === 'insight'));
-  for (const card of insightPool) {
-    if (combined.length >= CROWD_STATS_COUNT) break;
-    if (combined.some((existing) => existing.id === card.id)) continue;
-    combined.push(card);
+  if (combined.length < CROWD_STATS_COUNT) {
+    const insightPool = shuffleItems(
+      excludeLadderPool.filter(
+        (card) => card.visualType === 'insight' && !combined.some((existing) => existing.id === card.id)
+      )
+    );
+    for (const card of insightPool) {
+      if (combined.length >= CROWD_STATS_COUNT) break;
+      combined.push(card);
+    }
   }
 
   return combined.slice(0, CROWD_STATS_COUNT);

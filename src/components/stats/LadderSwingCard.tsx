@@ -27,17 +27,21 @@ export function LadderSwingCard({ card, revealNames }: LadderSwingCardProps) {
         <p className="kicker">{formatFixtureStageLabel(card.stage, card.group)}</p>
       </div>
       <ul className="ladder-swing-movers">
-        {card.movers.map((mover) => (
-          <li key={`${mover.displayName}-${mover.beforeRank}`} className="ladder-swing-mover">
-            <span className="ladder-swing-name">{mover.displayName}</span>
-            <span className="ladder-swing-ranks">
-              #{mover.beforeRank} → #{mover.afterRank}
-            </span>
-            <span className={`ladder-swing-delta ${mover.delta > 0 ? 'up' : 'down'}`}>
-              {mover.delta > 0 ? `↑${mover.delta}` : `↓${Math.abs(mover.delta)}`}
-            </span>
-          </li>
-        ))}
+        {card.movers.length === 0 ? (
+          <li className="ladder-swing-mover ladder-swing-empty">No rank changes for this scoreline.</li>
+        ) : (
+          card.movers.map((mover) => (
+            <li key={`${mover.displayName}-${mover.beforeRank}`} className="ladder-swing-mover">
+              <span className="ladder-swing-name">{mover.displayName}</span>
+              <span className="ladder-swing-ranks">
+                #{mover.beforeRank} → #{mover.afterRank}
+              </span>
+              <span className={`ladder-swing-delta ${mover.delta > 0 ? 'up' : 'down'}`}>
+                {mover.delta > 0 ? `↑${mover.delta}` : `↓${Math.abs(mover.delta)}`}
+              </span>
+            </li>
+          ))
+        )}
       </ul>
     </article>
   );

@@ -65,10 +65,16 @@ describe('computeStatistics', () => {
     const stats = await computeStatistics(POST_LOCK_NOW);
     expect(stats.meta.groupPhaseLocked).toBe(true);
     expect(stats.crowdCards.length).toBe(CROWD_STATS_COUNT);
+    expect(stats.crowdCards[0].visualType).toBe('ladder');
     const visualTypes = stats.crowdCards.map((c) => c.visualType);
     expect(visualTypes.some((k) => ['hero', 'fixture', 'insight', 'standings'].includes(k))).toBe(
       true
     );
+    const battle = stats.crowdCards.find((c) => c.kind === 'battle');
+    if (battle && battle.kind === 'battle') {
+      expect(battle.pickA).toBeTruthy();
+      expect(battle.pickB).toBeTruthy();
+    }
     const text = JSON.stringify(stats.crowdCards);
     expect(text.includes('locked in their tournament podium')).toBe(false);
     expect(text.includes('back the home team')).toBe(false);

@@ -2,6 +2,7 @@ import { getMatches } from '../../lib/matchResolver';
 import { canViewOthersPicks, isUpcomingFixture } from '../../lib/comparisonVisibility';
 import {
   buildCrowdStatPool,
+  buildPinnedLadderCards,
   collectViewablePicks,
   countUpcomingFixtures,
   sampleCrowdStats
@@ -102,7 +103,17 @@ export async function computeStatistics(nowIso = new Date().toISOString()) {
     { revealNames: groupPhaseLocked }
   );
 
-  const crowdCards = sampleCrowdStats(pool);
+  const pinnedLadders = groupPhaseLocked
+    ? buildPinnedLadderCards(
+        matches,
+        userPicks,
+        results,
+        matchConsensus,
+        viewableUpcomingMatchIds
+      )
+    : [];
+
+  const crowdCards = sampleCrowdStats(pool, { pinnedLadders });
 
   const message = groupPhaseLocked
     ? 'Six upcoming-fixture crowd stats — shuffle for a fresh mix.'
