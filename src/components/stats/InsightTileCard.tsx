@@ -1,7 +1,7 @@
 import { CrowdStatCard as CrowdStatCardType } from '../../types';
 
 interface InsightTileCardProps {
-  card: Extract<CrowdStatCardType, { visualType: 'insight' }>;
+  card: Extract<CrowdStatCardType, { kind: 'fact' | 'spotlight' }>;
 }
 
 export function InsightTileCard({ card }: InsightTileCardProps) {
