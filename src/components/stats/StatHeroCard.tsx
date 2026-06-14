@@ -5,12 +5,7 @@ interface StatHeroCardProps {
   variant?: 'default' | 'consensus' | 'chaos';
 }
 
-export function StatHeroCard({
-  subtitle,
-  value,
-  detail,
-  variant = 'default'
-}: StatHeroCardProps) {
+export function StatHeroCard({ subtitle, value, detail, variant = 'default' }: StatHeroCardProps) {
   return (
     <article className={`stat-hero-card stat-hero-card-${variant}`}>
       <p className="crowd-stat-panel-kicker">{subtitle}</p>

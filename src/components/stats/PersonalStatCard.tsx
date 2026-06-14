@@ -84,7 +84,9 @@ function NearestRivalBody({ card }: { card: PersonalStatCardProps['card'] }) {
           className={`head-to-head-row${player.isCurrentUser ? ' personal-you-row' : ''}`}
         >
           <span className="head-to-head-rank">#{player.rank}</span>
-          <span className="head-to-head-name">{player.isCurrentUser ? 'You' : player.displayName}</span>
+          <span className="head-to-head-name">
+            {player.isCurrentUser ? 'You' : player.displayName}
+          </span>
           <span className="head-to-head-pick">{player.pick}</span>
         </li>
       ))}
