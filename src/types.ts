@@ -62,6 +62,8 @@ export interface LeaderboardEntry {
   points: number;
   correctResultPoints: number;
   exactScorePoints: number;
+  correctResults: number;
+  exactScores: number;
   groupPositionPoints: number;
   bonusPoints: number;
   coinFlip?: {

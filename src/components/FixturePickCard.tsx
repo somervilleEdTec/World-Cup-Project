@@ -333,11 +333,11 @@ export function FixturePickCard({
       </p>
       {kickoffHint && <p className="fixture-meta">{kickoffHint}</p>}
 
-      {groupUserLocked && match.stage === 'GROUP' ? (
+      {groupUserLocked && match.stage === 'GROUP' && !actual ? (
         <p className="fixture-score-plain">
           {formatPickLine(pick ?? { matchId: match.id, homeScore: 0, awayScore: 0 }, match)}
         </p>
-      ) : showLockedSummary ? (
+      ) : showLockedSummary || (groupUserLocked && actual) ? (
         <div className="fixture-scores-summary fixture-scores-locked">
           {match.stage === 'GROUP' && !actual ? (
             <p className="fixture-score-plain">{formatPickLine(pick, match)}</p>

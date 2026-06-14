@@ -49,6 +49,8 @@ describe('tournament integration — DB and leaderboard', () => {
     expect(entry.points).toBe(6);
     expect(entry.exactScorePoints).toBe(4);
     expect(entry.correctResultPoints).toBe(2);
+    expect(entry.exactScores).toBe(1);
+    expect(entry.correctResults).toBe(1);
   });
 
   it('exposes confirmed knockout fixtures after feeding groups finish in DB', async () => {

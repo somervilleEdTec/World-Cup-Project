@@ -120,6 +120,8 @@ export async function computeLeaderboard() {
     points: entry.points,
     correctResultPoints: entry.correctResultPoints,
     exactScorePoints: entry.exactScorePoints,
+    correctResults: entry.tieBreak.correctResults,
+    exactScores: entry.tieBreak.exactScores,
     groupPositionPoints: entry.groupPositionPoints,
     bonusPoints: entry.bonusPoints,
     coinFlip: finalComplete

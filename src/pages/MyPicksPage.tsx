@@ -473,7 +473,7 @@ export function MyPicksPage() {
                 pick={mergedPicks[match.id]}
                 actual={officialResults[match.id]}
                 nowIso={nowIso}
-                groupUserLocked={userGroupLocked && !matchHasResult}
+                groupUserLocked={userGroupLocked}
                 inputsDisabled={calendarGroupLocked || matchKickoffLocked || matchHasResult}
                 showLockedSummary={!userGroupLocked && (matchKickoffLocked || matchHasResult)}
                 onSave={saveMatchPick}
