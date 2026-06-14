@@ -1,5 +1,6 @@
 import { groupMatches } from '../../data/tournament';
 import { getMatches } from '../../lib/matchResolver';
+import { getFootballDataToken } from '../../lib/runtimeConfig';
 import { fetchCompetitionFixtures, PROVIDER } from '../../services/footballDataService';
 import { getDb } from '../database';
 import {
@@ -46,9 +47,9 @@ function isGroupStageFixture(stage: string | undefined, group: string | undefine
 export async function buildMappingDiagnostics(
   apiToken?: string
 ): Promise<MappingDiagnosticsReport> {
-  const token = apiToken ?? process.env.FOOTBALL_DATA_TOKEN;
+  const token = apiToken ?? getFootballDataToken();
   if (!token) {
-    throw new Error('FOOTBALL_DATA_TOKEN missing');
+    throw new Error('FOOTBALL_DATA_TOKEN or FOOTBALL_API_KEY missing');
   }
 
   const db = getDb();
@@ -74,7 +75,13 @@ export async function buildMappingDiagnostics(
 
   for (const fixture of fixtures) {
     const existing = await internalIdFromProvider(PROVIDER, fixture.providerId);
-    const reason = explainMappingFailure(fixture.homeName, fixture.awayName, existing);
+    const reason = explainMappingFailure(
+      fixture.homeName,
+      fixture.awayName,
+      existing,
+      {},
+      fixture.group
+    );
     const groupStage = isGroupStageFixture(fixture.stage, fixture.group);
 
     if (groupStage) groupStageTotal += 1;
@@ -85,7 +92,9 @@ export async function buildMappingDiagnostics(
         PROVIDER,
         fixture.providerId,
         fixture.homeName,
-        fixture.awayName
+        fixture.awayName,
+        {},
+        fixture.group
       );
       if (internalId) {
         mapped += 1;

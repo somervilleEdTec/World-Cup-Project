@@ -1,7 +1,11 @@
 import 'dotenv/config';
 import { initDatabase } from './database';
 import { runAutoLocks } from './services/predictions';
-import { isDebugLocalMode, shouldSyncFootballData } from '../lib/runtimeConfig';
+import {
+  getFootballDataToken,
+  isDebugLocalMode,
+  shouldSyncFootballData
+} from '../lib/runtimeConfig';
 import { bootstrapFootballData } from './footballDataStartup';
 import { syncFootballData, syncKickoffsFromFootballData } from './services/sync';
 import { seedGroupMatchMappings } from './services/matchMapping';
@@ -18,7 +22,7 @@ async function main() {
     void runAutoLocks(new Date().toISOString());
   }, LOCK_INTERVAL_MS);
 
-  const token = process.env.FOOTBALL_DATA_TOKEN;
+  const token = getFootballDataToken();
   if (shouldSyncFootballData() && token) {
     try {
       await bootstrapFootballData(token);

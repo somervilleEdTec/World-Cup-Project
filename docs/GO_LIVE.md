@@ -68,6 +68,13 @@ Backups: [DATABASE_BACKUP.md](./DATABASE_BACKUP.md) · `npm run db:backup`
 - [ ] `/admin` redirects non-admins to home
 - [ ] Admin **not** listed on leaderboard or comparison
 
+### Stats (Crowd Predictions)
+
+- [ ] **Stats** nav opens `/comparison` with **Crowd Predictions** tab (default)
+- [ ] 5–8 random cards load; **Shuffle stats** returns a new mix
+- [ ] Pre-lock: no team names in teaser cards; post-lock: match infographics for upcoming fixtures
+- [ ] **By Fixture** tab shows player prediction table for selected match
+
 ### Predictions & locks
 
 - [ ] Group + tournament bonus lock **15 minutes before** first kickoff (Welcome rules)
@@ -77,7 +84,8 @@ Backups: [DATABASE_BACKUP.md](./DATABASE_BACKUP.md) · `npm run db:backup`
 ### Ops
 
 - [ ] Admin → mapping diagnostics (72/72 group if token set)
-- [ ] Full football-data sync once
+- [ ] All fixture kickoff dates correct — opening match **11 Jun 20:00 BST**; knockout times from `knockoutStageKickoffs.ts` (not legacy bracket offsets)
+- [ ] Full football-data sync once (Admin → **Import kickoffs** if production DB has stale dates)
 - [ ] `curl -s http://127.0.0.1:8787/api/health`
 
 ---

@@ -13,10 +13,16 @@
 
 ## Current focus
 
+- [x] **Crowd Predictions redesign** — unified random stat pool, bento grid UI, upcoming-fixture scope, shuffle button (2026-06-12, PR #35)
 - [ ] **Prediction locking audit** — [AGENT_PROMPT_LOCKING.md](./AGENT_PROMPT_LOCKING.md) · [LOCKING.md](./LOCKING.md) — when picks lock for all players vs per-user vs per-fixture
 - [x] Per-group lock/unlock + results-based edit lock (Debug, 2026-06-03)
 - [x] Knockout scoring — advancing team +2, FT exact +4 (PR #22, 2026-06-05)
 - [x] KO fixture sync mapping + per-fixture unlock from stored results (PR #23, 2026-06-05)
+- [x] Official FIFA kickoffs for all 104 fixtures + BST display audit (2026-06-05)
+- [x] Predict page kickoffs from server API; stale DB kickoff repair on startup (2026-06-05)
+- [x] Organiser hidden from leaderboard/comparison even if is_admin flag missing (2026-06-05)
+- [x] Touch score inputs — clear on focus for touch devices (2026-06-05)
+- [x] Expanded test suite — 180 tests (fixture schedule audit, kickoff/touch tests, 2026-06-05)
 - [x] API same-origin / autosave performance (Debug, 2026-06-03)
 
 ## Go-live
@@ -56,6 +62,7 @@
 
 - [x] Auth-protected routes + logout
 - [x] Comparison fixture picker + visibility rules
+- [x] Crowd Predictions — random bento-grid stats for upcoming fixtures ([UI_HANDOVER.md](./UI_HANDOVER.md) §8)
 - [x] Rules on Welcome page
 - [x] Per-round knockout tabs + group actual tables
 - [x] Per-group lock + auto-save predictions
@@ -64,7 +71,8 @@
 
 - [x] Postgres + migrations
 - [x] Deploy docs ([PRODUCTION.md](./PRODUCTION.md), [GO_LIVE.md](./GO_LIVE.md))
-- [x] API integration tests (121 tests)
+- [x] Official group-stage kickoffs (FIFA UTC static + football-data override)
+- [x] API integration tests (166 tests)
 - [x] football-data seed + sync
 - [x] Windows `scripts/Test-LocalSite.ps1`
 - [x] SVG team flags

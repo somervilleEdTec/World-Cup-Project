@@ -1,5 +1,5 @@
-import { Match } from '../types';
-import { isGroupLocked, predictionLockReached } from './pickLocks';
+import { ActualResult, Match } from '../types';
+import { isGroupLocked, kickoffReached, predictionLockReached } from './pickLocks';
 import { isGroupStage, isKnockout } from './tournamentLogic';
 
 /** Whether other players' predictions for this fixture may be shown. */
@@ -16,6 +16,15 @@ export function canViewOthersPicks(
     return predictionLockReached(match.kickoff, nowIso);
   }
   return false;
+}
+
+/** True when the fixture has not kicked off and has no official result. */
+export function isUpcomingFixture(
+  match: Match,
+  nowIso = new Date().toISOString(),
+  results: Record<string, ActualResult> = {}
+): boolean {
+  return !results[match.id] && !kickoffReached(match.kickoff, nowIso);
 }
 
 export function getNextUpcomingMatchId(

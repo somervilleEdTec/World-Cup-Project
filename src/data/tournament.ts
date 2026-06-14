@@ -1,7 +1,8 @@
 import { Match, Team } from '../types';
+import { GROUP_STAGE_KICKOFFS } from './groupStageKickoffs';
 import { TEAM_COUNTRY_CODES } from './teamCountryCodes';
 
-export const FIRST_MATCH_KICKOFF = '2026-06-11T19:00:00Z';
+export const FIRST_MATCH_KICKOFF = GROUP_STAGE_KICKOFFS['g-a-1'];
 
 const groupTeamNames: Record<string, [string, string, string, string]> = {
   A: ['Mexico', 'South Africa', 'South Korea', 'Czechia'],
@@ -31,32 +32,38 @@ export const teams: Team[] = Object.entries(groupTeamNames).flatMap(([group, nam
   }))
 );
 
-function groupMatchesForGroup(group: string, teamIds: string[], offsetDays: number): Match[] {
+function groupMatchesForGroup(group: string, teamIds: string[]): Match[] {
   const [a, b, c, d] = teamIds;
+  // FIFA designates the fourth drawn team (d) as home in matchday-2 fixture 2 and matchday-3 fixture 1.
   const pairs: Array<[string, string]> = [
     [a, b],
     [c, d],
     [a, c],
-    [b, d],
-    [a, d],
+    [d, b],
+    [d, a],
     [b, c]
   ];
-  return pairs.map(([homeTeamId, awayTeamId], idx) => ({
-    id: `g-${group.toLowerCase()}-${idx + 1}`,
-    stage: 'GROUP',
-    group,
-    kickoff: new Date(
-      Date.UTC(2026, 5, 11 + offsetDays + Math.floor(idx / 2), (idx % 2) * 3 + 16, 0, 0)
-    ).toISOString(),
-    homeTeamId,
-    awayTeamId
-  }));
+  return pairs.map(([homeTeamId, awayTeamId], idx) => {
+    const id = `g-${group.toLowerCase()}-${idx + 1}`;
+    const kickoff = GROUP_STAGE_KICKOFFS[id];
+    if (!kickoff) {
+      throw new Error(`Missing official kickoff for ${id}`);
+    }
+    return {
+      id,
+      stage: 'GROUP',
+      group,
+      kickoff,
+      homeTeamId,
+      awayTeamId
+    };
+  });
 }
 
 const groups = Object.keys(groupTeamNames);
-export const groupMatches: Match[] = groups.flatMap((group, index) => {
+export const groupMatches: Match[] = groups.flatMap((group) => {
   const ids = teams.filter((t) => t.group === group).map((t) => t.id);
-  return groupMatchesForGroup(group, ids, index);
+  return groupMatchesForGroup(group, ids);
 });
 
 export { getMatches } from '../lib/matchResolver';

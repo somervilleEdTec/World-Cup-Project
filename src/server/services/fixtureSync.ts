@@ -25,7 +25,8 @@ export async function syncKickoffsFromFootballData(
       fixture.homeName,
       fixture.awayName,
       existing,
-      syncActuals
+      syncActuals,
+      fixture.group
     );
 
     if (reason !== 'mappable' && reason !== 'already_mapped') {
@@ -39,7 +40,8 @@ export async function syncKickoffsFromFootballData(
       fixture.providerId,
       fixture.homeName,
       fixture.awayName,
-      syncActuals
+      syncActuals,
+      fixture.group
     );
     if (!internalId) {
       skipped += 1;

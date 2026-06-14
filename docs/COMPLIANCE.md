@@ -1,6 +1,6 @@
 # FINAL_PLAN compliance checklist
 
-Verified against [FINAL_PLAN.md](./FINAL_PLAN.md). **Last reviewed:** 2026-06-05 (KO scoring, fixture sync mapping). See [LOCKING.md](./LOCKING.md).
+Verified against [FINAL_PLAN.md](./FINAL_PLAN.md). **Last reviewed:** 2026-06-12 (crowd predictions random pool, all 104 official kickoffs, KO scoring, fixture sync mapping). See [LOCKING.md](./LOCKING.md).
 
 > **Note:** UI no longer uses a draft/commit panel. Match picks are written **committed** on save; tournament picks use **bonus_committed**. See [UI_HANDOVER.md](./UI_HANDOVER.md) for current behaviour.
 
@@ -14,7 +14,7 @@ Verified against [FINAL_PLAN.md](./FINAL_PLAN.md). **Last reviewed:** 2026-06-05
 | +1 exact group-position scoring | Done | `computeScore`; only when all 6 group results exist |
 | Tournament bonus scoring | Done | `bonus_committed` in `computeScore` |
 | Comparison / leaderboard use committed only | Done | SQL `state = 'committed'` |
-| Required pages | Done | Login, Welcome, My Picks, League, Comparison, Admin |
+| Required pages | Done | Login, Welcome, My Picks, League, Stats (Comparison + Crowd Predictions), Admin |
 | Group lock / unlock (user) | Done | `POST .../groups/:id/lock` · `.../unlock` → `accepted_groups`; unlock blocked if group has official results |
 | Group / fixture lock on official result | Done | `assertMatchEditable` + `assertGroupUnlockAllowed` in `pickLocks.ts` |
 | All 72 group picks before KO saves | Done | `assertAllGroupPicksCommitted` in `saveDraftPick` for KO |
@@ -22,7 +22,10 @@ Verified against [FINAL_PLAN.md](./FINAL_PLAN.md). **Last reviewed:** 2026-06-05
 | Knockout round multipliers (QF/SF/Final) | Done | `knockoutStageMultiplier.ts`, `matchScoring.ts` |
 | Knockout only when officially confirmed | Done | `knockoutFixtureAvailability.ts` — per feeder group/KO timing |
 | football-data sync + manual override | Done | `sync.ts`, admin routes; 90-min `fullTime` scores |
-| KO API mapping from stored results | Done | `matchMapping.ts`, `sync.ts`, `fixtureSync.ts` pass `actuals` |
+| Group-stage kickoffs (official FIFA UTC) | Done | `groupStageKickoffs.ts`, `tournament.ts`; overridden by `match_kickoffs` sync |
+| Knockout kickoffs (official FIFA UTC) | Done | `knockoutStageKickoffs.ts`, `officialKickoffs.ts`, `bracketEngine.ts` |
+| KO API mapping from stored results | Done | `matchMapping.ts`, `sync.ts`, `fixtureSync.ts` pass `actuals`; group-scoped lookup |
+| Organiser excluded from competition views | Done | `competitionUsers.ts` — `is_admin` + reserved bootstrap display name |
 | Mapping diagnostics | Done | Admin API + `npm run diagnose:mappings` |
 | Tie-breaker earliest commit | Done | `leaderboard.ts` sorts by `committed_at` |
 
@@ -34,8 +37,18 @@ Verified against [FINAL_PLAN.md](./FINAL_PLAN.md). **Last reviewed:** 2026-06-05
 - Tournament predictions do not require all groups accepted first.
 - Auth uses **display name**, not email.
 - **Comparison — knockout:** others’ predictions hidden until fixture kickoff (not visible pre-kickoff).
+- **Crowd Predictions:** random 5–8 cards scoped to upcoming fixtures; pre-lock teasers hide team names ([UI_HANDOVER.md](./UI_HANDOVER.md) §8).
 - User-facing label **prediction**; API/DB still use `committed` state naming.
 
-**Tests:** 121 tests (`npm test`) — includes `matchScoring.test.ts`, `knockoutFixtureAvailability.test.ts`, lock/unlock integration tests.
+**Tests:** 190+ tests (`npm test`) — unit logic, crowd stat pool, API integration, DB/data-protection, sync mapping, full fixture schedule audit, security/tamper, and tournament stress scenarios.
+
+| Area | Key files |
+|------|-----------|
+| Scoring / bracket | `matchScoring.test.ts`, `tournamentRobustness.test.ts`, `bracketEngine.test.ts` |
+| Kickoffs / schedule | `groupStageKickoffs.test.ts` |
+| Locks / KO gating | `pickLocks.test.ts`, `knockoutFixtureAvailability.test.ts`, `lockingPolicy.test.ts` |
+| API + DB | `api.integration.test.ts`, `tournament.integration.test.ts`, `database.integration.test.ts` |
+| Security | `security.integration.test.ts` |
+| Sync | `syncMapping.test.ts` |
 
 **Deferred (P3):** OAuth, PWA, PDF export, E2E tests, production CORS hardening.

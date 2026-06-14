@@ -1,6 +1,6 @@
 # Agent Handover — World Cup Boys
 
-**Last updated:** 2026-06-05
+**Last updated:** 2026-06-14 (Stats tab personal cards, panel subtitles, group standings fix)
 **Repository:** https://github.com/somervilleEdTec/World-Cup-Project  
 **Branches:** **`main`** (live deploy) · **`Debug`** (PC only) — [BRANCHING.md](./BRANCHING.md)  
 **Live:** https://worldcup.dosums.uk — automated deploy active — [DEPLOY_CONTROL_PLANE.md](./DEPLOY_CONTROL_PLANE.md) · [PRODUCTION.md](./PRODUCTION.md)  
@@ -95,6 +95,10 @@ Historical docs: [archive/README.md](./archive/README.md)
 |-----------|---------|
 | #22 | Knockout scoring hardened — advancing team +2, FT exact +4; no group W/D/L fallback |
 | #23 | KO fixture API mapping uses stored official results; per-fixture unlock timing |
+| #24 | Expanded test suite — tournament, DB, sync mapping, security stress tests |
+| #25 | Official FIFA UTC group-stage kickoffs; football-data mapping scoped by group |
+| Touch inputs | Clear score field on touch focus (`FixturePickCard.tsx`, `touchDevice.ts`) |
+| Kickoffs + organiser | Server `groupStageFixtures` on Predict page; organiser excluded from league/compare |
 | #7 | Name auth, join password, `db:purge`, My Picks tabs, auto-save, projected table |
 | #8 | Bonus save fix, table zeros, score clamp |
 | #9 | Tournament standalone, TeamSelect flags, no commit panel |
@@ -114,21 +118,24 @@ Historical docs: [archive/README.md](./archive/README.md)
 - [x] Bracket engine + **495** third-place mappings (`src/lib/bracketEngine.ts`, `scripts/generate-third-place-map.mjs`)
 - [x] Dynamic KO fixtures (`src/lib/matchResolver.ts`)
 - [x] Group standings + scoring (`src/lib/groupStandings.ts`, `src/lib/tournamentLogic.ts`)
-- [x] football-data mapping + KO sync with stored results (`matchMapping.ts`, `sync.ts`, `fixtureSync.ts`)
+- [x] Official kickoffs for **all 104 fixtures** — FIFA UTC (`groupStageKickoffs.ts`, `knockoutStageKickoffs.ts`, `officialKickoffs.ts`); DB/API overrides via football-data sync
+- [x] football-data mapping + KO sync with stored results (`matchMapping.ts`, `sync.ts`, `fixtureSync.ts`); group-scoped lookup (`GROUP_A` → `A`)
 - [x] Official KO gating — per-fixture unlock from feeder group/KO results (`knockoutFixtureAvailability.ts`)
 
 ### App & UX (current)
 
-- [x] Pages: Login, Welcome (with rules), **My Predictions**, League Table, Comparison, Admin
+- [x] Pages: Login, Welcome (with rules), **My Predictions**, League Table, **Stats** (Comparison + Crowd Predictions), Admin
 - [x] Auth: **display name** + password; join password; sessions
 - [x] My Predictions: **Tournament Results · Group Stage · R32 · R16 · QF · SF · Final / 3rd Place**
 - [x] Auto-save match scores; **Lock group**; missing predictions list (`src/lib/missingPicks.ts`)
 - [x] Group **projected** + **actual** standings tables; locked fixtures show prediction / result / points as text
-- [x] Comparison: colour-coded accuracy when results in; group predictions after lock; **KO after fixture kickoff**
+- [x] **Stats** (`/comparison`): **By Fixture** tab — colour-coded accuracy when results in; group predictions after lock; **KO after fixture kickoff**
+- [x] **Crowd Predictions** tab — six cards per load/shuffle: pinned **personal** stat (logged in), pinned **If this scoreline lands**, then four sampled crowd cards; panel subtitles; group consensus/divided standings; volatile fixture + rank cluster; **upcoming fixtures only**; pre-lock teasers hide team names
 - [x] All kickoff times shown in **BST** (`src/lib/formatDateTime.ts`)
 - [x] `TeamSelect` — flags + alphabetical teams
 - [x] SVG flags (`CountryFlag`, `public/flags/4x3/`)
-- [x] **121 tests**; `npm run build`; Windows `scripts/Test-LocalSite.ps1`; `npm run seed:ko-environment`; `npm run seed:complete-teams`
+- [x] Touch devices — score inputs clear on focus for easier entry (`src/lib/touchDevice.ts`, `FixturePickCard.tsx`)
+- [x] **234 tests** across unit + integration (validation, scoring, kickoffs, fixture schedule audit, DB, sync mapping, security, crowd stats); `npm run build`; Windows `scripts/Test-LocalSite.ps1`; `npm run seed:ko-environment`; `npm run seed:complete-teams`
 
 ### Ops / partial
 
@@ -160,15 +167,35 @@ Jobs: src/server/jobs.ts (locks, sync poll)
 
 | Path | Purpose |
 |------|---------|
+| `src/data/groupStageKickoffs.ts` | Official FIFA UTC kickoffs for 72 group fixtures (static fallback) |
+| `src/data/knockoutStageKickoffs.ts` | Official FIFA UTC kickoffs for 32 knockout fixtures |
+| `src/data/officialKickoffs.ts` | Merged map of all 104 official kickoffs |
+| `src/data/tournament.ts` | Teams, group pairings, `FIRST_MATCH_KICKOFF` |
+| `scripts/generate-group-kickoffs.ts` | Regenerate kickoffs from football-data (`FOOTBALL_DATA_TOKEN`) |
 | `src/pages/MyPicksPage.tsx` | Phase tabs, auto-save, lock, projected/actual tables |
-| `src/components/FixturePickCard.tsx` | Fixture UI; locked text + points |
+| `src/components/FixturePickCard.tsx` | Fixture UI; locked text + points; touch focus clears score |
+| `src/lib/touchDevice.ts` | Touch/coarse-pointer detection for score inputs |
 | `src/components/GroupStandingsTable.tsx` | Group projected/actual tables |
 | `src/lib/missingPicks.ts` | Missing predictions list for header |
 | `src/lib/matchScoring.ts` | Per-fixture points — group W/D/L; KO advancing team + FT exact |
-| `src/lib/comparisonVisibility.ts` | When others’ predictions are visible |
+| `src/lib/comparisonVisibility.ts` | When others’ predictions are visible; `isUpcomingFixture()` for stats scope |
+| `src/lib/crowdStatPool.ts` | Crowd stat pool builder + six-card sampler (pinned personal + ladder) |
+| `src/lib/personalStats.ts` | Personal stat candidates for logged-in user |
+| `src/lib/upcomingFixtures.ts` | Next / second-next kickoff window helper |
+| `src/lib/predictionStats.ts` | Raw consensus, headlines, fun-fact computations |
+| `src/server/services/statistics.ts` | `GET /api/statistics` — optional auth; builds pool, returns `crowdCards` |
+| `src/pages/ComparisonPage.tsx` | Stats page: Crowd Predictions + By Fixture tabs |
+| `src/components/stats/CrowdStatsPanel.tsx` | Crowd Predictions bento grid entry |
+| `src/components/stats/CrowdStatCard.tsx` | Renders hero / fixture / ladder / personal / standings / podium / volatile / cluster / insight cards |
 | `src/lib/formatDateTime.ts` | BST kickoff formatting |
 | `src/components/TeamSelect.tsx` | Flag + name picker |
-| `scripts/seed-ko-environment.ts` | `npm run seed:ko-environment` |
+| `src/server/__tests__/tournament.integration.test.ts` | Leaderboard, KO unlock, DB upsert, multi-player stress |
+| `src/server/__tests__/database.integration.test.ts` | Migrations, data-protection row counts, reset guards |
+| `src/server/__tests__/syncMapping.test.ts` | football-data → internal KO mapping with stored results |
+| `src/server/__tests__/security.integration.test.ts` | Auth, tampering, admin isolation, concurrent saves |
+| `src/__tests__/groupStageKickoffs.test.ts` | Group kickoff schedule regression tests |
+| `src/__tests__/fixtureScheduleAudit.test.ts` | All 104 kickoffs + BST display audit |
+| `src/__tests__/tournamentRobustness.test.ts` | Validation, scoring invariants, bracket stress |
 | `src/server/services/predictions.ts` | Saves, locks, bonus |
 | `src/server/services/auth.ts` | Admin creates players; login; password change |
 | `src/lib/pickLocks.ts` | Lock rules, 72-group gate |
@@ -197,7 +224,8 @@ Base: `http://localhost:8787` · Auth: `Authorization: Bearer <token>`
 | POST | `/api/predictions/groups/:groupId/accept` | Legacy alias → lock |
 | POST | `/api/predictions/commit` | Legacy; UI unused |
 | GET | `/api/leaderboard` | Public |
-| GET | `/api/comparison/*` | Bearer |
+| GET | `/api/comparison/*` | Bearer — fixture comparison and picker |
+| GET | `/api/statistics` | Optional Bearer — crowd prediction stats (`meta` + `crowdCards`); personal card when authenticated |
 | POST | `/api/admin/*` | Admin |
 | POST | `/api/system/locks/run` | Manual lock pass |
 
@@ -270,8 +298,8 @@ npm run db:purge      # reset local SQLite data
 ## 11. Known risks
 
 1. Third-place mappings from Wikipedia Annex C — regenerate if FIFA errata.
-2. KO kickoff times approximate in static data.
-3. football-data team name aliases may miss fixtures.
+2. football-data team name aliases may miss fixtures — run Admin diagnostics or `npm run diagnose:mappings`.
+3. Stale `match_kickoffs` in production DB — trigger Admin **Import kickoffs** after deploy if dates look wrong.
 4. **72 KO gate** vs friendly UX — saves blocked until 72 group picks committed.
 5. Auto-save debounce — last edit may be lost on fast navigation.
 6. No HTTPS/CORS in dev — configure for production.

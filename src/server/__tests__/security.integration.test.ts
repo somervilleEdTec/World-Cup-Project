@@ -3,6 +3,10 @@ import { describe, it, expect, afterAll, beforeEach } from 'vitest';
 import request from 'supertest';
 import { setupTestServer, teardownTestServer } from '../testHarness';
 import { adminToken, createPlayer, loginPlayer, loginPlayerReady } from './authHelpers';
+import { insertGroupResults, saveAllGroupPicks } from './testDbHelpers';
+import { buildConfirmedKnockoutFixtures } from '../../lib/knockoutFixtureAvailability';
+import { getDb } from '../database';
+import { getResultsMap } from '../services/leaderboard';
 import { groupMatches } from '../../data/tournament';
 import { teams } from '../../data/tournament';
 import type { Express } from 'express';
@@ -157,6 +161,8 @@ describe('security and tamper resistance', () => {
     const routes = [
       ['get', '/api/admin/players'],
       ['post', '/api/admin/players', { displayName: 'Hack', initialPassword: 'ab' }],
+      ['delete', '/api/admin/players/player-id'],
+      ['get', '/api/admin/fixtures'],
       ['get', '/api/admin/sync-status'],
       ['post', '/api/admin/sync/run'],
       ['get', '/api/admin/mapping-diagnostics'],
@@ -248,6 +254,32 @@ describe('security and tamper resistance', () => {
       .set('Authorization', `Bearer ${token}`);
     expect(state.body.acceptedGroups).toContain('A');
     expect(state.body.committedPicks['g-a-2']).toMatchObject({ homeScore: 0, awayScore: 0 });
+  });
+
+  it('locks knockout fixtures with implicit 0-0 draws and home team advance', async () => {
+    await createPlayer(app, 'KoImplicit');
+    const token = await loginPlayerReady(app, 'KoImplicit');
+
+    await saveAllGroupPicks(app, token);
+    const db = getDb();
+    await insertGroupResults(db, 'A');
+    await insertGroupResults(db, 'B');
+
+    const actuals = await getResultsMap();
+    const r32 = buildConfirmedKnockoutFixtures(actuals).find((m) => m.id === 'r32-1');
+    expect(r32).toBeTruthy();
+
+    const { runAutoLocks } = await import('../services/predictions');
+    await runAutoLocks('2026-06-28T18:45:00.000Z');
+
+    const state = await request(app)
+      .get('/api/predictions/state')
+      .set('Authorization', `Bearer ${token}`);
+    expect(state.body.committedPicks['r32-1']).toMatchObject({
+      homeScore: 0,
+      awayScore: 0,
+      progressingTeamId: r32!.homeTeamId
+    });
   });
 
   it('blocks edits after global auto-lock', async () => {
@@ -356,6 +388,16 @@ describe('security and tamper resistance', () => {
     expect(String(res.body.error)).toMatch(/reserved/i);
   });
 
+  it('rejects spaced variants of the reserved admin username', async () => {
+    const token = await adminToken(app);
+    const res = await request(app)
+      .post('/api/admin/players')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ displayName: 'Admin Tomsom', initialPassword: 'x' });
+    expect(res.status).toBe(400);
+    expect(String(res.body.error)).toMatch(/reserved/i);
+  });
+
   it('blocks admin from prediction APIs and leaderboard inclusion', async () => {
     const token = await adminToken(app);
     const draft = await request(app)
@@ -396,5 +438,125 @@ describe('security and tamper resistance', () => {
     const me = await request(app).get('/api/auth/me').set('Authorization', `Bearer ${token}`);
     expect(me.status).toBe(200);
     expect(me.body.user.mustChangePassword).toBe(true);
+  });
+
+  it('rejects string scores sent instead of integers', async () => {
+    await createPlayer(app, 'TypeCoerce');
+    const token = await loginPlayerReady(app, 'TypeCoerce');
+
+    const res = await request(app)
+      .post('/api/predictions/draft')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ matchId: 'g-a-1', homeScore: '2', awayScore: '1' });
+    expect(res.status).toBe(400);
+  });
+
+  it('rejects knockout draw without progressing team via API', async () => {
+    await createPlayer(app, 'KoDraw');
+    const token = await loginPlayerReady(app, 'KoDraw');
+    const admin = await adminToken(app);
+
+    const { saveAllGroupPicks, insertGroupResults } = await import('./testDbHelpers');
+    await saveAllGroupPicks(app, token);
+    const db = (await import('../database')).getDb();
+    await insertGroupResults(db, 'A');
+    await insertGroupResults(db, 'B');
+
+    const res = await request(app)
+      .post('/api/predictions/draft')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ matchId: 'r32-1', homeScore: 1, awayScore: 1 });
+    expect(res.status).toBe(400);
+    expect(String(res.body.error)).toMatch(/Draw selected|progress/i);
+  });
+
+  it('rejects forged progressing team outside the fixture', async () => {
+    await createPlayer(app, 'ForgeProg');
+    const token = await loginPlayerReady(app, 'ForgeProg');
+    const { saveAllGroupPicks, insertGroupResults } = await import('./testDbHelpers');
+    await saveAllGroupPicks(app, token);
+    const db = (await import('../database')).getDb();
+    await insertGroupResults(db, 'A');
+    await insertGroupResults(db, 'B');
+
+    const res = await request(app)
+      .post('/api/predictions/draft')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        matchId: 'r32-1',
+        homeScore: 1,
+        awayScore: 1,
+        progressingTeamId: 'brazil'
+      });
+    expect(res.status).toBe(400);
+    expect(String(res.body.error)).toMatch(/fixture/i);
+  });
+
+  it('rejects invalid group lock letters', async () => {
+    await createPlayer(app, 'BadGroup');
+    const token = await loginPlayerReady(app, 'BadGroup');
+
+    const res = await request(app)
+      .post('/api/predictions/groups/Z/lock')
+      .set('Authorization', `Bearer ${token}`);
+    expect(res.status).toBe(400);
+    expect(String(res.body.error)).toMatch(/Invalid group/i);
+  });
+
+  it('rejects login with empty credentials', async () => {
+    const res = await request(app).post('/api/auth/login').send({ displayName: '', password: '' });
+    expect(res.status).toBe(401);
+  });
+
+  it('rejects admin result override with negative scores', async () => {
+    const token = await adminToken(app);
+    const res = await request(app)
+      .post('/api/admin/results/override')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ matchId: 'g-a-1', homeScore: -1, awayScore: 0, status: 'FINISHED' });
+    expect(res.status).toBe(400);
+  });
+
+  it('allows admin to list fixtures and delete a player account', async () => {
+    const token = await adminToken(app);
+    await createPlayer(app, 'Delete Me');
+
+    const fixtures = await request(app)
+      .get('/api/admin/fixtures')
+      .set('Authorization', `Bearer ${token}`);
+    expect(fixtures.status).toBe(200);
+    expect(fixtures.body.fixtures.length).toBeGreaterThan(70);
+    expect(fixtures.body.fixtures.some((fixture: { id: string }) => fixture.id === 'g-a-1')).toBe(
+      true
+    );
+
+    const players = await request(app)
+      .get('/api/admin/players')
+      .set('Authorization', `Bearer ${token}`);
+    const target = players.body.players.find(
+      (player: { displayName: string }) => player.displayName === 'Delete Me'
+    );
+    expect(target).toBeTruthy();
+
+    const deleted = await request(app)
+      .delete(`/api/admin/players/${target.id}`)
+      .set('Authorization', `Bearer ${token}`);
+    expect(deleted.status).toBe(200);
+
+    const after = await request(app)
+      .get('/api/admin/players')
+      .set('Authorization', `Bearer ${token}`);
+    expect(after.body.players.some((player: { id: string }) => player.id === target.id)).toBe(
+      false
+    );
+  });
+
+  it('stores display names safely and returns them verbatim in leaderboard', async () => {
+    const xssName = '<script>alert(1)</script>';
+    await createPlayer(app, xssName);
+    const board = await request(app).get('/api/leaderboard');
+    const entry = board.body.entries.find((e: { name: string }) => e.name === xssName);
+    expect(entry).toBeTruthy();
+    expect(entry.name).toBe(xssName);
   });
 });

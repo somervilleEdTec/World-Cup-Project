@@ -30,10 +30,7 @@ async function main() {
     if (error instanceof Error && error.message.includes('blocked by data protection')) {
       const message = formatBlockedActionMessage({
         action: 'Run database migrations',
-        reasons: [
-          `${counts.predictions} prediction row(s) are stored.`,
-          error.message
-        ],
+        reasons: [`${counts.predictions} prediction row(s) are stored.`, error.message],
         alternatives: migrationBlockedAlternatives()
       });
       // eslint-disable-next-line no-console

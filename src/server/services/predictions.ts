@@ -16,13 +16,14 @@ import {
   predictionLockReached,
   shouldLockGroup
 } from '../../lib/pickLocks';
-import { defaultDrawPick } from '../../lib/pickUtils';
-import { Pick, TournamentBonusPick } from '../../types';
+import { defaultDrawPick, defaultKnockoutDrawPick } from '../../lib/pickUtils';
+import { Match, Pick, TournamentBonusPick } from '../../types';
 import {
   assertKnockoutFixtureConfirmed,
   buildConfirmedKnockoutFixtures
 } from '../../lib/knockoutFixtureAvailability';
 import { getResultsMap } from './leaderboard';
+import { competitionUserWhere, competitionUserBindParams } from './competitionUsers';
 
 const VALID_GROUPS = new Set(['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L']);
 
@@ -86,6 +87,7 @@ export async function getUserPredictionState(userId: string) {
   const results = await getResultsMap();
   const confirmedIds = new Set(buildConfirmedKnockoutFixtures(results).map((m) => m.id));
   const confirmedKnockoutFixtures = getMatches({}, results).filter((m) => confirmedIds.has(m.id));
+  const groupStageFixtures = getMatches({}, results).filter((m) => m.stage === 'GROUP');
   return {
     committedPicks,
     draftPicks,
@@ -95,6 +97,7 @@ export async function getUserPredictionState(userId: string) {
     groupPicksRequired: GROUP_MATCH_COUNT,
     allGroupPicksCommitted: allGroupPicksCommitted(committedPicks),
     confirmedKnockoutFixtures,
+    groupStageFixtures,
     officialResults: results,
     commitState: {
       version: meta?.commit_version ?? 1,
@@ -360,6 +363,32 @@ async function applyDefaultGroupPicksForUser(userId: string, nowIso: string) {
   }
 }
 
+async function applyDefaultKnockoutPicksForUser(
+  userId: string,
+  lockableKnockout: Match[],
+  nowIso: string
+) {
+  const db = getDb();
+  const state = await getUserPredictionState(userId);
+  const mergedPicks = { ...state.committedPicks, ...state.draftPicks };
+
+  for (const match of lockableKnockout) {
+    if (mergedPicks[match.id] !== undefined) continue;
+
+    const pick = defaultKnockoutDrawPick(match);
+    await db.run(
+      `INSERT INTO predictions (user_id, match_id, state, home_score, away_score, progressing_team_id, reviewed, updated_at)
+       VALUES (?, ?, 'committed', ?, ?, ?, 1, ?)
+       ON CONFLICT(user_id, match_id, state) DO UPDATE SET home_score=excluded.home_score, away_score=excluded.away_score, progressing_team_id=excluded.progressing_team_id, reviewed=1, updated_at=excluded.updated_at`,
+      [userId, pick.matchId, pick.homeScore, pick.awayScore, pick.progressingTeamId ?? null, nowIso]
+    );
+    await db.run(`DELETE FROM predictions WHERE user_id = ? AND match_id = ? AND state = 'draft'`, [
+      userId,
+      pick.matchId
+    ]);
+  }
+}
+
 export async function runAutoLocks(nowIso: string) {
   const db = getDb();
   const lockGroup = shouldLockGroup(nowIso);
@@ -367,7 +396,8 @@ export async function runAutoLocks(nowIso: string) {
     `SELECT pm.user_id AS user_id
      FROM prediction_meta pm
      JOIN users u ON u.id = pm.user_id
-     WHERE u.is_admin = 0`
+     WHERE ${competitionUserWhere('u')}`,
+    competitionUserBindParams()
   );
   if (lockGroup) {
     for (const row of userRows) {
@@ -377,13 +407,19 @@ export async function runAutoLocks(nowIso: string) {
   }
 
   const results = await getResultsMap();
-  const lockable = getMatches({}, results)
-    .filter((m) => m.stage !== 'GROUP' && predictionLockReached(m.kickoff, nowIso))
-    .map((m) => m.id);
+  const lockableKnockout = buildConfirmedKnockoutFixtures(results).filter((m) =>
+    predictionLockReached(m.kickoff, nowIso)
+  );
 
-  for (const matchId of lockable) {
+  if (lockableKnockout.length > 0) {
+    for (const row of userRows) {
+      await applyDefaultKnockoutPicksForUser(row.user_id, lockableKnockout, nowIso);
+    }
+  }
+
+  for (const match of lockableKnockout) {
     await db.run(`UPDATE predictions SET reviewed = 1 WHERE match_id = ? AND state = 'committed'`, [
-      matchId
+      match.id
     ]);
   }
 }

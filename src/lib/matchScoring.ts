@@ -36,9 +36,7 @@ export function evaluateMatchScoring(
     const predictedAdvancer = advancingTeamId(match, pick);
     const actualAdvancer = advancingTeamId(match, actual);
     const correctResult =
-      predictedAdvancer !== null &&
-      actualAdvancer !== null &&
-      predictedAdvancer === actualAdvancer;
+      predictedAdvancer !== null && actualAdvancer !== null && predictedAdvancer === actualAdvancer;
     return { correctResult, exactScore };
   }
 
@@ -56,12 +54,7 @@ export function classifyPickAccuracy(
   if (!pick || !actual) return 'none';
 
   const stage = options?.stage ?? 'GROUP';
-  const { correctResult, exactScore } = evaluateMatchScoring(
-    pick,
-    actual,
-    stage,
-    options?.match
-  );
+  const { correctResult, exactScore } = evaluateMatchScoring(pick, actual, stage, options?.match);
 
   if (exactScore) return 'exact';
   if (correctResult) return 'result';

@@ -2,7 +2,7 @@ import type { DatabaseClient } from './types';
 import { createSqliteClient } from './sqliteClient';
 import { createPostgresClient } from './postgresClient';
 import { runMigrations } from './migrate';
-import { refreshKickoffCache } from '../kickoffs';
+import { refreshKickoffCache, repairOfficialKickoffs } from '../kickoffs';
 import { ensureBootstrapAdmin } from '../services/auth';
 
 let dbInstance: DatabaseClient | null = null;
@@ -13,6 +13,7 @@ export async function initDatabase(options?: {
   skipMigrations?: boolean;
 }): Promise<DatabaseClient> {
   if (dbInstance) {
+    await repairOfficialKickoffs(dbInstance);
     await refreshKickoffCache(dbInstance);
     return dbInstance;
   }
@@ -28,6 +29,7 @@ export async function initDatabase(options?: {
   if (!options?.skipMigrations) {
     await runMigrations(dbInstance);
     await ensureBootstrapAdmin();
+    await repairOfficialKickoffs(dbInstance);
   }
   await refreshKickoffCache(dbInstance);
   return dbInstance;

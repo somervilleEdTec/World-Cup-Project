@@ -63,10 +63,8 @@ describe('match mapping with official results', () => {
     finishGroup('A', actuals);
     finishGroup('B', actuals);
 
-    expect(
-      explainMappingFailure('South Africa', 'Bosnia and Herzegovina', null, actuals)
-    ).toBe('mappable');
-    expect(explainMappingFailure('South Africa', 'Bosnia and Herzegovina', null, {})).toBe(
+    expect(explainMappingFailure('Czechia', 'Switzerland', null, actuals)).toBe('mappable');
+    expect(explainMappingFailure('Czechia', 'Switzerland', null, {})).toBe(
       'no_matching_internal_fixture'
     );
   });

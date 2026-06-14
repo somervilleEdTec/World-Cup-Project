@@ -48,3 +48,9 @@ export function scaledMatchPointsForStage(
   const exactBonusPoints = options.exactScore ? Math.round(BASE_EXACT_BONUS_POINTS * mult) : 0;
   return { resultPoints, exactBonusPoints, total: resultPoints + exactBonusPoints };
 }
+
+/** Max match points available for a stage (result + exact bonus). */
+export function maxMatchPointsForStage(stage: Stage): number {
+  const mult = knockoutStagePointsMultiplier(stage);
+  return Math.round((BASE_RESULT_POINTS + BASE_EXACT_BONUS_POINTS) * mult);
+}

@@ -1,6 +1,6 @@
 # Prediction locking — specification
 
-> **Last updated:** 2026-06-05 (KO fixture sync mapping, per-fixture unlock)  
+> **Last updated:** 2026-06-12 (crowd stats upcoming-fixture scope, group-stage kickoffs, KO fixture sync mapping)  
 > **FINAL_PLAN:** [FINAL_PLAN.md](./FINAL_PLAN.md) (owner-owned)  
 > **Code:** `src/lib/pickLocks.ts`, `src/server/services/predictions.ts`, `src/lib/comparisonVisibility.ts`, `src/server/jobs.ts`
 
@@ -43,6 +43,7 @@ Saves use **committed** picks only (UI auto-saves as `committed`). Draft rows ar
 | Unlock after user locked a group? | **Yes**, until official results exist in that group or global/tournament lock is active. |
 | KO “Lock round” buttons? | **Not required** — automatic per-fixture lock at kickoff. |
 | Comparison vs edit for KO? | **Reveal at kickoff**; edit may also stop when official result exists before kickoff. |
+| Crowd Predictions scope? | Match-level stats use **upcoming fixtures only** (`isUpcomingFixture`); pre-lock teasers hide team names; post-lock shows unlocked upcoming picks. |
 | Scoring on locked fixtures? | Uses last committed pick at lock/result time; see [FINAL_PLAN.md](./FINAL_PLAN.md) for point values and KO multipliers. |
 
 ---
@@ -73,10 +74,17 @@ See [KO_ENVIRONMENT.md](./KO_ENVIRONMENT.md) (`seed:before-final` for final-pick
 | File | Coverage |
 |------|----------|
 | `src/__tests__/pickLocks.test.ts` | Global lock, results, unlock |
-| `src/__tests__/comparisonVisibility.test.ts` | Group / KO visibility |
+| `src/__tests__/comparisonVisibility.test.ts` | Group / KO visibility; `isUpcomingFixture` |
+| `src/__tests__/crowdStatPool.test.ts` | Unified pool, sampling, anonymization |
+| `src/server/__tests__/statistics.service.test.ts` | `computeStatistics` pre/post lock |
 | `src/__tests__/lockingPolicy.test.ts` | Policy assertions vs this doc |
+| `src/__tests__/groupStageKickoffs.test.ts` | Official group kickoff schedule regression |
 | `src/__tests__/knockoutFixtureAvailability.test.ts` | Per-fixture KO unlock, API mapping with stored results |
 | `src/server/__tests__/api.integration.test.ts` | Lock/unlock API, 72 gate, global lock |
+| `src/server/__tests__/tournament.integration.test.ts` | Leaderboard scoring, KO unlock, DB upsert |
+| `src/server/__tests__/database.integration.test.ts` | Migrations and data-protection guards |
+| `src/server/__tests__/security.integration.test.ts` | Tamper resistance and admin isolation |
+| `src/__tests__/tournamentRobustness.test.ts` | Validation and scoring invariants |
 
 ---
 

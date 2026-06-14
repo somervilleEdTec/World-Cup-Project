@@ -14,8 +14,6 @@ export function GroupStandingsTable({ standings }: { standings: GroupRow[] }) {
             <th>W</th>
             <th>D</th>
             <th>L</th>
-            <th>GF</th>
-            <th>GA</th>
             <th>Pts</th>
           </tr>
         </thead>
@@ -30,8 +28,6 @@ export function GroupStandingsTable({ standings }: { standings: GroupRow[] }) {
                 <td>{row.w}</td>
                 <td>{row.d}</td>
                 <td>{row.l}</td>
-                <td>{row.gf}</td>
-                <td>{row.ga}</td>
                 <td>{row.pts}</td>
               </tr>
             );

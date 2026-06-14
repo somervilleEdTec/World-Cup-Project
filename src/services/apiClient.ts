@@ -1,4 +1,4 @@
-import { LeaderboardResponse, TournamentBonusPick, Pick } from '../types';
+import { LeaderboardResponse, StatisticsResponse, TournamentBonusPick, Pick } from '../types';
 
 /** Same-origin — Express in prod, Vite /api proxy in dev. Override only when API is on another host. */
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? '';
@@ -117,6 +117,30 @@ export async function listPlayers() {
   }>('/api/admin/players');
 }
 
+export async function deletePlayer(userId: string) {
+  return request<{ ok: true }>(`/api/admin/players/${encodeURIComponent(userId)}`, {
+    method: 'DELETE'
+  });
+}
+
+export async function fetchAdminFixtures() {
+  return request<{
+    fixtures: Array<{
+      id: string;
+      stage: string;
+      group?: string;
+      kickoff: string;
+      homeTeamId: string;
+      awayTeamId: string;
+      hasResult: boolean;
+    }>;
+  }>('/api/admin/fixtures');
+}
+
+export async function runPredictionLocks() {
+  return request<{ ok: true }>('/api/system/locks/run', { method: 'POST' });
+}
+
 export async function fetchPredictionState() {
   return request('/api/predictions/state');
 }
@@ -147,6 +171,10 @@ export async function commitDraft() {
 
 export async function fetchLeaderboard() {
   return request<LeaderboardResponse>('/api/leaderboard');
+}
+
+export async function fetchStatistics() {
+  return request<StatisticsResponse>('/api/statistics');
 }
 
 export async function runSync() {

@@ -5,6 +5,8 @@
 **Live site:** https://worldcup.dosums.uk (automated deploy from **`main`**)  
 **Repository:** https://github.com/somervilleEdTec/World-Cup-Project
 
+**Stats page:** `/comparison` — **Crowd Predictions** (six cards: personal stat + pinned ladder swing + crowd mix) and **By Fixture** (head-to-head player predictions).
+
 ---
 
 ## Branches
@@ -71,7 +73,7 @@ curl https://worldcup.dosums.uk/api/health
 |----------|---------|
 | `DATABASE_URL` | PostgreSQL (optional); omit for SQLite `data.db` |
 | `ADMIN_USERNAME` / `ADMIN_PASSWORD` | Bootstrap organiser account |
-| `FOOTBALL_DATA_TOKEN` | football-data.org API |
+| `FOOTBALL_DATA_TOKEN` | football-data.org API (`FOOTBALL_API_KEY` accepted as alias) |
 | `VITE_API_BASE_URL` | Frontend API origin (production: `https://worldcup.dosums.uk`) |
 | `PORT` | API port (default `8787`) |
 

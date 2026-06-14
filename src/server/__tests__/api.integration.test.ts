@@ -1,6 +1,7 @@
 // @vitest-environment node
 import { describe, it, expect, afterAll, beforeEach } from 'vitest';
 import request from 'supertest';
+import { getFootballDataToken } from '../../lib/runtimeConfig';
 import { setupTestServer, teardownTestServer } from '../testHarness';
 import { adminToken, createPlayer, loginPlayerReady } from './authHelpers';
 import type { Express } from 'express';
@@ -205,7 +206,7 @@ describe('API integration', () => {
       .get('/api/admin/mapping-diagnostics')
       .set('Authorization', `Bearer ${token}`);
 
-    if (process.env.FOOTBALL_DATA_TOKEN) {
+    if (getFootballDataToken()) {
       expect(res.status).toBe(200);
       expect(res.body.summary.groupStageTotal).toBe(72);
       expect(res.body.totals.providerFixtures).toBe(104);
@@ -235,6 +236,36 @@ describe('API integration', () => {
       .set('Authorization', `Bearer ${token}`);
     expect(state.body.bonusCommitted).toBeTruthy();
     expect(state.body.bonusDraft).toBeUndefined();
+  });
+
+  it('returns statistics API with crowdCards shape', async () => {
+    await createPlayer(app, 'Stats A', 'abc');
+    await createPlayer(app, 'Stats B', 'abc');
+    const tokenA = await loginPlayerReady(app, 'Stats A', 'abc', 'xyz');
+    const tokenB = await loginPlayerReady(app, 'Stats B', 'abc', 'xyz');
+
+    for (const matchId of ['g-a-1', 'g-a-2']) {
+      await request(app)
+        .post('/api/predictions/draft')
+        .set('Authorization', `Bearer ${tokenA}`)
+        .send({ matchId, homeScore: 2, awayScore: 1 });
+      await request(app)
+        .post('/api/predictions/draft')
+        .set('Authorization', `Bearer ${tokenB}`)
+        .send({ matchId, homeScore: 2, awayScore: 1 });
+    }
+
+    const res = await request(app).get('/api/statistics');
+    expect(res.status).toBe(200);
+    expect(res.body.meta.playerCount).toBe(2);
+    expect(typeof res.body.meta.groupPhaseLocked).toBe('boolean');
+    expect(typeof res.body.meta.upcomingFixtureCount).toBe('number');
+    expect(Array.isArray(res.body.crowdCards)).toBe(true);
+    expect(res.body.meta.cardCount).toBe(res.body.crowdCards.length);
+    if (res.body.crowdCards.length > 0) {
+      expect(res.body.crowdCards[0]).toHaveProperty('id');
+      expect(res.body.crowdCards[0]).toHaveProperty('kind');
+    }
   });
 
   it('returns health check', async () => {

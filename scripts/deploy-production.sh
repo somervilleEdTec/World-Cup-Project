@@ -42,8 +42,9 @@ set -a
 source .env
 set +a
 
-if [[ -z "${FOOTBALL_DATA_TOKEN:-}" ]]; then
-  echo "FOOTBALL_DATA_TOKEN is required in .env for live results."
+# shellcheck disable=SC1091
+source "$(dirname "$0")/lib/footballToken.sh"
+if ! require_football_data_token; then
   exit 1
 fi
 
@@ -180,6 +181,13 @@ if ! npm run migrate; then
   echo "ERROR: migrate failed or was blocked — deploy aborted to protect stored predictions."
   echo "See docs/DATA_PROTECTION.md for alternative solutions."
   exit 1
+fi
+
+echo "==> maintenance: remove duplicate non-admin organiser player (if present)"
+if sqlite3 "${SQLITE_PATH:-data.db}" "SELECT 1 FROM users WHERE LOWER(display_name) = LOWER('Admin Tomsom') AND is_admin = 0 LIMIT 1;" 2>/dev/null | grep -q 1; then
+  npm run db:remove-player -- "Admin Tomsom"
+else
+  echo "No duplicate Admin Tomsom player account — skip."
 fi
 
 echo "==> build"

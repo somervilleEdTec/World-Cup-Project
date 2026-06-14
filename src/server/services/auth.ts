@@ -33,6 +33,19 @@ function normalizeName(name: string): string {
   return name.trim();
 }
 
+/** Collapse spaces for reserved-name checks (blocks "Admin Tomsom" vs AdminTomsom). */
+function compactDisplayName(name: string): string {
+  return normalizeName(name).replace(/\s+/g, '').toLowerCase();
+}
+
+export function normalizeDisplayName(name: string): string {
+  return normalizeName(name);
+}
+
+export function isReservedOrganiserDisplayName(name: string): boolean {
+  return compactDisplayName(name) === compactDisplayName(BOOTSTRAP_ADMIN_USERNAME);
+}
+
 type UserRow = {
   id: string;
   password_hash: string;
@@ -96,7 +109,7 @@ export async function createPlayerAccount(
   if (name.length < 2) {
     throw new Error('Name must be at least 2 characters');
   }
-  if (name.toLowerCase() === normalizeName(BOOTSTRAP_ADMIN_USERNAME).toLowerCase()) {
+  if (isReservedOrganiserDisplayName(name)) {
     throw new Error('That username is reserved for the organiser account');
   }
   if (initialPassword.length < 1 || initialPassword.length > PLAYER_PASSWORD_MAX_LENGTH) {
@@ -213,6 +226,27 @@ export async function requireAdmin(token: string | undefined): Promise<AuthUser>
   const user = await requireUser(token);
   if (!user.isAdmin) throw new Error('Admin only');
   return user;
+}
+
+export async function deletePlayerAccount(userId: string): Promise<void> {
+  const db = getDb();
+  const row = await db.get<{ id: string; is_admin: number; display_name: string }>(
+    `SELECT id, is_admin, display_name FROM users WHERE id = ?`,
+    [userId]
+  );
+  if (!row) {
+    throw new Error('Player not found');
+  }
+  if (row.is_admin === 1 || isReservedOrganiserDisplayName(row.display_name)) {
+    throw new Error('Cannot delete admin or organiser accounts');
+  }
+
+  await db.transaction(async (tx) => {
+    await tx.run(`DELETE FROM sessions WHERE user_id = ?`, [userId]);
+    await tx.run(`DELETE FROM predictions WHERE user_id = ?`, [userId]);
+    await tx.run(`DELETE FROM prediction_meta WHERE user_id = ?`, [userId]);
+    await tx.run(`DELETE FROM users WHERE id = ?`, [userId]);
+  });
 }
 
 export async function listPlayers(): Promise<

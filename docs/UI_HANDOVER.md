@@ -1,8 +1,8 @@
 # UI / UX handover
 
-**Last updated:** 2026-06-02  
+**Last updated:** 2026-06-14  
 **Branches:** `main` (production) · `Debug` (development) — [BRANCHING.md](./BRANCHING.md)  
-**Status:** Owner polish + KO-environment UX **merged to `main`** (2026-06-02). See [HANDOVER.md](./HANDOVER.md) for current behaviour.
+**Status:** Owner polish + KO-environment UX **merged to `main`**. Group kickoffs + touch inputs fixed 2026-06-05. See [HANDOVER.md](./HANDOVER.md).
 
 ---
 
@@ -23,13 +23,15 @@
 | Area | File(s) | Notes |
 |------|---------|--------|
 | **My Predictions** | `src/pages/MyPicksPage.tsx` | 7 phase tabs; projected/actual tables; locked text view |
-| **Fixture card** | `src/components/FixturePickCard.tsx` | Prediction / result / points per fixture |
+| **Fixture card** | `src/components/FixturePickCard.tsx` | Prediction / result / points; touch focus clears score input |
 | **Group tables** | `src/components/GroupStandingsTable.tsx` | Projected + actual standings |
 | **Team picker** | `src/components/TeamSelect.tsx` | Flags + A–Z names |
 | **Layout / nav** | `src/components/AppLayout.tsx`, `src/styles/app.css` | Mobile 2×2 bottom nav |
 | **Welcome + rules** | `src/pages/WelcomePage.tsx` | Rules on welcome; no `/rules` |
 | **Login** | `src/pages/LoginPage.tsx` | Name + password + join password |
-| **Comparison** | `src/pages/ComparisonPage.tsx` | Fixture picker |
+| **Stats** | `src/pages/ComparisonPage.tsx` | Route `/comparison` (nav label **Stats**). Two tabs: **Crowd Predictions** (default) and **By Fixture** |
+| **Crowd Predictions** | `src/components/stats/CrowdStatsPanel.tsx`, `CrowdStatsGrid.tsx`, `CrowdStatCard.tsx`, `PersonalStatCard.tsx`, `CrowdStatsHeader.tsx` | Bento grid of **6** cards; slot 1 pinned **personal** stat (logged in); slot 2 pinned **If this scoreline lands**; **Shuffle stats** re-fetches; pre-lock dashed border + hidden team names |
+| **By Fixture** | `src/pages/ComparisonPage.tsx` | Fixture picker; player prediction table with colour-coded accuracy |
 | **League table** | `src/pages/LeagueTablePage.tsx` | Leaderboard |
 | **Admin** | `src/pages/AdminPage.tsx` | Sync / diagnostics |
 
@@ -60,6 +62,8 @@ Styling: **`src/styles/app.css` only** (no Tailwind).
 3. **SVG flags** — not emoji; custom `TeamSelect` (not native `<option>` images).
 4. **Lock / Unlock group** — `accepted_groups` in DB; unlock disabled when group has official results ([LOCKING.md](./LOCKING.md)).
 5. **Match picks** — POST `/api/predictions/draft` writes **committed** rows (no UI commit step).
+6. **All kickoffs** — official FIFA UTC for 72 group + 32 knockout fixtures in `officialKickoffs.ts`; displayed in BST via `formatKickoffBst`; DB sync may override.
+7. **Touch score entry** — on touch/coarse pointer, focusing a score field clears it; blur without typing restores the previous value.
 
 ---
 
@@ -79,7 +83,8 @@ http://localhost:8787/login
 |------|---------|
 | My Predictions | Per-round KO tabs; locked fixtures as text; points per fixture |
 | Group Stage | Actual standings table below projected |
-| Comparison | BST times; green/amber/red; KO hidden until kickoff |
+| Stats — By Fixture | BST times; green/amber/red; KO hidden until kickoff |
+| Stats — Crowd Predictions | Random bento grid (hero, match bars/donut, facts, group, outlook); upcoming fixtures only; shuffle button |
 | League Table | Bonus Points column; total Points last and bold |
 | Terminology | User-facing **prediction** throughout |
 | Local testing | `npm run seed:ko-environment` — [KO_ENVIRONMENT.md](./KO_ENVIRONMENT.md) |
@@ -98,6 +103,32 @@ http://localhost:8787/login
 | 8 | Leaderboard | Two players (admin-created) | Both listed (non-admin) | 2 users on `/api/leaderboard` | Verified |
 | 9 | Group unlock (API) | Lock group A, insert result for g-a-1, unlock | 400 — cannot unlock | Works | Verified (2026-06-03) |
 | 10 | Results lock (API) | Edit g-a-1 after official result | 400 — official result | Works | Verified (2026-06-03) |
+| 11 | Group kickoffs | View g-a-3, g-l-1 on My Picks | Matchday 2/1 FIFA dates (not staggered per group) | Was wrong from game 2+ | **Fixed** — PR #25, `groupStageKickoffs.ts` (2026-06-05) |
+| 12 | Touch score inputs | Tap score field on phone/tablet | Field clears for fresh entry | Hard to replace existing digits | **Fixed** — touch focus clear (2026-06-05) |
+| 13 | Stats — Crowd Predictions | Open Stats tab; click Shuffle stats | 6 mixed infographic cards for upcoming fixtures; personal stat pinned first when logged in; fresh mix on shuffle | Fixed dashboard showed all matches/groups | **Fixed** — unified random pool + bento grid (2026-06-12); personal + pinned ladder (2026-06-14) |
+
+---
+
+## 8. Crowd Predictions (Stats tab)
+
+**Route:** `/comparison` (default tab: Crowd Predictions). Legacy `/statistics` redirects here.
+
+| Behaviour | Detail |
+|-----------|--------|
+| Card count | **6** per page load or shuffle |
+| Pinned layout | **Slot 1:** personal stat (when logged in) — rotates on shuffle. **Slot 2:** single **If this scoreline lands** ladder card. **Slots 3–6:** sampled crowd cards |
+| Personal stats | Ladder move, you vs crowd, contrarian pick, nearest rival, hive mind score, group order diff — scoped to **next / second-next kickoff** |
+| Fixture scope | **Upcoming only** — no kicked-off or resulted fixtures in match-level stats |
+| Pre-lock | Teaser facts and anonymized aggregates; no team names; dashed mystery border |
+| Post-lock | Full team names, match consensus bars, group/outlook infographics, volatile fixture + rank cluster cards |
+| Subtitles | Every panel has an uppercase kicker (`.crowd-stat-panel-kicker`) explaining what the stat shows |
+| Group standings | **Consensus** cards show the crowd's modal top-4 order; **divided** cards show who people tip to win |
+| Shuffle | **Shuffle stats** button re-calls `GET /api/statistics` for a new random subset |
+| API | `GET /api/statistics` (optional Bearer for personal stats) — `{ meta, crowdCards }` |
+
+**Visual types:** `personal`, `ladder`, `hero`, `fixture`, `standings`, `podium`, `volatile`, `cluster`, `insight` (fact / battle / spotlight).
+
+**Key files:** `src/lib/crowdStatPool.ts`, `src/lib/personalStats.ts`, `src/lib/upcomingFixtures.ts`, `src/server/services/statistics.ts`, `src/components/stats/*`.
 
 ---
 

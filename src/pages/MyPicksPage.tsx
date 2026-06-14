@@ -23,10 +23,13 @@ import {
   groupHasOfficialResults
 } from '../lib/pickLocks';
 import { computeMissingPicks } from '../lib/missingPicks';
+import { formatKickoffBst } from '../lib/formatDateTime';
+import { getFirstMatchKickoff } from '../lib/kickoffOverrides';
 import {
   computeGroupStandings,
   isKnockoutFixtureLocked,
   predictionLockReached,
+  predictionLockTimeIso,
   shouldLockGroup
 } from '../lib/tournamentLogic';
 import { ActualResult, Match, Pick, Stage, TournamentBonusPick } from '../types';
@@ -75,6 +78,7 @@ interface RemoteState {
   bonusCommitted?: TournamentBonusPick;
   commitState: { groupLocked: boolean };
   confirmedKnockoutFixtures?: Match[];
+  groupStageFixtures?: Match[];
   officialResults?: Record<string, ActualResult>;
 }
 
@@ -96,6 +100,7 @@ export function MyPicksPage() {
   const [pendingGroupPicks, setPendingGroupPicks] = useState<Record<string, Pick>>({});
   /** Per-group voluntary lock (UI + server); each group is independent. */
   const [acceptedGroupsLocal, setAcceptedGroupsLocal] = useState<string[]>([]);
+  const [fixturesLoaded, setFixturesLoaded] = useState(false);
 
   const [nowIso, setNowIso] = useState(() => new Date().toISOString());
   useEffect(() => {
@@ -119,6 +124,7 @@ export function MyPicksPage() {
         acceptedGroups: accepted
       });
       setAcceptedGroupsLocal(accepted);
+      setFixturesLoaded(true);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to load prediction state';
       if (isAuthErrorMessage(message)) {
@@ -135,10 +141,24 @@ export function MyPicksPage() {
     void refresh();
   }, []);
 
+  const groupStageFixtures = state.groupStageFixtures ?? (fixturesLoaded ? [] : groupMatches);
   const activeGroup = groupSequence[groupIndex];
-  const activeGroupMatches = groupMatches.filter((match) => match.group === activeGroup);
+  const activeGroupMatches = useMemo(
+    () =>
+      groupStageFixtures
+        .filter((match) => match.group === activeGroup)
+        .sort((a, b) => a.kickoff.localeCompare(b.kickoff) || a.id.localeCompare(b.id)),
+    [groupStageFixtures, activeGroup]
+  );
   const calendarGroupLocked = shouldLockGroup(nowIso);
   const tournamentLocked = calendarGroupLocked;
+
+  const firstKickoffIso = useMemo(() => {
+    if (groupStageFixtures.length === 0) return getFirstMatchKickoff();
+    return [...groupStageFixtures].sort((a, b) => a.kickoff.localeCompare(b.kickoff))[0]!.kickoff;
+  }, [groupStageFixtures]);
+  const tournamentDeadlineIso = predictionLockTimeIso(firstKickoffIso);
+  const groupStageDeadlineIso = predictionLockTimeIso(firstKickoffIso);
 
   const userGroupLocked = acceptedGroupsLocal.includes(activeGroup);
 
@@ -240,7 +260,7 @@ export function MyPicksPage() {
   }, []);
 
   const ensureDefaultPicksForGroup = useCallback(async () => {
-    const matches = groupMatches.filter((match) => match.group === activeGroup);
+    const matches = groupStageFixtures.filter((match) => match.group === activeGroup);
     for (const match of matches) {
       if (mergedPicks[match.id] !== undefined) continue;
       await saveDraftPick(defaultDrawPick(match.id));
@@ -266,10 +286,10 @@ export function MyPicksPage() {
         allGroupPicksCommitted: computeAllGroupPicksCommitted(committedPicks)
       };
     });
-  }, [activeGroup, mergedPicks]);
+  }, [activeGroup, groupStageFixtures, mergedPicks]);
 
   const flushPendingForGroup = async (options?: { refresh?: boolean }) => {
-    const matches = groupMatches.filter((match) => match.group === activeGroup);
+    const matches = groupStageFixtures.filter((match) => match.group === activeGroup);
     for (const match of matches) {
       const pick = pendingGroupPicks[match.id];
       if (pick) {
@@ -289,7 +309,15 @@ export function MyPicksPage() {
   };
 
   const changeGroupIndex = (nextIndex: number) => {
-    void flushPendingForGroup().finally(() => setGroupIndex(nextIndex));
+    const wrapped =
+      ((nextIndex % groupSequence.length) + groupSequence.length) % groupSequence.length;
+    void flushPendingForGroup().finally(() => setGroupIndex(wrapped));
+  };
+
+  const selectGroup = (groupId: string) => {
+    const nextIndex = groupSequence.indexOf(groupId);
+    if (nextIndex < 0 || nextIndex === groupIndex) return;
+    changeGroupIndex(nextIndex);
   };
 
   const changePhase = (nextPhase: PicksPhase) => {
@@ -335,10 +363,25 @@ export function MyPicksPage() {
     <section className="stack">
       <article className="card">
         <h2>My Predictions</h2>
+        {(!tournamentLocked || !calendarGroupLocked) && (
+          <div className="prediction-deadlines">
+            {!tournamentLocked && (
+              <p className="prediction-deadline">
+                <strong>Tournament Predictions deadline:</strong>{' '}
+                {formatKickoffBst(tournamentDeadlineIso)}
+              </p>
+            )}
+            {!calendarGroupLocked && (
+              <p className="prediction-deadline">
+                <strong>Group Stage deadline:</strong> {formatKickoffBst(groupStageDeadlineIso)}
+              </p>
+            )}
+          </div>
+        )}
         <p>
           {tournamentLocked
             ? 'Group-stage and tournament result predictions are now locked.'
-            : 'Scores save automatically. Lock a group when you are happy with it — untouched matches count as 0-0 draws.'}
+            : 'Scores save automatically. Lock a group to see your predicted standings.'}
         </p>
         <div className="missing-picks">
           <h3>You have the following missing predictions:</h3>
@@ -382,6 +425,22 @@ export function MyPicksPage() {
             );
           })}
         </div>
+        {phase === 'group' && (
+          <div className="group-stage-tabs" role="tablist" aria-label="Group stage groups">
+            {groupSequence.map((groupId) => (
+              <button
+                key={groupId}
+                type="button"
+                role="tab"
+                aria-selected={groupId === activeGroup}
+                className={groupId === activeGroup ? 'active-tab' : ''}
+                onClick={() => selectGroup(groupId)}
+              >
+                {groupId}
+              </button>
+            ))}
+          </div>
+        )}
       </article>
 
       {phase === 'group' && (
@@ -413,7 +472,7 @@ export function MyPicksPage() {
                 pick={mergedPicks[match.id]}
                 actual={officialResults[match.id]}
                 nowIso={nowIso}
-                groupUserLocked={userGroupLocked && !matchHasResult}
+                groupUserLocked={userGroupLocked}
                 inputsDisabled={calendarGroupLocked || matchKickoffLocked || matchHasResult}
                 showLockedSummary={!userGroupLocked && (matchKickoffLocked || matchHasResult)}
                 onSave={saveMatchPick}
@@ -484,18 +543,10 @@ export function MyPicksPage() {
             >
               {userGroupLocked ? 'Unlock group' : 'Lock group'}
             </button>
-            <button
-              type="button"
-              disabled={groupIndex === 0}
-              onClick={() => changeGroupIndex(groupIndex - 1)}
-            >
+            <button type="button" onClick={() => changeGroupIndex(groupIndex - 1)}>
               Previous Group
             </button>
-            <button
-              type="button"
-              disabled={groupIndex === groupSequence.length - 1}
-              onClick={() => changeGroupIndex(groupIndex + 1)}
-            >
+            <button type="button" onClick={() => changeGroupIndex(groupIndex + 1)}>
               Next Group
             </button>
           </div>

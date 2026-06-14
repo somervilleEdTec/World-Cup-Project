@@ -31,7 +31,7 @@
 | [HANDOVER.md](./HANDOVER.md) | Architecture, API, file map, env vars |
 | [KO_ENVIRONMENT.md](./KO_ENVIRONMENT.md) | `npm run seed:debug` and variants |
 | [LOCKING.md](./LOCKING.md) | Prediction lock specification |
-| [UI_HANDOVER.md](./UI_HANDOVER.md) | UI surfaces and bug log |
+| [UI_HANDOVER.md](./UI_HANDOVER.md) | UI surfaces, Crowd Predictions (§8), bug log |
 | [AGENT_PROMPT.md](./AGENT_PROMPT.md) | Copy-paste prompt for agent sessions |
 | [TODO.md](./TODO.md) | Backlog and current focus |
 

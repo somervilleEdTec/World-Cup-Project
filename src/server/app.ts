@@ -4,12 +4,14 @@ import { z } from 'zod';
 import {
   changePassword,
   createPlayerAccount,
+  deletePlayerAccount,
   listPlayers,
   login,
   requireAdmin,
   requireUser,
   assertPlayerCanPredict
 } from './services/auth';
+import { getMatches } from '../lib/matchResolver';
 import {
   commitDraft,
   getUserPredictionState,
@@ -20,7 +22,9 @@ import {
   setGroupAccepted,
   unlockGroupAccepted
 } from './services/predictions';
-import { computeLeaderboard } from './services/leaderboard';
+import { computeLeaderboard, getResultsMap } from './services/leaderboard';
+import { computeStatistics } from './services/statistics';
+import { getFootballDataToken } from '../lib/runtimeConfig';
 import { buildMappingDiagnostics } from './services/mappingDiagnostics';
 import {
   getSyncStatus,
@@ -319,6 +323,26 @@ export function createApp(): Express {
     res.json(await computeLeaderboard());
   });
 
+  app.get('/api/statistics', async (req: Request, res: Response) => {
+    try {
+      let currentUserId: string | undefined;
+      const token = authToken(req);
+      if (token) {
+        try {
+          const user = await requireUser(token);
+          currentUserId = user.id;
+        } catch {
+          currentUserId = undefined;
+        }
+      }
+      return res.json(await computeStatistics(new Date().toISOString(), currentUserId));
+    } catch (error) {
+      return res
+        .status(500)
+        .json({ error: error instanceof Error ? error.message : 'Unable to load statistics' });
+    }
+  });
+
   app.get('/api/admin/players', async (req: Request, res: Response) => {
     try {
       await requireAdmin(authToken(req));
@@ -347,6 +371,41 @@ export function createApp(): Express {
     }
   });
 
+  app.delete('/api/admin/players/:userId', async (req: Request, res: Response) => {
+    try {
+      await requireAdmin(authToken(req));
+      await deletePlayerAccount(String(req.params.userId));
+      return res.json({ ok: true });
+    } catch (error) {
+      return res
+        .status(adminRouteFailureStatus(error))
+        .json({ error: error instanceof Error ? error.message : 'Could not delete player' });
+    }
+  });
+
+  app.get('/api/admin/fixtures', async (req: Request, res: Response) => {
+    try {
+      await requireAdmin(authToken(req));
+      const results = await getResultsMap();
+      const fixtures = getMatches({}, results)
+        .sort((a, b) => new Date(a.kickoff).getTime() - new Date(b.kickoff).getTime())
+        .map((match) => ({
+          id: match.id,
+          stage: match.stage,
+          group: match.group,
+          kickoff: match.kickoff,
+          homeTeamId: match.homeTeamId,
+          awayTeamId: match.awayTeamId,
+          hasResult: Boolean(results[match.id])
+        }));
+      return res.json({ fixtures });
+    } catch (error) {
+      return res
+        .status(authFailureStatus(error))
+        .json({ error: error instanceof Error ? error.message : 'Unauthorized' });
+    }
+  });
+
   app.get('/api/admin/sync-status', async (req: Request, res: Response) => {
     try {
       await requireAdmin(authToken(req));
@@ -361,8 +420,10 @@ export function createApp(): Express {
   app.post('/api/admin/sync/run', async (req: Request, res: Response) => {
     try {
       await requireAdmin(authToken(req));
-      const apiToken = process.env.FOOTBALL_DATA_TOKEN;
-      if (!apiToken) return res.status(400).json({ error: 'FOOTBALL_DATA_TOKEN missing' });
+      const apiToken = getFootballDataToken();
+      if (!apiToken) {
+        return res.status(400).json({ error: 'FOOTBALL_DATA_TOKEN or FOOTBALL_API_KEY missing' });
+      }
       const result = await runFullFootballDataSync(apiToken);
       return res.json(result);
     } catch (error) {
@@ -375,8 +436,10 @@ export function createApp(): Express {
   app.get('/api/admin/mapping-diagnostics', async (req: Request, res: Response) => {
     try {
       await requireAdmin(authToken(req));
-      const apiToken = process.env.FOOTBALL_DATA_TOKEN;
-      if (!apiToken) return res.status(400).json({ error: 'FOOTBALL_DATA_TOKEN missing' });
+      const apiToken = getFootballDataToken();
+      if (!apiToken) {
+        return res.status(400).json({ error: 'FOOTBALL_DATA_TOKEN or FOOTBALL_API_KEY missing' });
+      }
       return res.json(await buildMappingDiagnostics(apiToken));
     } catch (error) {
       return res
@@ -388,8 +451,10 @@ export function createApp(): Express {
   app.post('/api/admin/fixtures/sync', async (req: Request, res: Response) => {
     try {
       await requireAdmin(authToken(req));
-      const apiToken = process.env.FOOTBALL_DATA_TOKEN;
-      if (!apiToken) return res.status(400).json({ error: 'FOOTBALL_DATA_TOKEN missing' });
+      const apiToken = getFootballDataToken();
+      if (!apiToken) {
+        return res.status(400).json({ error: 'FOOTBALL_DATA_TOKEN or FOOTBALL_API_KEY missing' });
+      }
       const result = await syncKickoffsFromFootballData(apiToken);
       return res.json(result);
     } catch (error) {

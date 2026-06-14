@@ -10,6 +10,12 @@ export function isDebugLocalMode(): boolean {
   return envFlag('DEBUG_LOCAL');
 }
 
+/** football-data.org API token — FOOTBALL_DATA_TOKEN preferred, FOOTBALL_API_KEY as alias. */
+export function getFootballDataToken(): string | undefined {
+  const token = process.env.FOOTBALL_DATA_TOKEN?.trim() || process.env.FOOTBALL_API_KEY?.trim();
+  return token || undefined;
+}
+
 export function getResultsMode(): ResultsMode {
   const mode = process.env.RESULTS_MODE?.toLowerCase();
   if (mode === 'random' || mode === 'none' || mode === 'live') {
@@ -18,7 +24,7 @@ export function getResultsMode(): ResultsMode {
   if (isDebugLocalMode()) {
     return 'none';
   }
-  if (process.env.FOOTBALL_DATA_TOKEN) {
+  if (getFootballDataToken()) {
     return 'live';
   }
   return 'none';
@@ -29,5 +35,5 @@ export function shouldSyncFootballData(): boolean {
   if (isDebugLocalMode()) {
     return false;
   }
-  return getResultsMode() === 'live' && Boolean(process.env.FOOTBALL_DATA_TOKEN);
+  return getResultsMode() === 'live' && Boolean(getFootballDataToken());
 }

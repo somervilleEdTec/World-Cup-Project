@@ -119,12 +119,23 @@ Two states:
 2. **Welcome**
 3. **My Picks** (group wizard, bonus picks, KO panels)
 4. **League Table**
-5. **Comparison** (next fixture, all players’ committed picks)
+5. **Stats** (`/comparison`) — **Crowd Predictions** (random crowd stats for upcoming fixtures) and **By Fixture** (all players’ committed picks for a chosen match)
 
 ## Comparison visibility
 
 - **Group:** other players’ picks visible after first kickoff (group lock).
 - **Knockout:** other players’ predictions visible after that fixture’s kickoff (when locked).
+
+## Crowd Predictions (Stats tab)
+
+- **Six cards** per page load or shuffle — pinned personal stat (when logged in), pinned ladder swing, then four sampled crowd cards.
+- **Personal stats** (rotate on shuffle): your ladder move, you vs crowd, contrarian pick, nearest rival, hive mind score, group order vs crowd.
+- **League stats** in the sample pool include most volatile fixture and neck-and-neck rank cluster.
+- **Panel subtitles** on every card (e.g. “If this scoreline lands”, “Your next pick”).
+- **Group standings** show the crowd's coherent modal top-4 order (consensus) or group-winner race (divided).
+- **Upcoming fixtures only** for match-level stats (next / second-next kickoff for pinned cards).
+- **Pre-lock:** teaser stats without team names until first kickoff.
+- **Post-lock:** full names and infographics for unlocked upcoming fixtures.
 
 ## Messaging (required in UI)
 
@@ -135,10 +146,13 @@ Two states:
 
 ## football-data.org Integration
 
-- Poll fixtures/results on quota-safe schedule.
+- Poll fixtures/results on quota-safe schedule (kickoffs every 6 hours, results every 2 minutes).
+- Static group-stage kickoffs use the official FIFA UTC schedule (`src/data/groupStageKickoffs.ts`); production DB overrides via sync when mapped.
+- football-data mapping scopes team pairs by provider group code (`GROUP_A` → `A`) where available.
 - Update KO availability as teams qualify.
 - Recalculate leaderboard after results finalize.
 - Manual admin override always available.
+- Regenerate kickoff map: `FOOTBALL_DATA_TOKEN=... npx tsx scripts/generate-group-kickoffs.ts`
 
 ## Acceptance Criteria
 
