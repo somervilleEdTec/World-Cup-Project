@@ -1,7 +1,6 @@
 import { teams } from '../../data/tournament';
 import { TeamLabel } from '../TeamLabel';
 import { StatsTeamName } from './StatsTeamName';
-import { formatFixtureStageLabel } from '../../lib/fixtureLabels';
 import { CrowdStatCard as CrowdStatCardType } from '../../types';
 
 interface PersonalStatCardProps {
@@ -21,14 +20,11 @@ function FixtureHeader({
   const awayTeam = teams.find((t) => t.id === card.awayTeamId);
 
   return (
-    <>
-      <div className="fixture-row">
-        {revealNames && homeTeam ? <TeamLabel team={homeTeam} /> : <span>Home</span>}
-        <strong>vs</strong>
-        {revealNames && awayTeam ? <TeamLabel team={awayTeam} /> : <span>Away</span>}
-      </div>
-      {card.stage && <p className="kicker">{formatFixtureStageLabel(card.stage, card.group)}</p>}
-    </>
+    <div className="fixture-row">
+      {revealNames && homeTeam ? <TeamLabel team={homeTeam} /> : <span>Home</span>}
+      <strong>vs</strong>
+      {revealNames && awayTeam ? <TeamLabel team={awayTeam} /> : <span>Away</span>}
+    </div>
   );
 }
 
@@ -60,32 +56,6 @@ function LadderMoveBody({ card }: { card: PersonalStatCardProps['card'] }) {
   );
 }
 
-function YouVsCrowdBody({ card }: { card: PersonalStatCardProps['card'] }) {
-  if (card.kind !== 'youVsCrowd') return null;
-
-  return (
-    <div className="personal-you-vs-crowd">
-      <div className="personal-pick-column personal-pick-column-you">
-        <span className="personal-pick-heading">You</span>
-        <span className="personal-pick-value">{card.yourPick}</span>
-      </div>
-      <div className="personal-scoreline-chips" aria-label="Crowd scoreline breakdown">
-        {(card.scorelineBreakdown ?? []).map((entry) => {
-          const isYou = entry.label === card.yourPick;
-          return (
-            <span
-              key={entry.label}
-              className={`personal-scoreline-chip${isYou ? ' personal-scoreline-chip-you' : ''}`}
-            >
-              {entry.label} · {entry.pct}%
-            </span>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
 function ContrarianBody({ card }: { card: PersonalStatCardProps['card'] }) {
   if (card.kind !== 'contrarian') return null;
   const width = Math.max(card.crowdPct ?? 0, 4);
@@ -108,16 +78,16 @@ function NearestRivalBody({ card }: { card: PersonalStatCardProps['card'] }) {
 
   return (
     <ul className="head-to-head-rows">
-      <li className="head-to-head-row personal-you-row">
-        <span className="head-to-head-rank">#{card.yourRank}</span>
-        <span className="head-to-head-name">You</span>
-        <span className="head-to-head-pick">{card.yourPick}</span>
-      </li>
-      <li className="head-to-head-row">
-        <span className="head-to-head-rank">#{card.rivalRank}</span>
-        <span className="head-to-head-name">{card.rivalName}</span>
-        <span className="head-to-head-pick">{card.rivalPick}</span>
-      </li>
+      {(card.nearbyPlayers ?? []).map((player) => (
+        <li
+          key={player.userId}
+          className={`head-to-head-row${player.isCurrentUser ? ' personal-you-row' : ''}`}
+        >
+          <span className="head-to-head-rank">#{player.rank}</span>
+          <span className="head-to-head-name">{player.isCurrentUser ? 'You' : player.displayName}</span>
+          <span className="head-to-head-pick">{player.pick}</span>
+        </li>
+      ))}
     </ul>
   );
 }
@@ -137,7 +107,6 @@ function HiveMindBody({ card }: { card: PersonalStatCardProps['card'] }) {
       <p className="personal-hive-detail">
         {card.matchCount} of {card.matchTotal} upcoming picks match the crowd favourite
       </p>
-      <p className="kicker">League average: {card.leagueAvgPct}%</p>
     </div>
   );
 }
@@ -153,9 +122,6 @@ function GroupDiffBody({
 
   return (
     <div className="personal-group-diff">
-      <p className="kicker">
-        {card.mismatchCount} position{card.mismatchCount === 1 ? '' : 's'} differ from the crowd
-      </p>
       <div className="personal-group-diff-columns">
         <div>
           <p className="personal-group-diff-heading">You</p>
@@ -205,16 +171,10 @@ export function PersonalStatCard({ card, revealNames }: PersonalStatCardProps) {
       <p className="crowd-stat-panel-kicker">{card.subtitle}</p>
       <FixtureHeader card={card} revealNames={revealNames} />
       {card.kind === 'ladderMove' && <LadderMoveBody card={card} />}
-      {card.kind === 'youVsCrowd' && <YouVsCrowdBody card={card} />}
       {card.kind === 'contrarian' && <ContrarianBody card={card} />}
       {card.kind === 'nearestRival' && <NearestRivalBody card={card} />}
       {card.kind === 'hiveMind' && <HiveMindBody card={card} />}
-      {card.kind === 'groupDiff' && (
-        <>
-          <h4>Group {card.groupId}</h4>
-          <GroupDiffBody card={card} revealNames={revealNames} />
-        </>
-      )}
+      {card.kind === 'groupDiff' && <GroupDiffBody card={card} revealNames={revealNames} />}
     </article>
   );
 }

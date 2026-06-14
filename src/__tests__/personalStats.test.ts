@@ -61,8 +61,8 @@ describe('buildHiveMindCard via buildPersonalStatPool', () => {
   });
 });
 
-describe('buildYouVsCrowdCard via buildPersonalStatPool', () => {
-  it('includes scoreline breakdown for all crowd predictions', () => {
+describe('buildNearestRivalCard via buildPersonalStatPool', () => {
+  it('includes all nearby players within stage threshold with picks, sorted by rank', () => {
     const users: UserPicks[] = [
       {
         userId: 'u1',
@@ -103,13 +103,14 @@ describe('buildYouVsCrowdCard via buildPersonalStatPool', () => {
       revealNames: true
     });
 
-    const youVsCrowd = pool.find((card) => card.kind === 'youVsCrowd');
-    expect(youVsCrowd).toBeDefined();
-    if (youVsCrowd && youVsCrowd.kind === 'youVsCrowd') {
-      expect(youVsCrowd.scorelineBreakdown?.length).toBeGreaterThan(1);
-      expect(
-        youVsCrowd.scorelineBreakdown?.some((entry) => entry.label === youVsCrowd.yourPick)
-      ).toBe(true);
+    const nearestRival = pool.find((card) => card.kind === 'nearestRival');
+    expect(nearestRival).toBeDefined();
+    if (nearestRival && nearestRival.kind === 'nearestRival') {
+      expect(nearestRival.nearbyPlayers?.length).toBeGreaterThanOrEqual(2);
+      const ranks = nearestRival.nearbyPlayers?.map((player) => player.rank) ?? [];
+      expect(ranks).toEqual([...ranks].sort((a, b) => a - b));
+      expect(nearestRival.nearbyPlayers?.some((player) => player.isCurrentUser)).toBe(true);
+      expect(nearestRival.nearbyPlayers?.every((player) => player.pick.length > 0)).toBe(true);
     }
   });
 });

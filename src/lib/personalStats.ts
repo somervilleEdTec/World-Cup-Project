@@ -1,13 +1,12 @@
 import { teams, groupMatches } from '../data/tournament';
 import { computeGroupPositions } from './groupStandings';
-import { evaluateMatchScoring } from './matchScoring';
+import { maxMatchPointsForStage } from './knockoutStageMultiplier';
 import {
   computeGroupConsensus,
   formatScorelineLabel,
   GroupConsensusItem,
   MatchConsensusItem,
   pickKey,
-  scorelinesForMatch,
   UserPicks
 } from './predictionStats';
 import { getUpcomingKickoffWindows } from './upcomingFixtures';
@@ -16,7 +15,7 @@ import {
   LadderSwingCandidate,
   rankPlayersForStats
 } from './leagueImpact';
-import { ActualResult, CrowdStatCard, Match, PickAlignment } from '../types';
+import { ActualResult, CrowdStatCard, Match, NearbyFixturePlayer } from '../types';
 
 export interface PersonalStatsInput {
   currentUserId: string;
@@ -48,29 +47,6 @@ function formatUserPickLabel(match: Match, pick: UserPicks['picks'][string]): st
   return formatScorelineLabel(pickKey({ ...pick, matchId: match.id }, match.stage, match));
 }
 
-function pickAlignment(
-  userPick: UserPicks['picks'][string],
-  modalLabel: string,
-  match: Match
-): PickAlignment {
-  const userLabel = formatUserPickLabel(match, userPick);
-  if (userLabel === modalLabel) return 'exact';
-  const simulated = modalLabel.match(/^(\d+)-(\d+)/);
-  if (!simulated) return 'bold';
-  const actual: ActualResult = {
-    matchId: match.id,
-    homeScore: Number(simulated[1]),
-    awayScore: Number(simulated[2])
-  };
-  const { correctResult } = evaluateMatchScoring(
-    { ...userPick, matchId: match.id },
-    actual,
-    match.stage,
-    match
-  );
-  return correctResult ? 'result' : 'bold';
-}
-
 function upcomingMatchesWithUserPick(input: PersonalStatsInput, user: UserPicks): Match[] {
   return input.matches
     .filter((match) => input.viewableUpcomingMatchIds.has(match.id))
@@ -84,19 +60,6 @@ function windowMatchesWithUserPick(
   const next = windows.next.filter((m) => userHasPick(user, m.id));
   if (next.length > 0) return next;
   return windows.secondNext.filter((m) => userHasPick(user, m.id));
-}
-
-function selectScorelineChips(
-  breakdown: ReturnType<typeof scorelinesForMatch>,
-  yourPick: string,
-  maxVisible = 5
-): ReturnType<typeof scorelinesForMatch> {
-  const top = breakdown.slice(0, maxVisible);
-  const yourEntry = breakdown.find((entry) => entry.label === yourPick);
-  if (!yourEntry || top.some((entry) => entry.label === yourPick)) {
-    return top;
-  }
-  return [...top.slice(0, maxVisible - 1), yourEntry];
 }
 
 const HIVE_MIND_MIN_MATCHES = 4;
@@ -145,38 +108,6 @@ function buildLadderMoveCard(
   };
 }
 
-function buildYouVsCrowdCard(input: PersonalStatsInput, user: UserPicks): CrowdStatCard | null {
-  const windows = getUpcomingKickoffWindows(input.matches, input.viewableUpcomingMatchIds);
-  const eligible = windowMatchesWithUserPick(windows, user);
-  if (eligible.length === 0) return null;
-
-  const match = eligible[0];
-  const consensus = input.matchConsensus.find((c) => c.matchId === match.id);
-  const modal = consensus?.topScorelines[0];
-  const pick = user.picks[match.id];
-  if (!modal || !pick) return null;
-
-  const yourPick = formatUserPickLabel(match, pick);
-  const breakdown = scorelinesForMatch(match, input.userPicks);
-
-  return {
-    id: `personal-you-vs-crowd-${user.userId}-${match.id}`,
-    visualType: 'personal',
-    kind: 'youVsCrowd',
-    subtitle: 'Your next pick',
-    matchId: match.id,
-    stage: match.stage,
-    group: match.group,
-    homeTeamId: match.homeTeamId,
-    awayTeamId: match.awayTeamId,
-    yourPick,
-    crowdPick: modal.label,
-    crowdPct: modal.pct,
-    alignment: pickAlignment(pick, modal.label, match),
-    scorelineBreakdown: selectScorelineChips(breakdown, yourPick)
-  };
-}
-
 function buildContrarianCard(input: PersonalStatsInput, user: UserPicks): CrowdStatCard | null {
   const windows = getUpcomingKickoffWindows(input.matches, input.viewableUpcomingMatchIds);
   const eligible = windowMatchesWithUserPick(windows, user);
@@ -212,6 +143,38 @@ function buildContrarianCard(input: PersonalStatsInput, user: UserPicks): CrowdS
   };
 }
 
+function buildNearbyPlayersForMatch(
+  input: PersonalStatsInput,
+  user: UserPicks,
+  match: Match,
+  ranked: ReturnType<typeof rankPlayersForStats>,
+  userIndex: number
+): NearbyFixturePlayer[] {
+  const userPoints = ranked[userIndex].points;
+  const threshold = maxMatchPointsForStage(match.stage);
+  const players: NearbyFixturePlayer[] = [];
+
+  for (let index = 0; index < ranked.length; index += 1) {
+    const player = ranked[index];
+    const leagueUser = input.userPicks.find((u) => u.userId === player.userId);
+    if (!leagueUser) continue;
+    const pick = leagueUser.picks[match.id];
+    if (!pick || pick.homeScore < 0) continue;
+    if (Math.abs(player.points - userPoints) > threshold) continue;
+
+    players.push({
+      userId: player.userId,
+      rank: index + 1,
+      displayName: player.name,
+      points: player.points,
+      pick: formatUserPickLabel(match, pick),
+      ...(player.userId === user.userId ? { isCurrentUser: true } : {})
+    });
+  }
+
+  return players.sort((a, b) => a.rank - b.rank);
+}
+
 function buildNearestRivalCard(input: PersonalStatsInput, user: UserPicks): CrowdStatCard | null {
   const ranked = rankPlayersForStats(input.userPicks, input.results);
   const userIndex = ranked.findIndex((p) => p.userId === user.userId);
@@ -220,45 +183,25 @@ function buildNearestRivalCard(input: PersonalStatsInput, user: UserPicks): Crow
   const windows = getUpcomingKickoffWindows(input.matches, input.viewableUpcomingMatchIds);
   const windowMatches = [...windows.next, ...windows.secondNext];
 
-  const neighbours = ranked
-    .map((p, i) => ({ player: p, rank: i + 1 }))
-    .filter((entry) => entry.player.userId !== user.userId)
-    .filter((entry) => Math.abs(entry.rank - (userIndex + 1)) <= 2)
-    .sort(
-      (a, b) =>
-        Math.abs(a.rank - (userIndex + 1)) - Math.abs(b.rank - (userIndex + 1)) || a.rank - b.rank
-    );
-
   for (const match of windowMatches) {
     const pick = user.picks[match.id];
     if (!pick || pick.homeScore < 0) continue;
-    const userLabel = formatUserPickLabel(match, pick);
 
-    for (const neighbour of neighbours) {
-      const rival = input.userPicks.find((u) => u.userId === neighbour.player.userId);
-      if (!rival) continue;
-      const rivalPick = rival.picks[match.id];
-      if (!rivalPick || rivalPick.homeScore < 0) continue;
-      const rivalLabel = formatUserPickLabel(match, rivalPick);
-      if (rivalLabel === userLabel) continue;
+    const nearbyPlayers = buildNearbyPlayersForMatch(input, user, match, ranked, userIndex);
+    if (nearbyPlayers.length < 2) continue;
 
-      return {
-        id: `personal-rival-${user.userId}-${rival.userId}-${match.id}`,
-        visualType: 'personal',
-        kind: 'nearestRival',
-        subtitle: 'Head to head on next fixture',
-        matchId: match.id,
-        stage: match.stage,
-        group: match.group,
-        homeTeamId: match.homeTeamId,
-        awayTeamId: match.awayTeamId,
-        yourRank: userIndex + 1,
-        rivalRank: neighbour.rank,
-        rivalName: rival.displayName,
-        yourPick: userLabel,
-        rivalPick: rivalLabel
-      };
-    }
+    return {
+      id: `personal-rival-${user.userId}-${match.id}`,
+      visualType: 'personal',
+      kind: 'nearestRival',
+      subtitle: 'Head to head on next fixture',
+      matchId: match.id,
+      stage: match.stage,
+      group: match.group,
+      homeTeamId: match.homeTeamId,
+      awayTeamId: match.awayTeamId,
+      nearbyPlayers
+    };
   }
 
   return null;
@@ -359,13 +302,12 @@ function buildGroupDiffCard(input: PersonalStatsInput, user: UserPicks): CrowdSt
       id: `personal-group-diff-${user.userId}-${groupId}`,
       visualType: 'personal',
       kind: 'groupDiff',
-      subtitle: 'Where you disagree',
+      subtitle: `Where you disagree — Group ${groupId}`,
       groupId,
       yourOrder,
       crowdOrder,
       yourOrderTeamIds,
-      crowdOrderTeamIds,
-      mismatchCount
+      crowdOrderTeamIds
     };
   }
 
@@ -378,7 +320,6 @@ export function buildPersonalStatPool(input: PersonalStatsInput): CrowdStatCard[
 
   const builders = [
     () => buildLadderMoveCard(input, user, input.pinnedLadder),
-    () => buildYouVsCrowdCard(input, user),
     () => buildContrarianCard(input, user),
     () => buildNearestRivalCard(input, user),
     () => buildHiveMindCard(input, user),

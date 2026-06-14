@@ -13,7 +13,7 @@ export function CrowdStatsPanel({ data, shuffling, onShuffle }: CrowdStatsPanelP
 
   return (
     <section className="stack">
-      <CrowdStatsHeader meta={meta} shuffling={shuffling} onShuffle={onShuffle} />
+      <CrowdStatsHeader shuffling={shuffling} onShuffle={onShuffle} />
       <CrowdStatsGrid
         cards={crowdCards}
         revealNames={meta.groupPhaseLocked}

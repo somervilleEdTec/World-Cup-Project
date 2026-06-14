@@ -10,10 +10,6 @@ export function RankClusterCard({ card }: RankClusterCardProps) {
   return (
     <article className="card crowd-stat-card crowd-stat-card-cluster">
       <p className="crowd-stat-panel-kicker">{card.subtitle}</p>
-      <p className="kicker">
-        {card.players.length} players within {card.pointSpread} point
-        {card.pointSpread === 1 ? '' : 's'}
-      </p>
       <ul className="rank-cluster-list">
         {card.players.map((player) => {
           const width = maxPoints > 0 ? Math.round((player.points / maxPoints) * 100) : 0;

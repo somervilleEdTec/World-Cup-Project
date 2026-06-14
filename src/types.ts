@@ -126,13 +126,19 @@ export type CrowdStatVisualType =
 
 export type PersonalStatKind =
   | 'ladderMove'
-  | 'youVsCrowd'
   | 'contrarian'
   | 'nearestRival'
   | 'hiveMind'
   | 'groupDiff';
 
-export type PickAlignment = 'exact' | 'result' | 'bold';
+export interface NearbyFixturePlayer {
+  userId: string;
+  rank: number;
+  displayName: string;
+  points: number;
+  pick: string;
+  isCurrentUser?: boolean;
+}
 
 export interface LadderMover {
   displayName: string;
@@ -229,14 +235,8 @@ export type CrowdStatCard =
       afterRank?: number;
       delta?: number;
       yourPick?: string;
-      crowdPick?: string;
       crowdPct?: number;
-      alignment?: PickAlignment;
-      scorelineBreakdown?: StatisticsPickCount[];
-      rivalName?: string;
-      rivalRank?: number;
-      yourRank?: number;
-      rivalPick?: string;
+      nearbyPlayers?: NearbyFixturePlayer[];
       hiveMindPct?: number;
       leagueAvgPct?: number;
       matchCount?: number;
@@ -246,7 +246,6 @@ export type CrowdStatCard =
       crowdOrder?: string[];
       yourOrderTeamIds?: string[];
       crowdOrderTeamIds?: string[];
-      mismatchCount?: number;
     }
   | {
       id: string;

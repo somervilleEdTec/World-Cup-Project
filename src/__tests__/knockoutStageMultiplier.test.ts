@@ -3,6 +3,7 @@ import { computeMatchPoints } from '../lib/matchScoring';
 import {
   knockoutStageHeading,
   knockoutStagePointsMultiplier,
+  maxMatchPointsForStage,
   scaledMatchPointsForStage
 } from '../lib/knockoutStageMultiplier';
 
@@ -23,6 +24,21 @@ describe('knockoutStagePointsMultiplier', () => {
     expect(knockoutStagePointsMultiplier('SF')).toBe(2);
     expect(knockoutStagePointsMultiplier('FINAL')).toBe(3);
     expect(knockoutStagePointsMultiplier('THIRD_PLACE')).toBe(3);
+  });
+});
+
+describe('maxMatchPointsForStage', () => {
+  it('returns 6 for group and early knockout rounds', () => {
+    expect(maxMatchPointsForStage('GROUP')).toBe(6);
+    expect(maxMatchPointsForStage('R32')).toBe(6);
+    expect(maxMatchPointsForStage('R16')).toBe(6);
+  });
+
+  it('returns scaled thresholds for late knockout rounds', () => {
+    expect(maxMatchPointsForStage('QF')).toBe(9);
+    expect(maxMatchPointsForStage('SF')).toBe(12);
+    expect(maxMatchPointsForStage('FINAL')).toBe(18);
+    expect(maxMatchPointsForStage('THIRD_PLACE')).toBe(18);
   });
 });
 

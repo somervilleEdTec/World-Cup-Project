@@ -1,6 +1,5 @@
 import { teams } from '../../data/tournament';
 import { TeamLabel } from '../TeamLabel';
-import { formatFixtureStageLabel } from '../../lib/fixtureLabels';
 import { CrowdStatCard as CrowdStatCardType } from '../../types';
 
 interface HeadToHeadCardProps {
@@ -21,7 +20,6 @@ export function HeadToHeadCard({ card, revealNames }: HeadToHeadCardProps) {
           <strong>vs</strong>
           {revealNames && awayTeam ? <TeamLabel team={awayTeam} /> : <span>Away</span>}
         </div>
-        <p className="kicker">{formatFixtureStageLabel(card.stage, card.group)}</p>
       </div>
       <ul className="head-to-head-rows">
         <li className="head-to-head-row">

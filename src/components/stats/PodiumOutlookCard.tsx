@@ -17,14 +17,6 @@ const PODIUM_SUBTITLES: Record<
   fourth: 'Fourth-place picks'
 };
 
-const PODIUM_LABELS: Record<Extract<CrowdStatCardType, { visualType: 'podium' }>['slot'], string> =
-  {
-    champion: 'Champion',
-    runnerUp: 'Runner-up',
-    third: 'Third place',
-    fourth: 'Fourth place'
-  };
-
 const PODIUM_HEIGHTS = ['tall', 'medium', 'short'] as const;
 
 export function PodiumOutlookCard({ card, revealNames }: PodiumOutlookCardProps) {
@@ -33,7 +25,6 @@ export function PodiumOutlookCard({ card, revealNames }: PodiumOutlookCardProps)
   return (
     <article className="card crowd-stat-card crowd-stat-card-podium">
       <p className="crowd-stat-panel-kicker">{PODIUM_SUBTITLES[card.slot]}</p>
-      <h4>{PODIUM_LABELS[card.slot]}</h4>
       <div className="podium-steps">
         {picks.map((pick, index) => {
           const team = pick.teamId ? teams.find((t) => t.id === pick.teamId) : undefined;

@@ -1,6 +1,5 @@
 import { teams } from '../../data/tournament';
 import { TeamLabel } from '../TeamLabel';
-import { formatFixtureStageLabel } from '../../lib/fixtureLabels';
 import { CrowdStatCard as CrowdStatCardType } from '../../types';
 
 interface VolatileFixtureCardProps {
@@ -21,7 +20,6 @@ export function VolatileFixtureCard({ card, revealNames }: VolatileFixtureCardPr
         <strong>vs</strong>
         {revealNames && awayTeam ? <TeamLabel team={awayTeam} /> : <span>Away</span>}
       </div>
-      <p className="kicker">{formatFixtureStageLabel(card.stage, card.group)}</p>
       <p className="ladder-swing-scoreline">
         {card.scoreline} <span className="ladder-swing-pct">({card.scorelinePct}% crowd pick)</span>
       </p>

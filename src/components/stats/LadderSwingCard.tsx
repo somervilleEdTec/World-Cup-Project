@@ -1,6 +1,5 @@
 import { teams } from '../../data/tournament';
 import { TeamLabel } from '../TeamLabel';
-import { formatFixtureStageLabel } from '../../lib/fixtureLabels';
 import { CrowdStatCard as CrowdStatCardType } from '../../types';
 
 interface LadderSwingCardProps {
@@ -25,7 +24,6 @@ export function LadderSwingCard({ card, revealNames }: LadderSwingCardProps) {
           {card.scoreline}{' '}
           <span className="ladder-swing-pct">({card.scorelinePct}% crowd pick)</span>
         </p>
-        <p className="kicker">{formatFixtureStageLabel(card.stage, card.group)}</p>
       </div>
       <ul className="ladder-swing-movers">
         {card.movers.length === 0 ? (

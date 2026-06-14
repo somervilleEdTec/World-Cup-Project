@@ -4,12 +4,11 @@ import { StatisticsPickCount } from '../../types';
 
 interface ConsensusBarProps {
   item: StatisticsPickCount;
-  maxCount: number;
   revealNames?: boolean;
 }
 
-export function ConsensusBar({ item, maxCount, revealNames = true }: ConsensusBarProps) {
-  const width = maxCount > 0 ? Math.round((item.count / maxCount) * 100) : 0;
+export function ConsensusBar({ item, revealNames = true }: ConsensusBarProps) {
+  const width = item.pct > 0 ? Math.max(item.pct, 2) : 0;
   const team = item.teamId ? teams.find((t) => t.id === item.teamId) : undefined;
 
   return (

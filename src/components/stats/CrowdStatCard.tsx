@@ -31,7 +31,6 @@ export function CrowdStatCard({ card, revealNames, pinned = false }: CrowdStatCa
         <div className={`crowd-stat-card crowd-stat-card-hero${pinnedClass}`}>
           <StatHeroCard
             subtitle={HERO_SUBTITLES[card.title] ?? 'League highlight'}
-            title={card.title === 'The Hive Mind' ? '' : card.title}
             value={card.value}
             detail={card.detail}
             variant={card.variant}
