@@ -39,7 +39,7 @@ describe('LeagueTablePage', () => {
     vi.clearAllMocks();
   });
 
-  it('shows Rank, Player, and Pts by default without breakdown columns', async () => {
+  it('shows all columns including breakdown stats', async () => {
     render(<LeagueTablePage />);
 
     await waitFor(() => {
@@ -49,26 +49,14 @@ describe('LeagueTablePage', () => {
     expect(screen.getByRole('columnheader', { name: 'Rank' })).toBeTruthy();
     expect(screen.getByRole('columnheader', { name: 'Player' })).toBeTruthy();
     expect(screen.getByRole('columnheader', { name: 'Pts' })).toBeTruthy();
-    expect(screen.queryByRole('columnheader', { name: 'CR' })).toBeNull();
-    expect(screen.queryByRole('columnheader', { name: 'ES' })).toBeNull();
-    expect(screen.getByText('42')).toBeTruthy();
-  });
-
-  it('shows breakdown columns with counts and tournament points when toggled', async () => {
-    render(<LeagueTablePage />);
-
-    await waitFor(() => {
-      expect(screen.getByText('Alice')).toBeTruthy();
-    });
-
-    fireEvent.click(screen.getByLabelText('Show breakdown'));
-
     expect(screen.getByRole('columnheader', { name: 'CR' })).toBeTruthy();
     expect(screen.getByRole('columnheader', { name: 'ES' })).toBeTruthy();
     expect(screen.getByRole('columnheader', { name: 'GP' })).toBeTruthy();
     expect(screen.getByRole('columnheader', { name: 'TP' })).toBeTruthy();
+    expect(screen.queryByLabelText('Show breakdown')).toBeNull();
 
     const row = screen.getByText('Alice').closest('tr');
+    expect(row?.textContent).toContain('42');
     expect(row?.textContent).toContain('5');
     expect(row?.textContent).toContain('2');
     expect(row?.textContent).toContain('3');

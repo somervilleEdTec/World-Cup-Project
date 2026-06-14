@@ -511,21 +511,17 @@ td {
   overflow-x: visible;
 }
 
-.league-table-page--expanded {
-  display: block;
-  overflow-x: auto;
-}
-
 .league-table-page .league-col-player {
   text-align: left;
+  white-space: normal;
 }
 
-.league-table-breakdown-toggle {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin: 0.75rem 0 0.5rem;
-  font-size: 0.9rem;
+@media (max-width: 639px) {
+  .league-table-page th,
+  .league-table-page td {
+    padding: 0.4rem 0.3rem;
+    font-size: 0.82rem;
+  }
 }
 
 .league-table-legend {

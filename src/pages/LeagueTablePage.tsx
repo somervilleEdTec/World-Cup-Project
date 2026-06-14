@@ -34,8 +34,8 @@ function ScoringInfoPanel() {
         <li>Fourth place: +3</li>
       </ul>
       <p>
-        CR and ES columns in the breakdown show how many matches you got right (used for
-        tie-breakers), not the points earned from those matches.
+        CR and ES columns show how many matches you got right (used for tie-breakers), not the
+        points earned from those matches.
       </p>
     </div>
   );
@@ -69,7 +69,6 @@ export function LeagueTablePage() {
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
   const [coinFlipNote, setCoinFlipNote] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [showBreakdown, setShowBreakdown] = useState(false);
   const [showScoringInfo, setShowScoringInfo] = useState(false);
   const scoringPanelId = useId();
 
@@ -96,18 +95,7 @@ export function LeagueTablePage() {
       {error && <p className="warning">{error}</p>}
       {coinFlipNote && <p className="kicker">{coinFlipNote}</p>}
 
-      <label className="league-table-breakdown-toggle">
-        <input
-          type="checkbox"
-          checked={showBreakdown}
-          onChange={(event) => setShowBreakdown(event.target.checked)}
-        />
-        Show breakdown
-      </label>
-
-      <table
-        className={`league-table-page${showBreakdown ? ' league-table-page--expanded' : ''}`}
-      >
+      <table className="league-table-page">
         <thead>
           <tr>
             <th>Rank</th>
@@ -115,14 +103,10 @@ export function LeagueTablePage() {
             <th className="league-total" title="Points (total)">
               Pts
             </th>
-            {showBreakdown && (
-              <>
-                <th title="Correct Results — number of matches with correct outcome">CR</th>
-                <th title="Exact Scores — number of matches with exact scoreline">ES</th>
-                <th title="Group Positions — exact group finishing positions">GP</th>
-                <th title="Tournament Points — points from tournament outcome picks">TP</th>
-              </>
-            )}
+            <th title="Correct Results — number of matches with correct outcome">CR</th>
+            <th title="Exact Scores — number of matches with exact scoreline">ES</th>
+            <th title="Group Positions — exact group finishing positions">GP</th>
+            <th title="Tournament Points — points from tournament outcome picks">TP</th>
           </tr>
         </thead>
         <tbody>
@@ -131,14 +115,10 @@ export function LeagueTablePage() {
               <td>{entry.rank}</td>
               <td className="league-col-player">{entry.name}</td>
               <td className="league-total">{entry.points}</td>
-              {showBreakdown && (
-                <>
-                  <td>{entry.correctResults}</td>
-                  <td>{entry.exactScores}</td>
-                  <td>{entry.groupPositionPoints}</td>
-                  <td>{entry.bonusPoints}</td>
-                </>
-              )}
+              <td>{entry.correctResults}</td>
+              <td>{entry.exactScores}</td>
+              <td>{entry.groupPositionPoints}</td>
+              <td>{entry.bonusPoints}</td>
             </tr>
           ))}
         </tbody>
