@@ -1243,6 +1243,58 @@ td {
   padding: 1rem;
 }
 
+.head-to-head-header {
+  margin-bottom: 0.75rem;
+}
+
+.head-to-head-kicker {
+  margin: 0 0 0.35rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #0f2f56;
+}
+
+.head-to-head-rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.head-to-head-row {
+  display: grid;
+  grid-template-columns: 2.5rem 1fr auto;
+  gap: 0.5rem;
+  align-items: center;
+  padding: 0.45rem 0.55rem;
+  border-radius: 0.45rem;
+  background: #f4f8fc;
+}
+
+.head-to-head-rank {
+  font-weight: 700;
+  color: #0f2f56;
+}
+
+.head-to-head-name {
+  font-weight: 600;
+  color: #0f2f56;
+}
+
+.head-to-head-pick {
+  font-weight: 700;
+  color: #19a974;
+  font-size: 0.95rem;
+}
+
+.crowd-stat-card-battle {
+  min-height: 10rem;
+}
+
 .crowd-stat-card-match {
   min-height: 12rem;
 }

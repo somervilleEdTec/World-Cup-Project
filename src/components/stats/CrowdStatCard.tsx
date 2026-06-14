@@ -4,6 +4,7 @@ import { LadderSwingCard } from './LadderSwingCard';
 import { MiniGroupStandingsCard } from './MiniGroupStandingsCard';
 import { PodiumOutlookCard } from './PodiumOutlookCard';
 import { InsightTileCard } from './InsightTileCard';
+import { HeadToHeadCard } from './HeadToHeadCard';
 import { CrowdStatCard as CrowdStatCardType } from '../../types';
 
 interface CrowdStatCardProps {
@@ -33,6 +34,9 @@ export function CrowdStatCard({ card, revealNames }: CrowdStatCardProps) {
     case 'podium':
       return <PodiumOutlookCard card={card} />;
     case 'insight':
+      if (card.kind === 'battle') {
+        return <HeadToHeadCard card={card} revealNames={revealNames} />;
+      }
       return <InsightTileCard card={card} />;
     default:
       return null;

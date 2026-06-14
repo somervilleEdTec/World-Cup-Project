@@ -134,6 +134,22 @@ export type CrowdStatCard =
   | { id: string; visualType: 'insight'; kind: 'fact'; icon: string; text: string }
   | {
       id: string;
+      visualType: 'insight';
+      kind: 'battle';
+      matchId: string;
+      stage: Stage;
+      group?: string;
+      homeTeamId: string;
+      awayTeamId: string;
+      playerA: string;
+      playerB: string;
+      rankA: number;
+      rankB: number;
+      pickA: string;
+      pickB: string;
+    }
+  | {
+      id: string;
       visualType: 'fixture';
       kind: 'match';
       matchId: string;
