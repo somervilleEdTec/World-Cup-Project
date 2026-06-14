@@ -141,8 +141,7 @@ export function MyPicksPage() {
     void refresh();
   }, []);
 
-  const groupStageFixtures =
-    state.groupStageFixtures ?? (fixturesLoaded ? [] : groupMatches);
+  const groupStageFixtures = state.groupStageFixtures ?? (fixturesLoaded ? [] : groupMatches);
   const activeGroup = groupSequence[groupIndex];
   const activeGroupMatches = useMemo(
     () =>

@@ -197,9 +197,7 @@ describe('crowdStatPool', () => {
       (card) => card.visualType !== 'ladder' && card.visualType !== 'personal'
     );
     expect(sampled.slice(0, pinnedCount).filter(Boolean)).toHaveLength(pinnedCount);
-    expect(sampled.slice(pinnedCount)).toEqual(
-      nonPinned.slice(0, CROWD_STATS_COUNT - pinnedCount)
-    );
+    expect(sampled.slice(pinnedCount)).toEqual(nonPinned.slice(0, CROWD_STATS_COUNT - pinnedCount));
   });
 
   it('excludes past fixtures from upcoming count', () => {
@@ -234,9 +232,7 @@ describe('crowdStatPool', () => {
   it('does not include lock-percentage stats after group lock', () => {
     const pool = buildCrowdStatPool(poolInput, { revealNames: true });
 
-    const text = pool
-      .map((c) => ('text' in c ? c.text : ''))
-      .join(' ');
+    const text = pool.map((c) => ('text' in c ? c.text : '')).join(' ');
     expect(text.includes('locked in their tournament podium')).toBe(false);
     expect(text.includes('back the home team')).toBe(false);
     expect(text.includes('back an away win')).toBe(false);

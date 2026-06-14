@@ -19,10 +19,8 @@ export function normalizeScoresToInternalFixture(
   const providerHomeId = teamIdFromProviderName(providerHomeName);
   const providerAwayId = teamIdFromProviderName(providerAwayName);
 
-  const direct =
-    providerHomeId === internalHomeTeamId && providerAwayId === internalAwayTeamId;
-  const swapped =
-    providerHomeId === internalAwayTeamId && providerAwayId === internalHomeTeamId;
+  const direct = providerHomeId === internalHomeTeamId && providerAwayId === internalAwayTeamId;
+  const swapped = providerHomeId === internalAwayTeamId && providerAwayId === internalHomeTeamId;
 
   const homeScore = swapped ? providerAwayScore : providerHomeScore;
   const awayScore = swapped ? providerHomeScore : providerAwayScore;

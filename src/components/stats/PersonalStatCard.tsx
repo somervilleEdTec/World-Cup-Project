@@ -26,9 +26,7 @@ function FixtureHeader({
         <strong>vs</strong>
         {revealNames && awayTeam ? <TeamLabel team={awayTeam} /> : <span>Away</span>}
       </div>
-      {card.stage && (
-        <p className="kicker">{formatFixtureStageLabel(card.stage, card.group)}</p>
-      )}
+      {card.stage && <p className="kicker">{formatFixtureStageLabel(card.stage, card.group)}</p>}
     </>
   );
 }

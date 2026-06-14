@@ -150,7 +150,14 @@ export type CrowdStatCard =
       detail: string;
       variant?: 'default' | 'consensus' | 'chaos';
     }
-  | { id: string; visualType: 'insight'; kind: 'fact'; icon: string; text: string; subtitle?: string }
+  | {
+      id: string;
+      visualType: 'insight';
+      kind: 'fact';
+      icon: string;
+      text: string;
+      subtitle?: string;
+    }
   | {
       id: string;
       visualType: 'insight';
@@ -272,7 +279,14 @@ export type CrowdStatCard =
       slot: 'champion' | 'runnerUp' | 'third' | 'fourth';
       picks: StatisticsPickCount[];
     }
-  | { id: string; visualType: 'insight'; kind: 'spotlight'; icon: string; text: string; subtitle?: string };
+  | {
+      id: string;
+      visualType: 'insight';
+      kind: 'spotlight';
+      icon: string;
+      text: string;
+      subtitle?: string;
+    };
 
 export interface StatisticsResponse {
   meta: {

@@ -14,7 +14,7 @@ describe('dataProtection', () => {
 
   it('allows additive migration SQL', () => {
     const analysis = analyzeMigrationSql(
-      'ALTER TABLE prediction_meta ADD COLUMN accepted_groups TEXT NOT NULL DEFAULT \'[]\';'
+      "ALTER TABLE prediction_meta ADD COLUMN accepted_groups TEXT NOT NULL DEFAULT '[]';"
     );
     expect(analysis.destructive).toBe(false);
   });

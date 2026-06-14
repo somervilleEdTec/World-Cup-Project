@@ -48,12 +48,8 @@ describe('tournament robustness — validation', () => {
 
   it('accepts boundary scores 0 and 20', () => {
     const match = groupMatch('g-a-1', 'A', 'mexico', 'south-africa');
-    expect(validatePick(match, { matchId: 'g-a-1', homeScore: 0, awayScore: 20 })).toHaveLength(
-      0
-    );
-    expect(validatePick(match, { matchId: 'g-a-1', homeScore: 20, awayScore: 0 })).toHaveLength(
-      0
-    );
+    expect(validatePick(match, { matchId: 'g-a-1', homeScore: 0, awayScore: 20 })).toHaveLength(0);
+    expect(validatePick(match, { matchId: 'g-a-1', homeScore: 20, awayScore: 0 })).toHaveLength(0);
   });
 
   it('rejects every invalid bonus team slot independently', () => {

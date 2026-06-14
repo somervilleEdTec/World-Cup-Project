@@ -1,6 +1,6 @@
 # UI / UX handover
 
-**Last updated:** 2026-06-12  
+**Last updated:** 2026-06-14  
 **Branches:** `main` (production) · `Debug` (development) — [BRANCHING.md](./BRANCHING.md)  
 **Status:** Owner polish + KO-environment UX **merged to `main`**. Group kickoffs + touch inputs fixed 2026-06-05. See [HANDOVER.md](./HANDOVER.md).
 
@@ -30,7 +30,7 @@
 | **Welcome + rules** | `src/pages/WelcomePage.tsx` | Rules on welcome; no `/rules` |
 | **Login** | `src/pages/LoginPage.tsx` | Name + password + join password |
 | **Stats** | `src/pages/ComparisonPage.tsx` | Route `/comparison` (nav label **Stats**). Two tabs: **Crowd Predictions** (default) and **By Fixture** |
-| **Crowd Predictions** | `src/components/stats/CrowdStatsPanel.tsx`, `CrowdStatsGrid.tsx`, `CrowdStatCard.tsx`, `CrowdStatsHeader.tsx` | Bento grid of 5–8 random cards; **Shuffle stats** re-fetches; pre-lock dashed border + hidden team names |
+| **Crowd Predictions** | `src/components/stats/CrowdStatsPanel.tsx`, `CrowdStatsGrid.tsx`, `CrowdStatCard.tsx`, `PersonalStatCard.tsx`, `CrowdStatsHeader.tsx` | Bento grid of **6** cards; slot 1 pinned **personal** stat (logged in); slot 2 pinned **If this scoreline lands**; **Shuffle stats** re-fetches; pre-lock dashed border + hidden team names |
 | **By Fixture** | `src/pages/ComparisonPage.tsx` | Fixture picker; player prediction table with colour-coded accuracy |
 | **League table** | `src/pages/LeagueTablePage.tsx` | Leaderboard |
 | **Admin** | `src/pages/AdminPage.tsx` | Sync / diagnostics |
@@ -105,7 +105,7 @@ http://localhost:8787/login
 | 10 | Results lock (API) | Edit g-a-1 after official result | 400 — official result | Works | Verified (2026-06-03) |
 | 11 | Group kickoffs | View g-a-3, g-l-1 on My Picks | Matchday 2/1 FIFA dates (not staggered per group) | Was wrong from game 2+ | **Fixed** — PR #25, `groupStageKickoffs.ts` (2026-06-05) |
 | 12 | Touch score inputs | Tap score field on phone/tablet | Field clears for fresh entry | Hard to replace existing digits | **Fixed** — touch focus clear (2026-06-05) |
-| 13 | Stats — Crowd Predictions | Open Stats tab; click Shuffle stats | 5–8 mixed infographic cards for upcoming fixtures; fresh mix on shuffle | Fixed dashboard showed all matches/groups | **Fixed** — unified random pool + bento grid (2026-06-12) |
+| 13 | Stats — Crowd Predictions | Open Stats tab; click Shuffle stats | 6 mixed infographic cards for upcoming fixtures; personal stat pinned first when logged in; fresh mix on shuffle | Fixed dashboard showed all matches/groups | **Fixed** — unified random pool + bento grid (2026-06-12); personal + pinned ladder (2026-06-14) |
 
 ---
 
@@ -115,14 +115,20 @@ http://localhost:8787/login
 
 | Behaviour | Detail |
 |-----------|--------|
-| Card count | 5–8 per page load or shuffle (stratified by card type) |
+| Card count | **6** per page load or shuffle |
+| Pinned layout | **Slot 1:** personal stat (when logged in) — rotates on shuffle. **Slot 2:** single **If this scoreline lands** ladder card. **Slots 3–6:** sampled crowd cards |
+| Personal stats | Ladder move, you vs crowd, contrarian pick, nearest rival, hive mind score, group order diff — scoped to **next / second-next kickoff** |
 | Fixture scope | **Upcoming only** — no kicked-off or resulted fixtures in match-level stats |
 | Pre-lock | Teaser facts and anonymized aggregates; no team names; dashed mystery border |
-| Post-lock | Full team names, match consensus bars, result donuts, group/outlook infographics |
+| Post-lock | Full team names, match consensus bars, group/outlook infographics, volatile fixture + rank cluster cards |
+| Subtitles | Every panel has an uppercase kicker (`.crowd-stat-panel-kicker`) explaining what the stat shows |
+| Group standings | **Consensus** cards show the crowd's modal top-4 order; **divided** cards show who people tip to win |
 | Shuffle | **Shuffle stats** button re-calls `GET /api/statistics` for a new random subset |
-| API | `{ meta, crowdCards }` — card kinds: `hero`, `match`, `fact`, `group`, `outlook`, `spotlight` |
+| API | `GET /api/statistics` (optional Bearer for personal stats) — `{ meta, crowdCards }` |
 
-**Key files:** `src/lib/crowdStatPool.ts`, `src/server/services/statistics.ts`, `src/components/stats/*`.
+**Visual types:** `personal`, `ladder`, `hero`, `fixture`, `standings`, `podium`, `volatile`, `cluster`, `insight` (fact / battle / spotlight).
+
+**Key files:** `src/lib/crowdStatPool.ts`, `src/lib/personalStats.ts`, `src/lib/upcomingFixtures.ts`, `src/server/services/statistics.ts`, `src/components/stats/*`.
 
 ---
 

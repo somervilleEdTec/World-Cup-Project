@@ -62,7 +62,10 @@ function scorelineLabelToResult(matchId: string, label: string, match: Match): A
   return null;
 }
 
-function rankPlayers(userPicks: UserPicks[], results: Record<string, ActualResult>): RankedPlayer[] {
+function rankPlayers(
+  userPicks: UserPicks[],
+  results: Record<string, ActualResult>
+): RankedPlayer[] {
   const finalPlacings = deriveFinalPlacings(picksFromActuals(results), results);
   const finalComplete = isTournamentFinalComplete(results);
 
@@ -130,7 +133,8 @@ function buildPinnedLadderSwingForScoreline(
     .sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta))
     .slice(0, 4);
 
-  const maxSwing = movers.length > 0 ? Math.max(...movers.map((mover) => Math.abs(mover.delta))) : 0;
+  const maxSwing =
+    movers.length > 0 ? Math.max(...movers.map((mover) => Math.abs(mover.delta))) : 0;
 
   return {
     matchId: match.id,
@@ -523,7 +527,10 @@ export function computeTightestRankCluster(
       if (slice.length < 3) continue;
       const spread = slice[0].points - slice[slice.length - 1].points;
       if (spread > 4) continue;
-      if (spread < bestSpread || (spread === bestSpread && slice.length > (bestCluster?.length ?? 0))) {
+      if (
+        spread < bestSpread ||
+        (spread === bestSpread && slice.length > (bestCluster?.length ?? 0))
+      ) {
         bestSpread = spread;
         bestCluster = slice.map((player, idx) => ({
           userId: player.userId,

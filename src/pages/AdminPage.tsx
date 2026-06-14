@@ -55,7 +55,11 @@ interface AdminFixture {
 }
 
 function StatusBanner({ tone, message }: { tone: 'ok' | 'error'; message: string }) {
-  return <p className={tone === 'error' ? 'admin-banner admin-banner-error' : 'admin-banner'}>{message}</p>;
+  return (
+    <p className={tone === 'error' ? 'admin-banner admin-banner-error' : 'admin-banner'}>
+      {message}
+    </p>
+  );
 }
 
 export function AdminPage() {
@@ -255,8 +259,12 @@ export function AdminPage() {
           <Link to="/comparison">Open stats</Link>
         </div>
         <ul className="admin-summary">
-          <li>{players.length} players ({activePlayers} active, {pendingPlayers} awaiting first login)</li>
-          <li>{finishedFixtures}/{fixtures.length} fixtures with results</li>
+          <li>
+            {players.length} players ({activePlayers} active, {pendingPlayers} awaiting first login)
+          </li>
+          <li>
+            {finishedFixtures}/{fixtures.length} fixtures with results
+          </li>
           {status && (
             <li>
               Last sync: {formatOptionalKickoffBst(status.last_success_at) ?? 'never'}
@@ -270,7 +278,10 @@ export function AdminPage() {
 
       <article className="card">
         <h2>Players</h2>
-        <p>Add league members with a temporary password. They choose their own password on first login.</p>
+        <p>
+          Add league members with a temporary password. They choose their own password on first
+          login.
+        </p>
         <form onSubmit={addPlayer} className="form-grid">
           <label>
             Username
@@ -341,7 +352,11 @@ export function AdminPage() {
           process is running. Use these tools if something looks stale.
         </p>
         <div className="button-row">
-          <button type="button" onClick={() => void runAction('refresh-status', loadStatus)} disabled={Boolean(busy)}>
+          <button
+            type="button"
+            onClick={() => void runAction('refresh-status', loadStatus)}
+            disabled={Boolean(busy)}
+          >
             Refresh sync status
           </button>
           <button type="button" onClick={() => void refreshDiagnostics()} disabled={Boolean(busy)}>

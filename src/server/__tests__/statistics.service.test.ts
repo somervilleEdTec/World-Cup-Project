@@ -32,11 +32,7 @@ async function seedTwoPlayersWithPicks(nowIso: string) {
 
   for (const user of users) {
     for (const matchId of ['g-a-1', 'g-a-2']) {
-      await saveDraftPick(
-        user.id,
-        { matchId, homeScore: 2, awayScore: 1 },
-        nowIso
-      );
+      await saveDraftPick(user.id, { matchId, homeScore: 2, awayScore: 1 }, nowIso);
     }
   }
 }
@@ -66,9 +62,9 @@ describe('computeStatistics', () => {
     expect(stats.meta.groupPhaseLocked).toBe(true);
     expect(stats.crowdCards.length).toBe(CROWD_STATS_COUNT);
     const visualTypes = stats.crowdCards.map((c) => c.visualType);
-    expect(visualTypes.some((k) => ['hero', 'fixture', 'insight', 'standings', 'ladder'].includes(k))).toBe(
-      true
-    );
+    expect(
+      visualTypes.some((k) => ['hero', 'fixture', 'insight', 'standings', 'ladder'].includes(k))
+    ).toBe(true);
     const battle = stats.crowdCards.find((c) => c.kind === 'battle');
     if (battle && battle.kind === 'battle') {
       expect(battle.pickA).toBeTruthy();

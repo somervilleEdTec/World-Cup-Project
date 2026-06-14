@@ -2,11 +2,7 @@
 import { describe, it, expect, afterAll, beforeEach } from 'vitest';
 import request from 'supertest';
 import { setupTestServer, teardownTestServer } from '../testHarness';
-import {
-  adminToken,
-  createPlayer,
-  loginPlayerReady
-} from './authHelpers';
+import { adminToken, createPlayer, loginPlayerReady } from './authHelpers';
 import {
   adminOverrideResult,
   insertGroupResults,

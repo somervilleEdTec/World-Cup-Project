@@ -39,6 +39,7 @@ Use your actual clone path if not `C:\Users\tomso\World-Cup-Project`. **Do not**
 npm test
 npm run build
 npm run lint
+npm run format:check
 ```
 
 ---

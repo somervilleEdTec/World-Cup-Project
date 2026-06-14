@@ -5,7 +5,7 @@
 **Live site:** https://worldcup.dosums.uk (automated deploy from **`main`**)  
 **Repository:** https://github.com/somervilleEdTec/World-Cup-Project
 
-**Stats page:** `/comparison` — **Crowd Predictions** (random crowd stats for upcoming fixtures) and **By Fixture** (head-to-head player predictions).
+**Stats page:** `/comparison` — **Crowd Predictions** (six cards: personal stat + pinned ladder swing + crowd mix) and **By Fixture** (head-to-head player predictions).
 
 ---
 

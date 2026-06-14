@@ -546,7 +546,9 @@ describe('security and tamper resistance', () => {
     const after = await request(app)
       .get('/api/admin/players')
       .set('Authorization', `Bearer ${token}`);
-    expect(after.body.players.some((player: { id: string }) => player.id === target.id)).toBe(false);
+    expect(after.body.players.some((player: { id: string }) => player.id === target.id)).toBe(
+      false
+    );
   });
 
   it('stores display names safely and returns them verbatim in leaderboard', async () => {

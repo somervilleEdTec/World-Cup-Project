@@ -15,10 +15,7 @@ export function defaultKnockoutDrawPick(match: Match): Pick {
   };
 }
 
-export function effectiveGroupPick(
-  matchId: string,
-  picks: Record<string, Pick | undefined>
-): Pick {
+export function effectiveGroupPick(matchId: string, picks: Record<string, Pick | undefined>): Pick {
   return picks[matchId] ?? defaultDrawPick(matchId);
 }
 

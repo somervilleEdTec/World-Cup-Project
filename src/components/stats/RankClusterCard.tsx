@@ -23,7 +23,9 @@ export function RankClusterCard({ card }: RankClusterCardProps) {
               className={`rank-cluster-row${player.isCurrentUser ? ' rank-cluster-you' : ''}`}
             >
               <span className="rank-cluster-rank">#{player.rank}</span>
-              <span className="rank-cluster-name">{player.isCurrentUser ? 'You' : player.displayName}</span>
+              <span className="rank-cluster-name">
+                {player.isCurrentUser ? 'You' : player.displayName}
+              </span>
               <div className="rank-cluster-bar-wrap">
                 <div className="rank-cluster-bar-track" aria-hidden="true">
                   <div className="rank-cluster-bar-fill" style={{ width: `${width}%` }} />

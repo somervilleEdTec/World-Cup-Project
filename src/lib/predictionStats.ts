@@ -33,7 +33,9 @@ type FixtureTeams = Pick<Match, 'homeTeamId' | 'awayTeamId'>;
 export function pickKey(pick: MatchPick, stage: Stage, match: FixtureTeams): string {
   if (pick.homeScore === pick.awayScore && stage !== 'GROUP') {
     const advancer = advancingTeamId(match, pick);
-    return advancer ? `${pick.homeScore}-${pick.awayScore}|${advancer}` : `${pick.homeScore}-${pick.awayScore}`;
+    return advancer
+      ? `${pick.homeScore}-${pick.awayScore}|${advancer}`
+      : `${pick.homeScore}-${pick.awayScore}`;
   }
   return `${pick.homeScore}-${pick.awayScore}`;
 }
@@ -57,7 +59,11 @@ function resultLabel(pick: MatchPick, stage: Stage, match: FixtureTeams): string
   return 'D';
 }
 
-function countMapToSortedList(counts: Map<string, number>, total: number, formatLabel = (k: string) => k): PickCount[] {
+function countMapToSortedList(
+  counts: Map<string, number>,
+  total: number,
+  formatLabel = (k: string) => k
+): PickCount[] {
   return [...counts.entries()]
     .sort((a, b) => b[1] - a[1])
     .map(([key, count]) => ({
@@ -108,7 +114,10 @@ export function computeMatchConsensus(
 
     if (total === 0) continue;
 
-    const topScorelines = countMapToSortedList(scoreCounts, total, formatScorelineLabel).slice(0, 3);
+    const topScorelines = countMapToSortedList(scoreCounts, total, formatScorelineLabel).slice(
+      0,
+      3
+    );
     const modeCount = topScorelines[0]?.count ?? 0;
     const modePct = total > 0 ? Math.round((modeCount / total) * 100) : 0;
 
@@ -230,12 +239,7 @@ function buildGroupConsensusForUsers(userPicks: UserPicks[]): GroupConsensusItem
   return GROUP_IDS.map((groupId) => {
     const groupMatchIds = groupMatches.filter((m) => m.group === groupId).map((m) => m.id);
     const orderCounts = new Map<string, { order: string[]; count: number }>();
-    const positionCounts: Array<Map<string, number>> = [
-      new Map(),
-      new Map(),
-      new Map(),
-      new Map()
-    ];
+    const positionCounts: Array<Map<string, number>> = [new Map(), new Map(), new Map(), new Map()];
     let playersWithFullGroup = 0;
 
     for (const user of userPicks) {
@@ -281,7 +285,8 @@ function buildGroupConsensusForUsers(userPicks: UserPicks[]): GroupConsensusItem
       groupId,
       modalOrder,
       modalCount,
-      modalPct: playersWithFullGroup > 0 ? Math.round((modalCount / playersWithFullGroup) * 100) : 0,
+      modalPct:
+        playersWithFullGroup > 0 ? Math.round((modalCount / playersWithFullGroup) * 100) : 0,
       positionPopularity: ([1, 2, 3, 4] as const).map((rank) => ({
         rank,
         teams: countMapToSortedList(positionCounts[rank - 1], playersWithFullGroup, (teamId) => {
@@ -711,7 +716,9 @@ export function sortMatchConsensusForDisplay(items: MatchConsensusItem[]): {
   mostUnanimous: MatchConsensusItem[];
   mostSplit: MatchConsensusItem[];
 } {
-  const byUnanimous = [...items].sort((a, b) => b.modePct - a.modePct || b.totalPicks - a.totalPicks);
+  const byUnanimous = [...items].sort(
+    (a, b) => b.modePct - a.modePct || b.totalPicks - a.totalPicks
+  );
   const bySplit = [...items].sort(
     (a, b) => b.distinctScorelines - a.distinctScorelines || b.totalPicks - a.totalPicks
   );

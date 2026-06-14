@@ -380,14 +380,7 @@ async function applyDefaultKnockoutPicksForUser(
       `INSERT INTO predictions (user_id, match_id, state, home_score, away_score, progressing_team_id, reviewed, updated_at)
        VALUES (?, ?, 'committed', ?, ?, ?, 1, ?)
        ON CONFLICT(user_id, match_id, state) DO UPDATE SET home_score=excluded.home_score, away_score=excluded.away_score, progressing_team_id=excluded.progressing_team_id, reviewed=1, updated_at=excluded.updated_at`,
-      [
-        userId,
-        pick.matchId,
-        pick.homeScore,
-        pick.awayScore,
-        pick.progressingTeamId ?? null,
-        nowIso
-      ]
+      [userId, pick.matchId, pick.homeScore, pick.awayScore, pick.progressingTeamId ?? null, nowIso]
     );
     await db.run(`DELETE FROM predictions WHERE user_id = ? AND match_id = ? AND state = 'draft'`, [
       userId,

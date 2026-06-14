@@ -4,10 +4,7 @@ import { setupTestServer, teardownTestServer } from '../testHarness';
 import { createSqliteClient } from '../database/sqliteClient';
 import { resetDatabase, runMigrations } from '../database/migrate';
 import { replaceDatabaseForTests, closeDatabase } from '../database';
-import {
-  hasStoredPredictions,
-  readProtectedRowCounts
-} from '../../lib/dataProtection';
+import { hasStoredPredictions, readProtectedRowCounts } from '../../lib/dataProtection';
 import { getDb } from '../database';
 
 describe('database integration', () => {
@@ -24,7 +21,9 @@ describe('database integration', () => {
 
   it('applies all migrations on a fresh database', async () => {
     const db = getDb();
-    const versions = await db.all<{ version: number }>(`SELECT version FROM schema_migrations ORDER BY version`);
+    const versions = await db.all<{ version: number }>(
+      `SELECT version FROM schema_migrations ORDER BY version`
+    );
     expect(versions.length).toBeGreaterThanOrEqual(3);
   });
 

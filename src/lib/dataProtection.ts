@@ -31,7 +31,8 @@ const DESTRUCTIVE_PATTERNS: Array<{ pattern: RegExp; reason: string }> = [
     reason: 'TRUNCATE would remove stored data'
   },
   {
-    pattern: /\bALTER\s+TABLE\s+(predictions|prediction_meta|users|results)\b[^;]*\bDROP\s+COLUMN\b/i,
+    pattern:
+      /\bALTER\s+TABLE\s+(predictions|prediction_meta|users|results)\b[^;]*\bDROP\s+COLUMN\b/i,
     reason: 'DROP COLUMN on a protected table may make predictions unusable'
   }
 ];
@@ -71,10 +72,7 @@ export function hasStoredPredictions(counts: ProtectedRowCounts): boolean {
 
 export function hasProtectedData(counts: ProtectedRowCounts): boolean {
   return (
-    counts.predictions > 0 ||
-    counts.predictionMeta > 0 ||
-    counts.users > 0 ||
-    counts.results > 0
+    counts.predictions > 0 || counts.predictionMeta > 0 || counts.users > 0 || counts.results > 0
   );
 }
 

@@ -9,13 +9,21 @@ interface ResultDonutProps {
 export function ResultDonut({ segments }: ResultDonutProps) {
   if (segments.length === 0) return null;
 
-  let cumulative = 0;
-  const gradientParts = segments.map((segment, index) => {
-    const start = cumulative;
-    cumulative += segment.pct;
-    const color = DONUT_COLORS[index % DONUT_COLORS.length];
-    return `${color} ${start}% ${cumulative}%`;
-  });
+  const { parts: gradientParts } = segments.reduce<{
+    parts: string[];
+    cumulative: number;
+  }>(
+    (acc, segment, index) => {
+      const start = acc.cumulative;
+      const end = start + segment.pct;
+      const color = DONUT_COLORS[index % DONUT_COLORS.length];
+      return {
+        parts: [...acc.parts, `${color} ${start}% ${end}%`],
+        cumulative: end
+      };
+    },
+    { parts: [], cumulative: 0 }
+  );
 
   return (
     <div className="result-donut-wrap">

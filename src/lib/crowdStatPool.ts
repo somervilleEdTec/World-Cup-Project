@@ -1,6 +1,13 @@
 import { teams } from '../data/tournament';
 import { formatFixtureStageLabel } from './fixtureLabels';
-import { ActualResult, CrowdStatCard, CrowdStatVisualType, Match, Stage, StatisticsPickCount } from '../types';
+import {
+  ActualResult,
+  CrowdStatCard,
+  CrowdStatVisualType,
+  Match,
+  Stage,
+  StatisticsPickCount
+} from '../types';
 import { isUpcomingFixture } from './comparisonVisibility';
 import {
   computeLadderSwingCandidates,
@@ -10,13 +17,12 @@ import {
   computeTightestRankCluster,
   computeMostVolatileFixture
 } from './leagueImpact';
-import { buildPersonalStatPool, samplePersonalStat, ladderCandidateToCard } from './personalStats';
+import { ladderCandidateToCard } from './personalStats';
 import {
   buildMysteryStatPool,
   computeFunFacts,
   computeGroupConsensus,
   computeHeadlines,
-  computeMatchConsensus,
   computeTournamentOutlook,
   GroupConsensusItem,
   MatchConsensusItem,
@@ -94,11 +100,16 @@ function stripTeamNamesFromText(text: string): string {
 }
 
 function factSubtitleForText(text: string, icon: string): string {
-  if (text.includes('end in a draw') || text.includes('clean sheet') || text.includes('Average predicted goals')) {
+  if (
+    text.includes('end in a draw') ||
+    text.includes('clean sheet') ||
+    text.includes('Average predicted goals')
+  ) {
     return 'League trends';
   }
   if (text.includes('goal fest')) return 'Goal fest alert';
-  if (text.includes('strongest consensus') || text.includes('most unpredictable')) return 'Group watch';
+  if (text.includes('strongest consensus') || text.includes('most unpredictable'))
+    return 'Group watch';
   if (text.includes('runaway champion')) return 'Tournament outlook';
   if (text.includes('Only ') && text.includes('predicted a unique')) return 'Against the grain';
   if (icon === '🤝' || icon === '🧤' || icon === '⚽') return 'League trends';
@@ -126,7 +137,9 @@ function groupCardsFromConsensus(
   if (strongest) {
     const modalOrder = strongest.modalOrder.map((teamId) => {
       const team = teams.find((t) => t.id === teamId);
-      return revealNames ? (team?.name ?? teamId) : `Pick ${strongest.modalOrder.indexOf(teamId) + 1}`;
+      return revealNames
+        ? (team?.name ?? teamId)
+        : `Pick ${strongest.modalOrder.indexOf(teamId) + 1}`;
     });
     cards.push({
       id: `group-strong-${strongest.groupId}`,
@@ -234,12 +247,7 @@ function buildFixtureInsightCards(
     break;
   }
 
-  const battles = computeRankClusterBattles(
-    matches,
-    userPicks,
-    results,
-    viewableUpcomingMatchIds
-  );
+  const battles = computeRankClusterBattles(matches, userPicks, results, viewableUpcomingMatchIds);
   for (const battle of battles.slice(0, 1)) {
     cards.push({
       id: `battle-${battle.match.id}-${battle.playerA}-${battle.playerB}`,
@@ -570,9 +578,7 @@ export function sampleCrowdStats(
   const selected: CrowdStatCard[] = [];
   const usedIds = new Set<string>();
 
-  const sampleOrder = VISUAL_TYPE_ORDER.filter(
-    (type) => type !== 'personal' && type !== 'ladder'
-  );
+  const sampleOrder = VISUAL_TYPE_ORDER.filter((type) => type !== 'personal' && type !== 'ladder');
 
   for (const visualType of sampleOrder) {
     const candidates = shuffleItems(byVisual.get(visualType) ?? []).filter(
@@ -595,7 +601,7 @@ export function sampleCrowdStats(
     .filter((card): card is CrowdStatCard => card !== undefined);
   const extras = selected.filter((card) => !ordered.includes(card));
 
-  let combined = [pinnedPersonal, pinnedLadder, ...ordered, ...extras].filter(
+  const combined = [pinnedPersonal, pinnedLadder, ...ordered, ...extras].filter(
     (card): card is CrowdStatCard => card !== undefined
   );
 

@@ -1,6 +1,6 @@
 # Agent Handover — World Cup Boys
 
-**Last updated:** 2026-06-12 (Crowd Predictions random pool, all 104 official kickoffs, BST audit)
+**Last updated:** 2026-06-14 (Stats tab personal cards, panel subtitles, group standings fix)
 **Repository:** https://github.com/somervilleEdTec/World-Cup-Project  
 **Branches:** **`main`** (live deploy) · **`Debug`** (PC only) — [BRANCHING.md](./BRANCHING.md)  
 **Live:** https://worldcup.dosums.uk — automated deploy active — [DEPLOY_CONTROL_PLANE.md](./DEPLOY_CONTROL_PLANE.md) · [PRODUCTION.md](./PRODUCTION.md)  
@@ -130,12 +130,12 @@ Historical docs: [archive/README.md](./archive/README.md)
 - [x] Auto-save match scores; **Lock group**; missing predictions list (`src/lib/missingPicks.ts`)
 - [x] Group **projected** + **actual** standings tables; locked fixtures show prediction / result / points as text
 - [x] **Stats** (`/comparison`): **By Fixture** tab — colour-coded accuracy when results in; group predictions after lock; **KO after fixture kickoff**
-- [x] **Crowd Predictions** tab — unified random stat pool (5–8 cards per load/shuffle): hero headlines, match infographics, fun facts, group snapshots, podium outlook; **upcoming fixtures only**; pre-lock teasers hide team names
+- [x] **Crowd Predictions** tab — six cards per load/shuffle: pinned **personal** stat (logged in), pinned **If this scoreline lands**, then four sampled crowd cards; panel subtitles; group consensus/divided standings; volatile fixture + rank cluster; **upcoming fixtures only**; pre-lock teasers hide team names
 - [x] All kickoff times shown in **BST** (`src/lib/formatDateTime.ts`)
 - [x] `TeamSelect` — flags + alphabetical teams
 - [x] SVG flags (`CountryFlag`, `public/flags/4x3/`)
 - [x] Touch devices — score inputs clear on focus for easier entry (`src/lib/touchDevice.ts`, `FixturePickCard.tsx`)
-- [x] **180 tests** across unit + integration (validation, scoring, kickoffs, fixture schedule audit, DB, sync mapping, security); `npm run build`; Windows `scripts/Test-LocalSite.ps1`; `npm run seed:ko-environment`; `npm run seed:complete-teams`
+- [x] **234 tests** across unit + integration (validation, scoring, kickoffs, fixture schedule audit, DB, sync mapping, security, crowd stats); `npm run build`; Windows `scripts/Test-LocalSite.ps1`; `npm run seed:ko-environment`; `npm run seed:complete-teams`
 
 ### Ops / partial
 
@@ -179,12 +179,14 @@ Jobs: src/server/jobs.ts (locks, sync poll)
 | `src/lib/missingPicks.ts` | Missing predictions list for header |
 | `src/lib/matchScoring.ts` | Per-fixture points — group W/D/L; KO advancing team + FT exact |
 | `src/lib/comparisonVisibility.ts` | When others’ predictions are visible; `isUpcomingFixture()` for stats scope |
-| `src/lib/crowdStatPool.ts` | Unified crowd-stat pool builder + stratified random sampler |
+| `src/lib/crowdStatPool.ts` | Crowd stat pool builder + six-card sampler (pinned personal + ladder) |
+| `src/lib/personalStats.ts` | Personal stat candidates for logged-in user |
+| `src/lib/upcomingFixtures.ts` | Next / second-next kickoff window helper |
 | `src/lib/predictionStats.ts` | Raw consensus, headlines, fun-fact computations |
-| `src/server/services/statistics.ts` | `GET /api/statistics` — builds pool, returns `crowdCards` |
+| `src/server/services/statistics.ts` | `GET /api/statistics` — optional auth; builds pool, returns `crowdCards` |
 | `src/pages/ComparisonPage.tsx` | Stats page: Crowd Predictions + By Fixture tabs |
 | `src/components/stats/CrowdStatsPanel.tsx` | Crowd Predictions bento grid entry |
-| `src/components/stats/CrowdStatCard.tsx` | Renders hero / match / fact / group / outlook / spotlight cards |
+| `src/components/stats/CrowdStatCard.tsx` | Renders hero / fixture / ladder / personal / standings / podium / volatile / cluster / insight cards |
 | `src/lib/formatDateTime.ts` | BST kickoff formatting |
 | `src/components/TeamSelect.tsx` | Flag + name picker |
 | `src/server/__tests__/tournament.integration.test.ts` | Leaderboard, KO unlock, DB upsert, multi-player stress |
@@ -223,7 +225,7 @@ Base: `http://localhost:8787` · Auth: `Authorization: Bearer <token>`
 | POST | `/api/predictions/commit` | Legacy; UI unused |
 | GET | `/api/leaderboard` | Public |
 | GET | `/api/comparison/*` | Bearer — fixture comparison and picker |
-| GET | `/api/statistics` | Bearer — crowd prediction stats (`meta` + `crowdCards`) |
+| GET | `/api/statistics` | Optional Bearer — crowd prediction stats (`meta` + `crowdCards`); personal card when authenticated |
 | POST | `/api/admin/*` | Admin |
 | POST | `/api/system/locks/run` | Manual lock pass |
 

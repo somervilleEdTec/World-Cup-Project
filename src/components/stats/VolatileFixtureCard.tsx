@@ -23,15 +23,17 @@ export function VolatileFixtureCard({ card, revealNames }: VolatileFixtureCardPr
       </div>
       <p className="kicker">{formatFixtureStageLabel(card.stage, card.group)}</p>
       <p className="ladder-swing-scoreline">
-        {card.scoreline}{' '}
-        <span className="ladder-swing-pct">({card.scorelinePct}% crowd pick)</span>
+        {card.scoreline} <span className="ladder-swing-pct">({card.scorelinePct}% crowd pick)</span>
       </p>
       <p className="volatile-fixture-meta">
         Would move {card.ranksMoved} player rank{card.ranksMoved === 1 ? '' : 's'}
       </p>
       <div className="consensus-bar-row">
         <div className="consensus-bar-track" aria-hidden="true">
-          <div className="consensus-bar-fill volatile-swing-fill" style={{ width: `${barWidth}%` }} />
+          <div
+            className="consensus-bar-fill volatile-swing-fill"
+            style={{ width: `${barWidth}%` }}
+          />
         </div>
         <span className="consensus-bar-meta">↑{card.maxSwing} max swing</span>
       </div>

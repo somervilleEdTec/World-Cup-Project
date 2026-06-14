@@ -25,7 +25,9 @@ function ScoringInfoPanel() {
         <li>Final and third-place play-off: 3× match points</li>
       </ul>
       <h4>Group standings bonus</h4>
-      <p>+1 point for each team you place in the exact correct finishing position within its group.</p>
+      <p>
+        +1 point for each team you place in the exact correct finishing position within its group.
+      </p>
       <h4>Tournament predictions</h4>
       <ul>
         <li>Champion: +6</li>
@@ -61,7 +63,8 @@ const LEGEND_ROWS = [
   {
     acronym: 'TP',
     meaning: 'Tournament Points',
-    shows: 'Points earned from tournament outcome picks (Champion +6, Runner-up +5, etc.) — not a count'
+    shows:
+      'Points earned from tournament outcome picks (Champion +6, Runner-up +5, etc.) — not a count'
   }
 ] as const;
 
@@ -96,8 +99,7 @@ export function LeagueTablePage() {
       {coinFlipNote && <p className="kicker">{coinFlipNote}</p>}
 
       <p className="league-table-prizes" aria-label="League prizes">
-        <strong>Prizes:</strong>{' '}
-        <span className="league-prize-first">1st £50</span>
+        <strong>Prizes:</strong> <span className="league-prize-first">1st £50</span>
         {' · '}
         <span className="league-prize-second">2nd £20</span>
       </p>

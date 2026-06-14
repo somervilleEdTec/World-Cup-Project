@@ -18,11 +18,10 @@ import { groupMatches } from '../data/tournament';
 describe('pickKey', () => {
   it('returns score only for group matches', () => {
     expect(
-      pickKey(
-        { matchId: 'g-a-1', homeScore: 2, awayScore: 1 },
-        'GROUP',
-        { homeTeamId: 'mexico', awayTeamId: 'south-africa' }
-      )
+      pickKey({ matchId: 'g-a-1', homeScore: 2, awayScore: 1 }, 'GROUP', {
+        homeTeamId: 'mexico',
+        awayTeamId: 'south-africa'
+      })
     ).toBe('2-1');
   });
 
@@ -219,8 +218,28 @@ describe('computeMysteryStats', () => {
     );
 
     const users: UserPicks[] = [
-      { userId: 'u1', displayName: 'Alice', picks: picksA, bonus: { winnerTeamId: 'brazil', runnerUpTeamId: 'france', thirdTeamId: 'germany', fourthTeamId: 'spain' } },
-      { userId: 'u2', displayName: 'Bob', picks: picksA, bonus: { winnerTeamId: 'brazil', runnerUpTeamId: 'argentina', thirdTeamId: 'germany', fourthTeamId: 'spain' } }
+      {
+        userId: 'u1',
+        displayName: 'Alice',
+        picks: picksA,
+        bonus: {
+          winnerTeamId: 'brazil',
+          runnerUpTeamId: 'france',
+          thirdTeamId: 'germany',
+          fourthTeamId: 'spain'
+        }
+      },
+      {
+        userId: 'u2',
+        displayName: 'Bob',
+        picks: picksA,
+        bonus: {
+          winnerTeamId: 'brazil',
+          runnerUpTeamId: 'argentina',
+          thirdTeamId: 'germany',
+          fourthTeamId: 'spain'
+        }
+      }
     ];
 
     const facts = computeMysteryStats(users);

@@ -31,9 +31,7 @@ export function MiniGroupStandingsCard({ card }: MiniGroupStandingsCardProps) {
         </>
       ) : (
         <>
-          <p className="kicker">
-            {card.distinctWinners} different teams tipped to finish 1st
-          </p>
+          <p className="kicker">{card.distinctWinners} different teams tipped to finish 1st</p>
           <div className="mini-standings-grid">
             {(card.positions[0]?.teams ?? []).map((team) => (
               <div key={team.label} className="mini-standings-row">

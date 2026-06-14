@@ -128,8 +128,12 @@ Two states:
 
 ## Crowd Predictions (Stats tab)
 
-- **Random mix:** 5–8 cards per page load or shuffle — hero headlines, match infographics, fun facts, group snapshots, podium outlook.
-- **Upcoming fixtures only** for match-level stats (no kicked-off or resulted fixtures).
+- **Six cards** per page load or shuffle — pinned personal stat (when logged in), pinned ladder swing, then four sampled crowd cards.
+- **Personal stats** (rotate on shuffle): your ladder move, you vs crowd, contrarian pick, nearest rival, hive mind score, group order vs crowd.
+- **League stats** in the sample pool include most volatile fixture and neck-and-neck rank cluster.
+- **Panel subtitles** on every card (e.g. “If this scoreline lands”, “Your next pick”).
+- **Group standings** show the crowd's coherent modal top-4 order (consensus) or group-winner race (divided).
+- **Upcoming fixtures only** for match-level stats (next / second-next kickoff for pinned cards).
 - **Pre-lock:** teaser stats without team names until first kickoff.
 - **Post-lock:** full names and infographics for unlocked upcoming fixtures.
 

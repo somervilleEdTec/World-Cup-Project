@@ -12,8 +12,7 @@ export function isDebugLocalMode(): boolean {
 
 /** football-data.org API token — FOOTBALL_DATA_TOKEN preferred, FOOTBALL_API_KEY as alias. */
 export function getFootballDataToken(): string | undefined {
-  const token =
-    process.env.FOOTBALL_DATA_TOKEN?.trim() || process.env.FOOTBALL_API_KEY?.trim();
+  const token = process.env.FOOTBALL_DATA_TOKEN?.trim() || process.env.FOOTBALL_API_KEY?.trim();
   return token || undefined;
 }
 

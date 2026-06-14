@@ -2,7 +2,11 @@
 import { describe, it, expect, afterAll, beforeEach } from 'vitest';
 import type { Express } from 'express';
 import { setupTestServer, teardownTestServer } from '../testHarness';
-import { explainMappingFailure, parseProviderGroup, resolveInternalMatchId } from '../services/matchMapping';
+import {
+  explainMappingFailure,
+  parseProviderGroup,
+  resolveInternalMatchId
+} from '../services/matchMapping';
 import { PROVIDER } from '../../services/footballDataService';
 import { groupMatches, teams } from '../../data/tournament';
 import { getDb } from '../database';

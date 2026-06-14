@@ -14,15 +14,13 @@ const PODIUM_SUBTITLES: Record<
   fourth: 'Fourth-place picks'
 };
 
-const PODIUM_LABELS: Record<
-  Extract<CrowdStatCardType, { visualType: 'podium' }>['slot'],
-  string
-> = {
-  champion: 'Champion',
-  runnerUp: 'Runner-up',
-  third: 'Third place',
-  fourth: 'Fourth place'
-};
+const PODIUM_LABELS: Record<Extract<CrowdStatCardType, { visualType: 'podium' }>['slot'], string> =
+  {
+    champion: 'Champion',
+    runnerUp: 'Runner-up',
+    third: 'Third place',
+    fourth: 'Fourth place'
+  };
 
 const PODIUM_HEIGHTS = ['tall', 'medium', 'short'] as const;
 

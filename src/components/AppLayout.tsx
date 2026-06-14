@@ -26,10 +26,9 @@ export function AppLayout() {
       .catch(() => setIsAdmin(false));
   }, []);
 
-  const links = (isAdmin
-    ? baseLinks.filter((link) => link.to !== '/my-picks')
-    : baseLinks
-  ).concat(isAdmin ? [{ to: '/admin', label: 'Admin', mobileLabel: 'Admin' }] : []);
+  const links = (isAdmin ? baseLinks.filter((link) => link.to !== '/my-picks') : baseLinks).concat(
+    isAdmin ? [{ to: '/admin', label: 'Admin', mobileLabel: 'Admin' }] : []
+  );
 
   const logout = () => {
     clearToken();

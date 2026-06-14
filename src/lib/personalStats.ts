@@ -123,10 +123,7 @@ function buildLadderMoveCard(
   };
 }
 
-function buildYouVsCrowdCard(
-  input: PersonalStatsInput,
-  user: UserPicks
-): CrowdStatCard | null {
+function buildYouVsCrowdCard(input: PersonalStatsInput, user: UserPicks): CrowdStatCard | null {
   const windows = getUpcomingKickoffWindows(input.matches, input.viewableUpcomingMatchIds);
   const eligible = windowMatchesWithUserPick(windows, user);
   if (eligible.length === 0) return null;
@@ -154,10 +151,7 @@ function buildYouVsCrowdCard(
   };
 }
 
-function buildContrarianCard(
-  input: PersonalStatsInput,
-  user: UserPicks
-): CrowdStatCard | null {
+function buildContrarianCard(input: PersonalStatsInput, user: UserPicks): CrowdStatCard | null {
   const windows = getUpcomingKickoffWindows(input.matches, input.viewableUpcomingMatchIds);
   const eligible = windowMatchesWithUserPick(windows, user);
   if (eligible.length === 0) return null;
@@ -192,10 +186,7 @@ function buildContrarianCard(
   };
 }
 
-function buildNearestRivalCard(
-  input: PersonalStatsInput,
-  user: UserPicks
-): CrowdStatCard | null {
+function buildNearestRivalCard(input: PersonalStatsInput, user: UserPicks): CrowdStatCard | null {
   const ranked = rankPlayersForStats(input.userPicks, input.results);
   const userIndex = ranked.findIndex((p) => p.userId === user.userId);
   if (userIndex < 0) return null;
@@ -209,8 +200,7 @@ function buildNearestRivalCard(
     .filter((entry) => Math.abs(entry.rank - (userIndex + 1)) <= 2)
     .sort(
       (a, b) =>
-        Math.abs(a.rank - (userIndex + 1)) - Math.abs(b.rank - (userIndex + 1)) ||
-        a.rank - b.rank
+        Math.abs(a.rank - (userIndex + 1)) - Math.abs(b.rank - (userIndex + 1)) || a.rank - b.rank
     );
 
   for (const match of windowMatches) {
@@ -248,10 +238,7 @@ function buildNearestRivalCard(
   return null;
 }
 
-function buildHiveMindCard(
-  input: PersonalStatsInput,
-  user: UserPicks
-): CrowdStatCard | null {
+function buildHiveMindCard(input: PersonalStatsInput, user: UserPicks): CrowdStatCard | null {
   const windows = getUpcomingKickoffWindows(input.matches, input.viewableUpcomingMatchIds);
   const eligible = windowMatchesWithUserPick(windows, user);
   if (eligible.length === 0) return null;
@@ -288,8 +275,7 @@ function buildHiveMindCard(
     kind: 'hiveMind',
     subtitle: 'How mainstream are your picks?',
     hiveMindPct: Math.round((userModal / userMatches) * 100),
-    leagueAvgPct:
-      leagueMatches > 0 ? Math.round((leagueModal / leagueMatches) * 100) : 0,
+    leagueAvgPct: leagueMatches > 0 ? Math.round((leagueModal / leagueMatches) * 100) : 0,
     matchCount: userModal,
     matchTotal: userMatches
   };
@@ -307,10 +293,7 @@ function userHasFullGroup(user: UserPicks, groupId: string): boolean {
   return ids.every((id) => userHasPick(user, id));
 }
 
-function buildGroupDiffCard(
-  input: PersonalStatsInput,
-  user: UserPicks
-): CrowdStatCard | null {
+function buildGroupDiffCard(input: PersonalStatsInput, user: UserPicks): CrowdStatCard | null {
   if (!input.groupPhaseLocked) return null;
 
   const windows = getUpcomingKickoffWindows(input.matches, input.viewableUpcomingMatchIds);
@@ -329,11 +312,15 @@ function buildGroupDiffCard(
 
     const yourOrder = computeGroupPositions(groupId, user.picks).map((teamId) => {
       const team = teams.find((t) => t.id === teamId);
-      return input.revealNames ? (team?.name ?? teamId) : `Pick ${consensus.modalOrder.indexOf(teamId) + 1}`;
+      return input.revealNames
+        ? (team?.name ?? teamId)
+        : `Pick ${consensus.modalOrder.indexOf(teamId) + 1}`;
     });
     const crowdOrder = consensus.modalOrder.map((teamId) => {
       const team = teams.find((t) => t.id === teamId);
-      return input.revealNames ? (team?.name ?? teamId) : `Pick ${consensus.modalOrder.indexOf(teamId) + 1}`;
+      return input.revealNames
+        ? (team?.name ?? teamId)
+        : `Pick ${consensus.modalOrder.indexOf(teamId) + 1}`;
     });
 
     const mismatchCount = yourOrder.filter((team, idx) => team !== crowdOrder[idx]).length;

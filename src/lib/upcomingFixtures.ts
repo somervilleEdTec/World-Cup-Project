@@ -24,9 +24,7 @@ export function getUpcomingKickoffWindows(
 
   return {
     next: upcoming.filter((m) => m.kickoff === nextKickoff),
-    secondNext: secondKickoff
-      ? upcoming.filter((m) => m.kickoff === secondKickoff)
-      : []
+    secondNext: secondKickoff ? upcoming.filter((m) => m.kickoff === secondKickoff) : []
   };
 }
 

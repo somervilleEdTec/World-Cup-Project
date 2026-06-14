@@ -22,13 +22,16 @@ export function LadderSwingCard({ card, revealNames }: LadderSwingCardProps) {
           {revealNames && awayTeam ? <TeamLabel team={awayTeam} /> : <span>Away</span>}
         </div>
         <p className="ladder-swing-scoreline">
-          {card.scoreline} <span className="ladder-swing-pct">({card.scorelinePct}% crowd pick)</span>
+          {card.scoreline}{' '}
+          <span className="ladder-swing-pct">({card.scorelinePct}% crowd pick)</span>
         </p>
         <p className="kicker">{formatFixtureStageLabel(card.stage, card.group)}</p>
       </div>
       <ul className="ladder-swing-movers">
         {card.movers.length === 0 ? (
-          <li className="ladder-swing-mover ladder-swing-empty">No rank changes for this scoreline.</li>
+          <li className="ladder-swing-mover ladder-swing-empty">
+            No rank changes for this scoreline.
+          </li>
         ) : (
           card.movers.map((mover) => (
             <li key={`${mover.displayName}-${mover.beforeRank}`} className="ladder-swing-mover">

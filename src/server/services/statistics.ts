@@ -24,10 +24,7 @@ async function isTournamentGroupPhaseLocked(db: ReturnType<typeof getDb>): Promi
   return Boolean(row?.locked);
 }
 
-export async function computeStatistics(
-  nowIso = new Date().toISOString(),
-  currentUserId?: string
-) {
+export async function computeStatistics(nowIso = new Date().toISOString(), currentUserId?: string) {
   const db = getDb();
   const results = await getResultsMap();
   const matches = getMatches({}, results).filter(
@@ -120,13 +117,7 @@ export async function computeStatistics(
     : null;
 
   const pinnedLadder = groupPhaseLocked
-    ? buildPinnedLadderCard(
-        matches,
-        userPicks,
-        results,
-        matchConsensus,
-        viewableUpcomingMatchIds
-      )
+    ? buildPinnedLadderCard(matches, userPicks, results, matchConsensus, viewableUpcomingMatchIds)
     : undefined;
 
   const pinnedPersonal =

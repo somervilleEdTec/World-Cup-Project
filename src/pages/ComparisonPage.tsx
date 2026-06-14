@@ -160,18 +160,19 @@ export function ComparisonPage() {
   const awayTeam = data ? teams.find((team) => team.id === data.match.awayTeamId) : undefined;
   const activeId = selectedMatchId || data?.match.id || '';
 
-  const fixtureGroups = fixtures.reduce<
-    Array<{ label: string; items: typeof fixtures }>
-  >((groups, fixture) => {
-    const label = fixtureSelectGroupLabel(fixture);
-    const existing = groups.find((group) => group.label === label);
-    if (existing) {
-      existing.items.push(fixture);
-    } else {
-      groups.push({ label, items: [fixture] });
-    }
-    return groups;
-  }, []);
+  const fixtureGroups = fixtures.reduce<Array<{ label: string; items: typeof fixtures }>>(
+    (groups, fixture) => {
+      const label = fixtureSelectGroupLabel(fixture);
+      const existing = groups.find((group) => group.label === label);
+      if (existing) {
+        existing.items.push(fixture);
+      } else {
+        groups.push({ label, items: [fixture] });
+      }
+      return groups;
+    },
+    []
+  );
 
   return (
     <section className="stack">
