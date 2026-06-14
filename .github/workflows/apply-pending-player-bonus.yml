@@ -74,6 +74,7 @@ jobs:
 
       - name: Remove pending request file
         if: steps.request.outputs.has_request == 'true' && success()
+        continue-on-error: true
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
