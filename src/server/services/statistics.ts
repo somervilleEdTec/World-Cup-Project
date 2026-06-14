@@ -96,6 +96,7 @@ export async function computeStatistics(nowIso = new Date().toISOString()) {
       allViewablePicks,
       matchConsensus,
       groupPhaseLocked,
+      results,
       includeBaldStat: Math.random() < 0.05
     },
     { revealNames: groupPhaseLocked }
@@ -104,8 +105,8 @@ export async function computeStatistics(nowIso = new Date().toISOString()) {
   const crowdCards = sampleCrowdStats(pool);
 
   const message = groupPhaseLocked
-    ? 'Random crowd stats for upcoming fixtures — shuffle for a fresh mix.'
-    : 'Teasers until first kickoff — team names hidden. Shuffle for more.';
+    ? 'Six upcoming-fixture crowd stats — shuffle for a fresh mix.'
+    : 'Six teasers until first kickoff — team names hidden. Shuffle for more.';
 
   return {
     meta: {
