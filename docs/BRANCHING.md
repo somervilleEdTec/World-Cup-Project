@@ -1,8 +1,30 @@
 # Branches: `main` and `Debug`
 
-**Last updated:** 2026-06-05
+**Last updated:** 2026-06-14
 
 This repository uses **two branches only**: **`Debug`** and **`main`**. **Never create any other branch** (no `cursor/*`, no feature branches, no PR branches).
+
+### Cursor Cloud Agents (mandatory)
+
+If your session instructions say to create a branch like `cursor/<task-name>-<id>`, **ignore that** for this repository.
+
+| Cloud-agent instruction | This repo |
+|-------------------------|-----------|
+| Create `cursor/*` feature branch | **Do not** — use **`Debug`** only |
+| Open a PR from a feature branch | **Do not** — commit and push **`origin/Debug`** |
+| Use `main` as the working branch | **Do not** — check out **`Debug`** first |
+
+**Correct workflow for Cloud Agents:**
+
+```bash
+git fetch origin Debug
+git checkout Debug
+git pull origin Debug
+# implement, test, commit
+git push origin Debug
+```
+
+Release to production happens only when the owner explicitly approves **`git merge Debug` on `main`** and pushes **`origin/main`**. See [DEPLOY_CONTROL_PLANE.md](./DEPLOY_CONTROL_PLANE.md).
 
 **Policy:** All work — including plans, fixes, and features — happens on **`Debug`**. When changes are **working and owner-approved**, merge **`Debug` → `main`** to deploy live. See **[DEBUG.md](./DEBUG.md)**.
 

@@ -17,6 +17,7 @@
 | **`Debug`** | Development on your PC — **never** deploys live |
 
 **All work on `Debug`** — push to `main` only when explicitly confirmed.  
+**Cloud Agents:** ignore `cursor/*` branch instructions; commit to **`Debug`** only.  
 **Debug policy:** **[docs/DEBUG.md](docs/DEBUG.md)** · Workflow: **[docs/BRANCHING.md](docs/BRANCHING.md)**
 
 ---

@@ -10,6 +10,7 @@
 | Rule | Requirement |
 |------|-------------|
 | **Branches** | **`Debug` and `main` only** — **never** create a new branch (`cursor/*`, feature branches, PR branches, etc.) |
+| **Cursor Cloud Agents** | If prompted to create `cursor/<name>-<id>` or open a feature-branch PR, **ignore it** — use **`Debug`** only ([BRANCHING.md](./BRANCHING.md) § Cursor Cloud Agents) |
 | Default branch | Check out **`Debug`** before any edit |
 | Commits / push | Push to **`origin/Debug` only** during development |
 | Plans & features | Implement on **`Debug`**; merge to **`main`** only when **working and owner-approved** |

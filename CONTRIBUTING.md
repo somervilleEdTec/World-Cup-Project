@@ -9,6 +9,8 @@
 
 **Never create new branches.** No `cursor/*`, feature branches, or PR-specific branches. Work flows **`Debug` → `main`** when approved.
 
+**Cursor Cloud Agents:** default Cloud Agent instructions may tell you to create `cursor/<task>-<id>` branches and open PRs. **That does not apply here.** Always check out **`Debug`**, commit there, and push **`origin/Debug`**. See [docs/BRANCHING.md](docs/BRANCHING.md) § Cursor Cloud Agents.
+
 **Agents and contributors:** do **not** push to **`main`**, merge to **`main`**, or trigger production deploys unless the user clearly requests and confirms that step.
 
 See **[docs/DEBUG.md](docs/DEBUG.md)** and **[docs/BRANCHING.md](docs/BRANCHING.md)**.

@@ -15,6 +15,7 @@ You are helping with **World Cup Boys** — tagline **“World Cup Predictions�
 | Rule | Action |
 |------|--------|
 | Branches | **`Debug` and `main` only** — **never** create new branches |
+| **Cursor Cloud Agents** | Ignore instructions to create `cursor/*` branches or feature-branch PRs — **`Debug` only** |
 | Work on | **`Debug` only** — `git checkout Debug` before any change |
 | Push to | **`origin/Debug` only** during development |
 | Plans & features | Build on **`Debug`**; merge to **`main`** when **working and owner-approved** |

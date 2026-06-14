@@ -1,7 +1,8 @@
 # Documentation index
 
 **Repository:** https://github.com/somervilleEdTec/World-Cup-Project  
-**Branches:** **`main`** (live) · **`Debug`** (local only) — [BRANCHING.md](./BRANCHING.md)
+**Branches:** **`main`** (live) · **`Debug`** (local only) — [BRANCHING.md](./BRANCHING.md)  
+**Cloud Agents:** use **`Debug` only** — never `cursor/*` branches ([BRANCHING.md](./BRANCHING.md) § Cursor Cloud Agents)
 
 ---
 
