@@ -1,0 +1,82 @@
+# Auto-runs when .github/ops/set-player-bonus.json is pushed to main (one-shot organiser override).
+
+name: Apply pending player bonus (auto)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/ops/set-player-bonus.json'
+
+concurrency:
+  group: production-set-player-bonus-auto
+  cancel-in-progress: false
+
+jobs:
+  apply-player-bonus:
+    name: Apply bonus picks on production host
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Read pending bonus request
+        id: request
+        run: |
+          set -euo pipefail
+          file=".github/ops/set-player-bonus.json"
+          if [ ! -f "$file" ]; then
+            echo "No pending request file — skipping."
+            exit 0
+          fi
+          echo "display_name=$(jq -r .displayName "$file")" >> "$GITHUB_OUTPUT"
+          echo "winner=$(jq -r .winner "$file")" >> "$GITHUB_OUTPUT"
+          echo "runner_up=$(jq -r .runnerUp "$file")" >> "$GITHUB_OUTPUT"
+          echo "third=$(jq -r .third "$file")" >> "$GITHUB_OUTPUT"
+          echo "fourth=$(jq -r .fourth "$file")" >> "$GITHUB_OUTPUT"
+          echo "has_request=true" >> "$GITHUB_OUTPUT"
+
+      - name: Check deploy secrets
+        if: steps.request.outputs.has_request == 'true'
+        run: |
+          missing=0
+          check() { if [ -z "$1" ]; then echo "  MISSING: $2"; missing=1; else echo "  OK: $2"; fi; }
+          check "${{ secrets.DEPLOY_HOST }}" "DEPLOY_HOST"
+          check "${{ secrets.DEPLOY_USER }}" "DEPLOY_USER"
+          check "${{ secrets.DEPLOY_SSH_KEY }}" "DEPLOY_SSH_KEY"
+          check "${{ secrets.DEPLOY_PATH }}" "DEPLOY_PATH"
+          if [ "${missing}" -ne 0 ]; then exit 1; fi
+
+      - name: Configure SSH
+        if: steps.request.outputs.has_request == 'true'
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
+        run: bash scripts/ci-ssh-setup.sh
+
+      - name: Apply player bonus over SSH
+        if: steps.request.outputs.has_request == 'true'
+        env:
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+          PLAYER_NAME: ${{ steps.request.outputs.display_name }}
+          WINNER: ${{ steps.request.outputs.winner }}
+          RUNNER_UP: ${{ steps.request.outputs.runner_up }}
+          THIRD: ${{ steps.request.outputs.third }}
+          FOURTH: ${{ steps.request.outputs.fourth }}
+          SSH_MAX_ATTEMPTS: 3
+          SSH_RETRY_WAIT_SEC: 30
+        timeout-minutes: 15
+        run: |
+          set -euo pipefail
+          bash scripts/ci-ssh-exec.sh "cd '${DEPLOY_PATH}' && git fetch origin main && git checkout main && git pull --ff-only origin main && npm run db:backup && echo '=== Before ===' && sqlite3 data.db \"SELECT u.display_name, pm.bonus_committed FROM users u LEFT JOIN prediction_meta pm ON pm.user_id = u.id WHERE LOWER(u.display_name) = LOWER('${PLAYER_NAME}');\" && npm run db:set-player-bonus -- \"${PLAYER_NAME}\" \"${WINNER}\" \"${RUNNER_UP}\" \"${THIRD}\" \"${FOURTH}\" && echo '=== After ===' && sqlite3 data.db \"SELECT u.display_name, pm.bonus_committed FROM users u LEFT JOIN prediction_meta pm ON pm.user_id = u.id WHERE LOWER(u.display_name) = LOWER('${PLAYER_NAME}');\""
+
+      - name: Remove pending request file
+        if: steps.request.outputs.has_request == 'true' && success()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/ops/set-player-bonus.json
+          git commit -m "Remove applied player bonus ops request"
+          git push origin main
