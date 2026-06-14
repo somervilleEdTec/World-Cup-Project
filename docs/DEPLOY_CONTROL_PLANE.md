@@ -223,11 +223,12 @@ bash scripts/restart-production-services.sh
 
 Cloud agents should:
 
-1. Edit on **`Debug`**, push → wait for **CI Debug** green.
-2. Merge to **`main`** and push when the user confirms production release.
-3. Wait for **Deploy main** → green **Verify live site**; confirm `curl https://worldcup.dosums.uk/api/health` commit matches merge SHA.
-4. If the site is down (**530 / 1033**): follow [OUTAGE_RECOVERY.md](./OUTAGE_RECOVERY.md) — re-run **Deploy main** first; SSH only if that fails.
-5. **Do not** ask the owner to SSH for routine releases. SSH only for bootstrap, `.env`, `repair-npm-on-server.sh`, or tunnel recovery after re-run deploy.
+1. Check out **`Debug`** — **never create a new branch**.
+2. Implement plans and fixes on **`Debug`**, push → wait for **CI Debug** green.
+3. When **working and owner-approved**, merge **`Debug` → `main`** and push to deploy live.
+4. Wait for **Deploy main** → green **Verify live site**; confirm `curl https://worldcup.dosums.uk/api/health` commit matches merge SHA.
+5. If the site is down (**530 / 1033**): follow [OUTAGE_RECOVERY.md](./OUTAGE_RECOVERY.md) — re-run **Deploy main** first; SSH only if that fails.
+6. **Do not** ask the owner to SSH for routine releases. SSH only for bootstrap, `.env`, `repair-npm-on-server.sh`, or tunnel recovery after re-run deploy.
 
 ---
 

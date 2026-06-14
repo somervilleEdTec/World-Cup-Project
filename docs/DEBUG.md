@@ -9,9 +9,11 @@
 
 | Rule | Requirement |
 |------|-------------|
+| **Branches** | **`Debug` and `main` only** — **never** create a new branch (`cursor/*`, feature branches, PR branches, etc.) |
 | Default branch | Check out **`Debug`** before any edit |
-| Commits / push | Push to **`origin/Debug` only** |
-| **`main`** | **Never** push, merge to `main`, or open PRs to `main` unless the user **explicitly requests and confirms** a production release |
+| Commits / push | Push to **`origin/Debug` only** during development |
+| Plans & features | Implement on **`Debug`**; merge to **`main`** only when **working and owner-approved** |
+| **`main`** | Merge from **`Debug`** and push when the user **explicitly requests and confirms** a production release |
 | Project folder | Run **all** `git` / `npm` commands inside the clone (not Desktop or another folder) |
 | Hosting | **Local only** (`localhost` / `127.0.0.1`) — not the Oracle VM |
 | Results | **No** football-data.org on Debug — use seeds when you need test data |

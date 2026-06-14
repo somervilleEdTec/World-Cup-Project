@@ -2,9 +2,9 @@
 
 **Last updated:** 2026-06-05
 
-This repository uses **two branches only**. All other remote branches should be deleted.
+This repository uses **two branches only**: **`Debug`** and **`main`**. **Never create any other branch** (no `cursor/*`, no feature branches, no PR branches).
 
-**Policy:** All work happens on **`Debug`**. **`main`** is updated **only** when the owner explicitly requests and confirms a production release. See **[DEBUG.md](./DEBUG.md)**.
+**Policy:** All work — including plans, fixes, and features — happens on **`Debug`**. When changes are **working and owner-approved**, merge **`Debug` → `main`** to deploy live. See **[DEBUG.md](./DEBUG.md)**.
 
 | Branch | Purpose | Live site | GitHub Actions |
 |--------|---------|-----------|----------------|
@@ -19,6 +19,7 @@ See **[DEPLOY_CONTROL_PLANE.md](./DEPLOY_CONTROL_PLANE.md)** — GitHub owns dep
 
 | Rule | Enforcement |
 |------|-------------|
+| **Never create new branches** | No `git checkout -b`, no `cursor/*`, no feature/PR branches — **`Debug` only** |
 | No live deploy | `deploy-main.yml` triggers only on **`main`** |
 | No production script on wrong branch | `scripts/deploy-production.sh` exits if not on **`main`** |
 | CI on push | **`Debug`** runs [ci-debug.yml](../.github/workflows/ci-debug.yml) (no deploy) |
@@ -55,6 +56,8 @@ See **[DEBUG.md](./DEBUG.md)** · [KO_ENVIRONMENT.md](./KO_ENVIRONMENT.md). Use 
 ## `main` — production and live deploy
 
 ### Release flow (Debug → live)
+
+**Only after changes on `Debug` are tested and owner-approved:**
 
 **Windows (PowerShell) — inside the repo:**
 

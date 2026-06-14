@@ -281,8 +281,8 @@ npm run db:purge      # reset local SQLite data
 
 ## 12. Conventions
 
-- **Branches:** `Debug` for work; merge to `main` when stable ([BRANCHING.md](./BRANCHING.md))
-- PRs (if used): base `main`, head `Debug`
+- **Branches:** **`Debug` only** for work — **never create new branches**; merge to **`main`** when stable and owner-approved ([BRANCHING.md](./BRANCHING.md))
+- No PR branches — merge **`Debug` → `main`** directly when releasing
 - Update [UI_HANDOVER.md](./UI_HANDOVER.md) §6 when fixing UI bugs
 
 ---

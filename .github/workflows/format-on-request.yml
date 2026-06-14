@@ -1,0 +1,41 @@
+# Prettier is not run in CI Debug or Deploy main — trigger manually when needed.
+
+name: Format (on request)
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'Run Prettier check or apply fixes locally after write'
+        required: true
+        default: check
+        type: choice
+        options:
+          - check
+          - write
+
+jobs:
+  format:
+    name: Prettier
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Prettier check
+        if: inputs.mode == 'check'
+        run: npm run format:check
+
+      - name: Prettier write
+        if: inputs.mode == 'write'
+        run: npm run format

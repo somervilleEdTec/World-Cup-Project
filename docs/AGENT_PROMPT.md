@@ -14,9 +14,11 @@ You are helping with **World Cup Boys** — tagline **“World Cup Predictions�
 
 | Rule | Action |
 |------|--------|
+| Branches | **`Debug` and `main` only** — **never** create new branches |
 | Work on | **`Debug` only** — `git checkout Debug` before any change |
-| Push to | **`origin/Debug` only** |
-| **`main`** | **Never** commit, push, merge, or deploy unless the user **explicitly states and confirms** a production release |
+| Push to | **`origin/Debug` only** during development |
+| Plans & features | Build on **`Debug`**; merge to **`main`** when **working and owner-approved** |
+| **`main`** | Merge from **`Debug`** and push only when the user **explicitly states and confirms** a production release |
 
 **Local only on Debug:** `DEBUG_LOCAL=1`, localhost, **no** football-data.org — use **`npm run seed:debug`** for random results (or `--no-results`).  
 **Test users:** **Test1–Test20**, password **`guest`**, **no predictions / no results** by default unless the user asks for seeded data.
@@ -50,7 +52,7 @@ Test logins (after `npm run seed:debug`): **Test1** … **Test20** / **`guest`**
 
 ## Quality gates (before push to Debug)
 
-Push to **`Debug`** → GitHub **CI Debug** runs `npm test` + build automatically.
+Push to **`Debug`** → GitHub **CI Debug** runs `npm test`, `lint`, and build automatically.
 
 Locally (optional):
 
@@ -58,6 +60,7 @@ Locally (optional):
 npm test
 npm run build
 npm run lint
+npm run format    # optional — not in CI; or Actions → Format (on request)
 ```
 
 Production: merge to **`main`** and push — VM pull timer (~3 min) + **Deploy main** verify live health. See [DEPLOY_CONTROL_PLANE.md](./DEPLOY_CONTROL_PLANE.md).

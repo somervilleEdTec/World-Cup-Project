@@ -4,8 +4,10 @@
 
 | Branch | Who uses it | Push policy |
 |--------|-------------|-------------|
-| **`Debug`** | **All** day-to-day development | **Default** — commit and push here only |
+| **`Debug`** | **All** day-to-day development and plans | **Default** — commit and push here only |
 | **`main`** | Production / live site | **Only** when the owner **explicitly asks and confirms** a release |
+
+**Never create new branches.** No `cursor/*`, feature branches, or PR-specific branches. Work flows **`Debug` → `main`** when approved.
 
 **Agents and contributors:** do **not** push to **`main`**, merge to **`main`**, or trigger production deploys unless the user clearly requests and confirms that step.
 
@@ -40,6 +42,8 @@ npm test
 npm run build
 npm run lint
 ```
+
+Prettier is **not** run in CI by default. Run locally when needed (`npm run format`) or trigger **Actions → Format (on request)**.
 
 ---
 
