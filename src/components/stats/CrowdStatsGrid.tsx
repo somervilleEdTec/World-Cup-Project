@@ -18,8 +18,13 @@ export function CrowdStatsGrid({ cards, revealNames, mysteryMode }: CrowdStatsGr
 
   return (
     <div className={`crowd-stats-grid${mysteryMode ? ' crowd-stats-grid-mystery' : ''}`}>
-      {cards.map((card) => (
-        <CrowdStatCard key={card.id} card={card} revealNames={revealNames} />
+      {cards.map((card, index) => (
+        <CrowdStatCard
+          key={card.id}
+          card={card}
+          revealNames={revealNames}
+          pinned={index < 2 && (card.visualType === 'personal' || card.visualType === 'ladder')}
+        />
       ))}
     </div>
   );

@@ -7,6 +7,7 @@ interface InsightTileCardProps {
 export function InsightTileCard({ card }: InsightTileCardProps) {
   return (
     <article className="card crowd-stat-card crowd-stat-card-insight">
+      {card.subtitle && <p className="crowd-stat-panel-kicker">{card.subtitle}</p>}
       <div className="insight-tile">
         <span className="insight-tile-icon" aria-hidden="true">
           {card.icon}

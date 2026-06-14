@@ -112,7 +112,26 @@ export interface StatisticsPickCount {
   pct: number;
 }
 
-export type CrowdStatVisualType = 'hero' | 'fixture' | 'ladder' | 'standings' | 'podium' | 'insight';
+export type CrowdStatVisualType =
+  | 'hero'
+  | 'fixture'
+  | 'ladder'
+  | 'standings'
+  | 'podium'
+  | 'insight'
+  | 'personal'
+  | 'volatile'
+  | 'cluster';
+
+export type PersonalStatKind =
+  | 'ladderMove'
+  | 'youVsCrowd'
+  | 'contrarian'
+  | 'nearestRival'
+  | 'hiveMind'
+  | 'groupDiff';
+
+export type PickAlignment = 'exact' | 'result' | 'bold';
 
 export interface LadderMover {
   displayName: string;
@@ -131,7 +150,7 @@ export type CrowdStatCard =
       detail: string;
       variant?: 'default' | 'consensus' | 'chaos';
     }
-  | { id: string; visualType: 'insight'; kind: 'fact'; icon: string; text: string }
+  | { id: string; visualType: 'insight'; kind: 'fact'; icon: string; text: string; subtitle?: string }
   | {
       id: string;
       visualType: 'insight';
@@ -177,11 +196,74 @@ export type CrowdStatCard =
       id: string;
       visualType: 'standings';
       kind: 'group';
+      variant: 'consensus' | 'divided';
       groupId: string;
       modalPct: number;
       modalCount: number;
       distinctWinners: number;
+      modalOrder?: string[];
       positions: Array<{ rank: 1 | 2 | 3 | 4; teams: StatisticsPickCount[] }>;
+    }
+  | {
+      id: string;
+      visualType: 'personal';
+      kind: PersonalStatKind;
+      subtitle: string;
+      matchId?: string;
+      stage?: Stage;
+      group?: string;
+      homeTeamId?: string;
+      awayTeamId?: string;
+      scoreline?: string;
+      scorelinePct?: number;
+      beforeRank?: number;
+      afterRank?: number;
+      delta?: number;
+      yourPick?: string;
+      crowdPick?: string;
+      crowdPct?: number;
+      alignment?: PickAlignment;
+      rivalName?: string;
+      rivalRank?: number;
+      yourRank?: number;
+      rivalPick?: string;
+      hiveMindPct?: number;
+      leagueAvgPct?: number;
+      matchCount?: number;
+      matchTotal?: number;
+      groupId?: string;
+      yourOrder?: string[];
+      crowdOrder?: string[];
+      mismatchCount?: number;
+    }
+  | {
+      id: string;
+      visualType: 'volatile';
+      kind: 'volatile';
+      subtitle: string;
+      matchId: string;
+      stage: Stage;
+      group?: string;
+      homeTeamId: string;
+      awayTeamId: string;
+      scoreline: string;
+      scorelinePct: number;
+      ranksMoved: number;
+      maxSwing: number;
+    }
+  | {
+      id: string;
+      visualType: 'cluster';
+      kind: 'cluster';
+      subtitle: string;
+      players: Array<{
+        userId: string;
+        displayName: string;
+        rank: number;
+        points: number;
+        isCurrentUser?: boolean;
+      }>;
+      pointSpread: number;
     }
   | {
       id: string;
@@ -190,7 +272,7 @@ export type CrowdStatCard =
       slot: 'champion' | 'runnerUp' | 'third' | 'fourth';
       picks: StatisticsPickCount[];
     }
-  | { id: string; visualType: 'insight'; kind: 'spotlight'; icon: string; text: string };
+  | { id: string; visualType: 'insight'; kind: 'spotlight'; icon: string; text: string; subtitle?: string };
 
 export interface StatisticsResponse {
   meta: {

@@ -1055,8 +1055,26 @@ td {
   grid-column: 1 / -1;
 }
 
-.crowd-stat-card-ladder {
+.crowd-stat-card-ladder,
+.crowd-stat-card-personal {
   grid-column: 1 / -1;
+}
+
+.crowd-stat-card-pinned > .card,
+.crowd-stat-card-pinned.crowd-stat-card-hero .stat-hero-card {
+  border-color: #7eb8e8;
+  box-shadow: 0 0 0 1px rgba(15, 47, 86, 0.06);
+}
+
+.crowd-stat-panel-kicker,
+.ladder-swing-kicker,
+.head-to-head-kicker {
+  margin: 0 0 0.35rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #0f2f56;
 }
 
 @media (min-width: 640px) {
@@ -1064,7 +1082,8 @@ td {
     grid-column: span 2;
   }
 
-  .crowd-stat-card-ladder {
+  .crowd-stat-card-ladder,
+  .crowd-stat-card-personal {
     grid-column: span 2;
   }
 }
@@ -1331,4 +1350,204 @@ td {
 .crowd-stats-empty {
   text-align: center;
   color: #4a6278;
+}
+
+.mini-standings-order-list {
+  list-style: none;
+  margin: 0.5rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.mini-standings-order-row {
+  display: grid;
+  grid-template-columns: 2rem 1fr;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.mini-standings-team {
+  font-weight: 600;
+  color: #0f2f56;
+}
+
+.personal-ladder-move-you {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 0.5rem;
+  align-items: center;
+  padding: 0.65rem 0.75rem;
+  border-radius: 0.45rem;
+  background: #eef6fc;
+  margin-top: 0.5rem;
+}
+
+.personal-ladder-move-label {
+  font-weight: 700;
+  color: #0f2f56;
+}
+
+.personal-ladder-move-ranks {
+  font-size: 0.95rem;
+  color: #4a6278;
+}
+
+.personal-you-vs-crowd {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.personal-pick-column {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.5rem;
+  border-radius: 0.45rem;
+  background: #f4f8fc;
+}
+
+.personal-pick-heading {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #4a6278;
+}
+
+.personal-pick-value {
+  font-weight: 700;
+  color: #0f2f56;
+}
+
+.personal-alignment-badge {
+  grid-column: 1 / -1;
+  justify-self: start;
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+  background: #e8f2fb;
+  color: #0f2f56;
+}
+
+.personal-alignment-exact,
+.personal-alignment-result {
+  background: #e6f7ef;
+  color: #137a4d;
+}
+
+.personal-alignment-bold {
+  background: #fff4e5;
+  color: #9a6700;
+}
+
+.personal-you-row {
+  background: #eef6fc;
+  border-radius: 0.45rem;
+}
+
+.personal-hive-mind {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.35rem;
+}
+
+.personal-hive-ring {
+  width: 5.5rem;
+  height: 5.5rem;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: conic-gradient(#19a974 var(--hive-pct), #e8f2fb 0);
+  position: relative;
+}
+
+.personal-hive-ring::before {
+  content: '';
+  position: absolute;
+  inset: 0.55rem;
+  border-radius: 50%;
+  background: #fff;
+}
+
+.personal-hive-pct {
+  position: relative;
+  z-index: 1;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #0f2f56;
+}
+
+.personal-hive-detail {
+  margin: 0;
+  text-align: center;
+  color: #4a6278;
+  font-size: 0.9rem;
+}
+
+.personal-group-diff-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.personal-group-diff-heading {
+  margin: 0 0 0.35rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #4a6278;
+}
+
+.personal-group-mismatch .mini-standings-team {
+  color: #b42318;
+}
+
+.volatile-fixture-meta {
+  margin: 0.35rem 0;
+  color: #4a6278;
+}
+
+.volatile-swing-fill {
+  background: #f4a261;
+}
+
+.rank-cluster-list {
+  list-style: none;
+  margin: 0.5rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.rank-cluster-row {
+  display: grid;
+  grid-template-columns: 2.5rem 1fr auto;
+  gap: 0.5rem;
+  align-items: center;
+  padding: 0.4rem 0.5rem;
+  border-radius: 0.45rem;
+  background: #f4f8fc;
+}
+
+.rank-cluster-you {
+  background: #eef6fc;
+  outline: 1px solid #7eb8e8;
+}
+
+.rank-cluster-name {
+  font-weight: 600;
+  color: #0f2f56;
+}
+
+.rank-cluster-points {
+  font-size: 0.85rem;
+  color: #4a6278;
+  white-space: nowrap;
 }

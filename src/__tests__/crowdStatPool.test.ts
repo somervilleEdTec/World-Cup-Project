@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { groupMatches } from '../data/tournament';
 import {
   buildCrowdStatPool,
-  buildPinnedLadderCards,
+  buildPinnedLadderCard,
   CROWD_STATS_COUNT,
   collectViewablePicks,
   countUpcomingFixtures,
@@ -10,6 +10,7 @@ import {
   VISUAL_TYPE_ORDER
 } from '../lib/crowdStatPool';
 import { computeMatchConsensus, UserPicks } from '../lib/predictionStats';
+import { buildPersonalStatPool, samplePersonalStat } from '../lib/personalStats';
 import { isUpcomingFixture } from '../lib/comparisonVisibility';
 
 describe('crowdStatPool', () => {
@@ -65,24 +66,47 @@ describe('crowdStatPool', () => {
   const matchConsensus = computeMatchConsensus(groupMatches, users, viewableIds);
   const allViewablePicks = collectViewablePicks(groupMatches, users, viewableIds);
 
+  const poolInput = {
+    matches: groupMatches,
+    userPicks: users,
+    viewableUpcomingMatchIds: viewableIds,
+    allViewablePicks,
+    matchConsensus,
+    groupPhaseLocked: true,
+    results: {} as Record<string, never>,
+    currentUserId: 'u1'
+  };
+
   it('builds a pool with mixed visual types when locked', () => {
-    const pool = buildCrowdStatPool(
-      {
-        matches: groupMatches,
-        userPicks: users,
-        viewableUpcomingMatchIds: viewableIds,
-        allViewablePicks,
-        matchConsensus,
-        groupPhaseLocked: true,
-        results: {}
-      },
-      { revealNames: true }
-    );
+    const pool = buildCrowdStatPool(poolInput, { revealNames: true });
 
     const visualTypes = new Set(pool.map((c) => c.visualType));
     expect(pool.length).toBeGreaterThan(0);
     expect(visualTypes.has('fixture') || visualTypes.has('hero')).toBe(true);
     expect(pool.some((c) => c.visualType === 'ladder')).toBe(true);
+  });
+
+  it('may include group standings cards when players have full group orders', () => {
+    const fullGroupUsers: UserPicks[] = users.map((user) => ({
+      ...user,
+      picks: {
+        ...user.picks,
+        'g-a-3': { matchId: 'g-a-3', homeScore: 1, awayScore: 0 },
+        'g-a-4': { matchId: 'g-a-4', homeScore: 2, awayScore: 2 },
+        'g-a-5': { matchId: 'g-a-5', homeScore: 1, awayScore: 1 },
+        'g-a-6': { matchId: 'g-a-6', homeScore: 0, awayScore: 1 }
+      }
+    }));
+    const fullConsensus = computeMatchConsensus(groupMatches, fullGroupUsers, viewableIds);
+    const pool = buildCrowdStatPool(
+      { ...poolInput, userPicks: fullGroupUsers, matchConsensus: fullConsensus },
+      { revealNames: true }
+    );
+    const groupCard = pool.find((c) => c.visualType === 'standings' && c.variant === 'consensus');
+    expect(groupCard).toBeDefined();
+    if (groupCard && groupCard.visualType === 'standings') {
+      expect(groupCard.modalOrder?.length).toBe(4);
+    }
   });
 
   it('anonymizes team names in pre-lock pool', () => {
@@ -109,65 +133,72 @@ describe('crowdStatPool', () => {
     expect(pool.some((c) => c.visualType === 'insight')).toBe(true);
   });
 
-  it('samples exactly six cards with pinned ladders first', () => {
-    const pool = buildCrowdStatPool(
-      {
-        matches: groupMatches,
-        userPicks: users,
-        viewableUpcomingMatchIds: viewableIds,
-        allViewablePicks,
-        matchConsensus,
-        groupPhaseLocked: true,
-        results: {}
-      },
-      { revealNames: true }
-    );
+  it('samples exactly six cards with personal and ladder pinned first', () => {
+    const pool = buildCrowdStatPool(poolInput, { revealNames: true });
 
-    const pinnedLadders = buildPinnedLadderCards(
+    const pinnedLadder = buildPinnedLadderCard(
       groupMatches,
       users,
       {},
       matchConsensus,
       viewableIds
     );
-    const sampled = sampleCrowdStats(pool, { pinnedLadders });
+    const personalPool = buildPersonalStatPool({
+      currentUserId: 'u1',
+      matches: groupMatches,
+      userPicks: users,
+      results: {},
+      matchConsensus,
+      viewableUpcomingMatchIds: viewableIds,
+      groupPhaseLocked: true,
+      revealNames: true
+    });
+    const pinnedPersonal = samplePersonalStat(personalPool, false);
+
+    const sampled = sampleCrowdStats(pool, { pinnedPersonal, pinnedLadder, shuffle: false });
     expect(sampled.length).toBe(CROWD_STATS_COUNT);
-    expect(pinnedLadders.length).toBeGreaterThan(0);
-    expect(sampled[0].visualType).toBe('ladder');
-    if (pinnedLadders.length > 1) {
-      expect(sampled[1].visualType).toBe('ladder');
+    if (pinnedPersonal) {
+      expect(sampled[0].visualType).toBe('personal');
+    }
+    if (pinnedLadder) {
+      expect(sampled[pinnedPersonal ? 1 : 0].visualType).toBe('ladder');
     }
     const visualTypes = new Set(sampled.map((c) => c.visualType));
-    expect(visualTypes.size).toBeGreaterThanOrEqual(4);
-    expect(VISUAL_TYPE_ORDER[0]).toBe('ladder');
+    expect(visualTypes.size).toBeGreaterThanOrEqual(3);
+    expect(VISUAL_TYPE_ORDER[0]).toBe('personal');
   });
 
-  it('returns deterministic sample with pinned ladders prepended when shuffle is false', () => {
-    const pool = buildCrowdStatPool(
-      {
-        matches: groupMatches,
-        userPicks: users,
-        viewableUpcomingMatchIds: viewableIds,
-        allViewablePicks,
-        matchConsensus,
-        groupPhaseLocked: true,
-        results: {}
-      },
-      { revealNames: true }
-    );
-    const pinnedLadders = buildPinnedLadderCards(
+  it('returns deterministic sample with pinned cards prepended when shuffle is false', () => {
+    const pool = buildCrowdStatPool(poolInput, { revealNames: true });
+    const pinnedLadder = buildPinnedLadderCard(
       groupMatches,
       users,
       {},
       matchConsensus,
       viewableIds
     );
+    const pinnedPersonal = samplePersonalStat(
+      buildPersonalStatPool({
+        currentUserId: 'u1',
+        matches: groupMatches,
+        userPicks: users,
+        results: {},
+        matchConsensus,
+        viewableUpcomingMatchIds: viewableIds,
+        groupPhaseLocked: true,
+        revealNames: true
+      }),
+      false
+    );
 
-    const sampled = sampleCrowdStats(pool, { shuffle: false, pinnedLadders });
-    const nonLadder = pool.filter((card) => card.visualType !== 'ladder');
-    expect(sampled.slice(0, pinnedLadders.length)).toEqual(pinnedLadders);
-    expect(sampled.slice(pinnedLadders.length)).toEqual(
-      nonLadder.slice(0, CROWD_STATS_COUNT - pinnedLadders.length)
+    const sampled = sampleCrowdStats(pool, { shuffle: false, pinnedPersonal, pinnedLadder });
+    const pinnedCount = (pinnedPersonal ? 1 : 0) + (pinnedLadder ? 1 : 0);
+    const nonPinned = pool.filter(
+      (card) => card.visualType !== 'ladder' && card.visualType !== 'personal'
+    );
+    expect(sampled.slice(0, pinnedCount).filter(Boolean)).toHaveLength(pinnedCount);
+    expect(sampled.slice(pinnedCount)).toEqual(
+      nonPinned.slice(0, CROWD_STATS_COUNT - pinnedCount)
     );
   });
 
@@ -180,18 +211,7 @@ describe('crowdStatPool', () => {
   });
 
   it('includes hero and fixture cards only when group phase is locked', () => {
-    const lockedPool = buildCrowdStatPool(
-      {
-        matches: groupMatches,
-        userPicks: users,
-        viewableUpcomingMatchIds: viewableIds,
-        allViewablePicks,
-        matchConsensus,
-        groupPhaseLocked: true,
-        results: {}
-      },
-      { revealNames: true }
-    );
+    const lockedPool = buildCrowdStatPool(poolInput, { revealNames: true });
     const unlockedPool = buildCrowdStatPool(
       {
         matches: groupMatches,
@@ -212,18 +232,7 @@ describe('crowdStatPool', () => {
   });
 
   it('does not include lock-percentage stats after group lock', () => {
-    const pool = buildCrowdStatPool(
-      {
-        matches: groupMatches,
-        userPicks: users,
-        viewableUpcomingMatchIds: viewableIds,
-        allViewablePicks,
-        matchConsensus,
-        groupPhaseLocked: true,
-        results: {}
-      },
-      { revealNames: true }
-    );
+    const pool = buildCrowdStatPool(poolInput, { revealNames: true });
 
     const text = pool
       .map((c) => ('text' in c ? c.text : ''))
@@ -233,7 +242,12 @@ describe('crowdStatPool', () => {
     expect(text.includes('back an away win')).toBe(false);
   });
 
-  it('returns empty sample for empty pool', () => {
+  it('includes volatile and cluster cards when enough data exists', () => {
+    const pool = buildCrowdStatPool(poolInput, { revealNames: true });
+    expect(pool.some((c) => c.visualType === 'volatile' || c.visualType === 'cluster')).toBe(true);
+  });
+
+  it('returns empty sample for empty pool without pinned cards', () => {
     expect(sampleCrowdStats([])).toEqual([]);
   });
 

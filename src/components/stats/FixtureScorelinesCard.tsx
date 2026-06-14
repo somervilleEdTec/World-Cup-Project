@@ -16,6 +16,7 @@ export function FixtureScorelinesCard({ card, revealNames }: FixtureScorelinesCa
 
   return (
     <article className="card crowd-stat-card crowd-stat-card-fixture">
+      <p className="crowd-stat-panel-kicker">Top predicted scorelines</p>
       <div className="stats-match-header">
         <div className="fixture-row">
           {revealNames && homeTeam ? <TeamLabel team={homeTeam} /> : <span>Home</span>}

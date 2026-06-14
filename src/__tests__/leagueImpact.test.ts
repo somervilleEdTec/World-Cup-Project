@@ -89,7 +89,7 @@ describe('leagueImpact', () => {
     expect(pinned[0].matchId).toBe('g-a-1');
   });
 
-  it('pins two ladder cards when two fixtures share the next kickoff', () => {
+  it('returns one best pinned ladder when two fixtures share the next kickoff', () => {
     const simultaneousConsensus = computeMatchConsensus(
       [groupAFifth, groupASixth],
       users,
@@ -104,8 +104,8 @@ describe('leagueImpact', () => {
       new Set(['g-a-5', 'g-a-6'])
     );
 
-    expect(pinned.length).toBe(2);
-    expect(pinned.map((item) => item.matchId).sort()).toEqual(['g-a-5', 'g-a-6']);
+    expect(pinned.length).toBe(1);
+    expect(['g-a-5', 'g-a-6']).toContain(pinned[0].matchId);
   });
 
   it('computes points on the line for modal scoreline', () => {

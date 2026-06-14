@@ -15,7 +15,7 @@ export function LadderSwingCard({ card, revealNames }: LadderSwingCardProps) {
   return (
     <article className="card crowd-stat-card crowd-stat-card-ladder">
       <div className="ladder-swing-header">
-        <p className="ladder-swing-kicker">If this scoreline lands</p>
+        <p className="crowd-stat-panel-kicker">If this scoreline lands</p>
         <div className="fixture-row">
           {revealNames && homeTeam ? <TeamLabel team={homeTeam} /> : <span>Home</span>}
           <strong>vs</strong>

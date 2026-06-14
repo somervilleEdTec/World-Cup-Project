@@ -15,7 +15,7 @@ export function HeadToHeadCard({ card, revealNames }: HeadToHeadCardProps) {
   return (
     <article className="card crowd-stat-card crowd-stat-card-battle">
       <div className="head-to-head-header">
-        <p className="head-to-head-kicker">Head to head on next fixture</p>
+        <p className="crowd-stat-panel-kicker">Head to head on next fixture</p>
         <div className="fixture-row">
           {revealNames && homeTeam ? <TeamLabel team={homeTeam} /> : <span>Home</span>}
           <strong>vs</strong>

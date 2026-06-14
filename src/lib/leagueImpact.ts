@@ -10,6 +10,7 @@ import { computeScore } from './tournamentLogic';
 import { scaledMatchPointsForStage } from './knockoutStageMultiplier';
 import { evaluateMatchScoring } from './matchScoring';
 import { formatScorelineLabel, MatchConsensusItem, pickKey, UserPicks } from './predictionStats';
+import { getUpcomingKickoffWindows } from './upcomingFixtures';
 import { ActualResult, LadderMover, Match } from '../types';
 
 interface RankedPlayer {
@@ -193,6 +194,54 @@ function buildLadderSwingForScoreline(
   };
 }
 
+export function rankPlayersForStats(
+  userPicks: UserPicks[],
+  results: Record<string, ActualResult>
+): RankedPlayer[] {
+  return rankPlayers(userPicks, results);
+}
+
+export function computePinnedLadderSwing(
+  matches: Match[],
+  userPicks: UserPicks[],
+  results: Record<string, ActualResult>,
+  matchConsensus: MatchConsensusItem[],
+  viewableUpcomingMatchIds: Set<string>
+): LadderSwingCandidate | null {
+  if (userPicks.length < 2) return null;
+
+  const windows = getUpcomingKickoffWindows(matches, viewableUpcomingMatchIds);
+  const baselineRanks = ranksFromPlayers(rankPlayers(userPicks, results));
+
+  for (const wave of [windows.next, windows.secondNext]) {
+    if (wave.length === 0) continue;
+
+    let best: LadderSwingCandidate | null = null;
+    for (const match of wave) {
+      const consensus = matchConsensus.find((item) => item.matchId === match.id);
+      const modal = consensus?.topScorelines[0];
+      if (!modal) continue;
+
+      const candidate = buildPinnedLadderSwingForScoreline(
+        match,
+        modal.label,
+        modal.pct,
+        userPicks,
+        results,
+        baselineRanks
+      );
+      if (!candidate || candidate.maxSwing < 1) continue;
+      if (!best || candidate.maxSwing > best.maxSwing) {
+        best = candidate;
+      }
+    }
+    if (best) return best;
+  }
+
+  return null;
+}
+
+/** @deprecated Use computePinnedLadderSwing for single pinned card */
 export function computePinnedLadderSwings(
   matches: Match[],
   userPicks: UserPicks[],
@@ -200,37 +249,14 @@ export function computePinnedLadderSwings(
   matchConsensus: MatchConsensusItem[],
   viewableUpcomingMatchIds: Set<string>
 ): LadderSwingCandidate[] {
-  if (userPicks.length < 2) return [];
-
-  const upcomingMatches = matches
-    .filter((match) => viewableUpcomingMatchIds.has(match.id))
-    .sort((a, b) => a.kickoff.localeCompare(b.kickoff));
-
-  if (upcomingMatches.length === 0) return [];
-
-  const earliestKickoff = upcomingMatches[0].kickoff;
-  const nextWave = upcomingMatches.filter((match) => match.kickoff === earliestKickoff);
-
-  const baselineRanks = ranksFromPlayers(rankPlayers(userPicks, results));
-  const pinned: LadderSwingCandidate[] = [];
-
-  for (const match of nextWave) {
-    const consensus = matchConsensus.find((item) => item.matchId === match.id);
-    const modal = consensus?.topScorelines[0];
-    if (!modal) continue;
-
-    const candidate = buildPinnedLadderSwingForScoreline(
-      match,
-      modal.label,
-      modal.pct,
-      userPicks,
-      results,
-      baselineRanks
-    );
-    if (candidate) pinned.push(candidate);
-  }
-
-  return pinned;
+  const single = computePinnedLadderSwing(
+    matches,
+    userPicks,
+    results,
+    matchConsensus,
+    viewableUpcomingMatchIds
+  );
+  return single ? [single] : [];
 }
 
 export interface RankClusterBattle {
@@ -426,4 +452,90 @@ export function computeRankClusterBattles(
   }
 
   return battles;
+}
+
+export interface VolatileFixtureResult {
+  candidate: LadderSwingCandidate;
+  ranksMoved: number;
+}
+
+export function computeMostVolatileFixture(
+  matches: Match[],
+  userPicks: UserPicks[],
+  results: Record<string, ActualResult>,
+  matchConsensus: MatchConsensusItem[],
+  viewableUpcomingMatchIds: Set<string>
+): VolatileFixtureResult | null {
+  const windows = getUpcomingKickoffWindows(matches, viewableUpcomingMatchIds);
+  const baselineRanks = ranksFromPlayers(rankPlayers(userPicks, results));
+
+  let best: VolatileFixtureResult | null = null;
+
+  for (const wave of [windows.next, windows.secondNext]) {
+    for (const match of wave) {
+      const consensus = matchConsensus.find((item) => item.matchId === match.id);
+      const modal = consensus?.topScorelines[0];
+      if (!modal) continue;
+
+      const candidate = buildPinnedLadderSwingForScoreline(
+        match,
+        modal.label,
+        modal.pct,
+        userPicks,
+        results,
+        baselineRanks
+      );
+      if (!candidate || candidate.movers.length === 0) continue;
+
+      const result = { candidate, ranksMoved: candidate.movers.length };
+      if (!best || candidate.maxSwing > best.candidate.maxSwing) {
+        best = result;
+      }
+    }
+    if (best) return best;
+  }
+
+  return best;
+}
+
+export interface RankClusterEntry {
+  userId: string;
+  displayName: string;
+  rank: number;
+  points: number;
+  isCurrentUser?: boolean;
+}
+
+export function computeTightestRankCluster(
+  userPicks: UserPicks[],
+  results: Record<string, ActualResult>,
+  currentUserId?: string
+): { players: RankClusterEntry[]; pointSpread: number } | null {
+  const ranked = rankPlayers(userPicks, results);
+  if (ranked.length < 3) return null;
+
+  let bestCluster: RankClusterEntry[] | null = null;
+  let bestSpread = Number.POSITIVE_INFINITY;
+
+  for (let start = 0; start < ranked.length; start += 1) {
+    for (let size = 4; size >= 3; size -= 1) {
+      const slice = ranked.slice(start, start + size);
+      if (slice.length < 3) continue;
+      const spread = slice[0].points - slice[slice.length - 1].points;
+      if (spread > 4) continue;
+      if (spread < bestSpread || (spread === bestSpread && slice.length > (bestCluster?.length ?? 0))) {
+        bestSpread = spread;
+        bestCluster = slice.map((player, idx) => ({
+          userId: player.userId,
+          displayName: player.name,
+          rank: start + idx + 1,
+          points: player.points,
+          ...(currentUserId && player.userId === currentUserId ? { isCurrentUser: true } : {})
+        }));
+      }
+    }
+  }
+
+  if (!bestCluster) return null;
+  return { players: bestCluster, pointSpread: bestSpread };
 }

@@ -323,8 +323,24 @@ export function createApp(): Express {
     res.json(await computeLeaderboard());
   });
 
-  app.get('/api/statistics', async (_req: Request, res: Response) => {
-    res.json(await computeStatistics());
+  app.get('/api/statistics', async (req: Request, res: Response) => {
+    try {
+      let currentUserId: string | undefined;
+      const token = authToken(req);
+      if (token) {
+        try {
+          const user = await requireUser(token);
+          currentUserId = user.id;
+        } catch {
+          currentUserId = undefined;
+        }
+      }
+      return res.json(await computeStatistics(new Date().toISOString(), currentUserId));
+    } catch (error) {
+      return res
+        .status(500)
+        .json({ error: error instanceof Error ? error.message : 'Unable to load statistics' });
+    }
   });
 
   app.get('/api/admin/players', async (req: Request, res: Response) => {

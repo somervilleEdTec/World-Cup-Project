@@ -2,11 +2,13 @@ import { getMatches } from '../../lib/matchResolver';
 import { canViewOthersPicks, isUpcomingFixture } from '../../lib/comparisonVisibility';
 import {
   buildCrowdStatPool,
-  buildPinnedLadderCards,
+  buildPinnedLadderCard,
   collectViewablePicks,
   countUpcomingFixtures,
   sampleCrowdStats
 } from '../../lib/crowdStatPool';
+import { computePinnedLadderSwing } from '../../lib/leagueImpact';
+import { buildPersonalStatPool, samplePersonalStat } from '../../lib/personalStats';
 import { computeMatchConsensus } from '../../lib/predictionStats';
 import { shouldLockGroup } from '../../lib/tournamentLogic';
 import { TournamentBonusPick } from '../../types';
@@ -22,7 +24,10 @@ async function isTournamentGroupPhaseLocked(db: ReturnType<typeof getDb>): Promi
   return Boolean(row?.locked);
 }
 
-export async function computeStatistics(nowIso = new Date().toISOString()) {
+export async function computeStatistics(
+  nowIso = new Date().toISOString(),
+  currentUserId?: string
+) {
   const db = getDb();
   const results = await getResultsMap();
   const matches = getMatches({}, results).filter(
@@ -98,25 +103,55 @@ export async function computeStatistics(nowIso = new Date().toISOString()) {
       matchConsensus,
       groupPhaseLocked,
       results,
-      includeBaldStat: Math.random() < 0.05
+      includeBaldStat: Math.random() < 0.05,
+      currentUserId
     },
     { revealNames: groupPhaseLocked }
   );
 
-  const pinnedLadders = groupPhaseLocked
-    ? buildPinnedLadderCards(
+  const pinnedLadderCandidate = groupPhaseLocked
+    ? computePinnedLadderSwing(
         matches,
         userPicks,
         results,
         matchConsensus,
         viewableUpcomingMatchIds
       )
-    : [];
+    : null;
 
-  const crowdCards = sampleCrowdStats(pool, { pinnedLadders });
+  const pinnedLadder = groupPhaseLocked
+    ? buildPinnedLadderCard(
+        matches,
+        userPicks,
+        results,
+        matchConsensus,
+        viewableUpcomingMatchIds
+      )
+    : undefined;
+
+  const pinnedPersonal =
+    currentUserId && groupPhaseLocked
+      ? samplePersonalStat(
+          buildPersonalStatPool({
+            currentUserId,
+            matches,
+            userPicks,
+            results,
+            matchConsensus,
+            viewableUpcomingMatchIds,
+            groupPhaseLocked,
+            revealNames: groupPhaseLocked,
+            pinnedLadder: pinnedLadderCandidate
+          })
+        )
+      : undefined;
+
+  const crowdCards = sampleCrowdStats(pool, { pinnedPersonal, pinnedLadder });
 
   const message = groupPhaseLocked
-    ? 'Six upcoming-fixture crowd stats — shuffle for a fresh mix.'
+    ? pinnedPersonal
+      ? 'Your stat plus five crowd picks — shuffle for a fresh mix.'
+      : 'Six upcoming-fixture crowd stats — shuffle for a fresh mix.'
     : 'Six teasers until first kickoff — team names hidden. Shuffle for more.';
 
   return {

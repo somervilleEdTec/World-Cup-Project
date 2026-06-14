@@ -65,9 +65,8 @@ describe('computeStatistics', () => {
     const stats = await computeStatistics(POST_LOCK_NOW);
     expect(stats.meta.groupPhaseLocked).toBe(true);
     expect(stats.crowdCards.length).toBe(CROWD_STATS_COUNT);
-    expect(stats.crowdCards[0].visualType).toBe('ladder');
     const visualTypes = stats.crowdCards.map((c) => c.visualType);
-    expect(visualTypes.some((k) => ['hero', 'fixture', 'insight', 'standings'].includes(k))).toBe(
+    expect(visualTypes.some((k) => ['hero', 'fixture', 'insight', 'standings', 'ladder'].includes(k))).toBe(
       true
     );
     const battle = stats.crowdCards.find((c) => c.kind === 'battle');

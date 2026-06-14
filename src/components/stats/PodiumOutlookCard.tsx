@@ -4,6 +4,16 @@ interface PodiumOutlookCardProps {
   card: Extract<CrowdStatCardType, { visualType: 'podium' }>;
 }
 
+const PODIUM_SUBTITLES: Record<
+  Extract<CrowdStatCardType, { visualType: 'podium' }>['slot'],
+  string
+> = {
+  champion: 'Tournament winner picks',
+  runnerUp: 'Runner-up picks',
+  third: 'Third-place picks',
+  fourth: 'Fourth-place picks'
+};
+
 const PODIUM_LABELS: Record<
   Extract<CrowdStatCardType, { visualType: 'podium' }>['slot'],
   string
@@ -21,6 +31,7 @@ export function PodiumOutlookCard({ card }: PodiumOutlookCardProps) {
 
   return (
     <article className="card crowd-stat-card crowd-stat-card-podium">
+      <p className="crowd-stat-panel-kicker">{PODIUM_SUBTITLES[card.slot]}</p>
       <h4>{PODIUM_LABELS[card.slot]}</h4>
       <div className="podium-steps">
         {picks.map((pick, index) => (
