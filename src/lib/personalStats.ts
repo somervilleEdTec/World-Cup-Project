@@ -16,6 +16,7 @@ import {
   rankPlayersForStats
 } from './leagueImpact';
 import { ActualResult, CrowdStatCard, Match, NearbyFixturePlayer } from '../types';
+import { committedBonusPickFromUser } from './tournamentBonus';
 
 export interface PersonalStatsInput {
   currentUserId: string;
@@ -168,6 +169,7 @@ function buildNearbyPlayersForMatch(
       displayName: player.name,
       points: player.points,
       pick: formatUserPickLabel(match, pick),
+      tournamentBonus: committedBonusPickFromUser(leagueUser),
       ...(player.userId === user.userId ? { isCurrentUser: true } : {})
     });
   }

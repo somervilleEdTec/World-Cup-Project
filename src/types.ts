@@ -138,6 +138,7 @@ export interface NearbyFixturePlayer {
   points: number;
   pick: string;
   isCurrentUser?: boolean;
+  tournamentBonus?: TournamentBonusPick;
 }
 
 export interface LadderMover {
@@ -180,6 +181,9 @@ export type CrowdStatCard =
       rankB: number;
       pickA: string;
       pickB: string;
+      currentUserSide?: 'A' | 'B';
+      bonusA?: TournamentBonusPick;
+      bonusB?: TournamentBonusPick;
     }
   | {
       id: string;

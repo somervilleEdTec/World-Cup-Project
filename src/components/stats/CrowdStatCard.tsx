@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { StatHeroCard } from './StatHeroCard';
 import { FixtureScorelinesCard } from './FixtureScorelinesCard';
 import { LadderSwingCard } from './LadderSwingCard';
@@ -22,13 +23,28 @@ const HERO_SUBTITLES: Record<string, string> = {
   'Scoreline King': 'Most-picked scoreline'
 };
 
+function wrapCard(visualType: string, pinnedClass: string, children: ReactNode, extraClass = '') {
+  const classes = [
+    'crowd-stat-card-wrap',
+    `crowd-stat-card-wrap-${visualType}`,
+    extraClass,
+    pinnedClass
+  ]
+    .filter(Boolean)
+    .join(' ')
+    .trim();
+  return <div className={classes}>{children}</div>;
+}
+
 export function CrowdStatCard({ card, revealNames, pinned = false }: CrowdStatCardProps) {
   const pinnedClass = pinned ? ' crowd-stat-card-pinned' : '';
 
   switch (card.visualType) {
     case 'hero':
       return (
-        <div className={`crowd-stat-card crowd-stat-card-hero${pinnedClass}`}>
+        <div
+          className={`crowd-stat-card-wrap crowd-stat-card-wrap-hero crowd-stat-card crowd-stat-card-hero${pinnedClass}`}
+        >
           <StatHeroCard
             subtitle={HERO_SUBTITLES[card.title] ?? 'League highlight'}
             value={card.value}
@@ -38,60 +54,41 @@ export function CrowdStatCard({ card, revealNames, pinned = false }: CrowdStatCa
         </div>
       );
     case 'fixture':
-      return (
-        <div className={pinnedClass || undefined}>
-          <FixtureScorelinesCard card={card} revealNames={revealNames} />
-        </div>
-      );
+      return wrapCard('fixture', pinnedClass, (
+        <FixtureScorelinesCard card={card} revealNames={revealNames} />
+      ));
     case 'ladder':
-      return (
-        <div className={pinnedClass || undefined}>
-          <LadderSwingCard card={card} revealNames={revealNames} />
-        </div>
-      );
+      return wrapCard('ladder', pinnedClass, (
+        <LadderSwingCard card={card} revealNames={revealNames} />
+      ));
     case 'standings':
-      return (
-        <div className={pinnedClass || undefined}>
-          <MiniGroupStandingsCard card={card} revealNames={revealNames} />
-        </div>
-      );
+      return wrapCard('standings', pinnedClass, (
+        <MiniGroupStandingsCard card={card} revealNames={revealNames} />
+      ));
     case 'podium':
-      return (
-        <div className={pinnedClass || undefined}>
-          <PodiumOutlookCard card={card} revealNames={revealNames} />
-        </div>
-      );
+      return wrapCard('podium', pinnedClass, (
+        <PodiumOutlookCard card={card} revealNames={revealNames} />
+      ));
     case 'personal':
-      return (
-        <div className={pinnedClass || undefined}>
-          <PersonalStatCard card={card} revealNames={revealNames} />
-        </div>
-      );
+      return wrapCard('personal', pinnedClass, (
+        <PersonalStatCard card={card} revealNames={revealNames} />
+      ));
     case 'volatile':
-      return (
-        <div className={pinnedClass || undefined}>
-          <VolatileFixtureCard card={card} revealNames={revealNames} />
-        </div>
-      );
+      return wrapCard('volatile', pinnedClass, (
+        <VolatileFixtureCard card={card} revealNames={revealNames} />
+      ));
     case 'cluster':
-      return (
-        <div className={pinnedClass || undefined}>
-          <RankClusterCard card={card} />
-        </div>
-      );
+      return wrapCard('cluster', pinnedClass, <RankClusterCard card={card} />);
     case 'insight':
       if (card.kind === 'battle') {
-        return (
-          <div className={pinnedClass || undefined}>
-            <HeadToHeadCard card={card} revealNames={revealNames} />
-          </div>
+        return wrapCard(
+          'insight',
+          pinnedClass,
+          <HeadToHeadCard card={card} revealNames={revealNames} />,
+          'crowd-stat-card-wrap-battle'
         );
       }
-      return (
-        <div className={pinnedClass || undefined}>
-          <InsightTileCard card={card} />
-        </div>
-      );
+      return wrapCard('insight', pinnedClass, <InsightTileCard card={card} />);
     default:
       return null;
   }

@@ -255,6 +255,19 @@ describe('crowdStatPool', () => {
     expect(pool.some((c) => c.visualType === 'volatile' || c.visualType === 'cluster')).toBe(true);
   });
 
+  it('attaches battle bonuses and current user side when logged in', () => {
+    const pool = buildCrowdStatPool(poolInput, { revealNames: true });
+    const battle = pool.find((card) => card.kind === 'battle');
+    expect(battle).toBeDefined();
+    if (battle && battle.kind === 'battle') {
+      expect(battle.bonusA?.winnerTeamId).toBeTruthy();
+      expect(battle.bonusB?.winnerTeamId).toBeTruthy();
+      if (battle.playerA === 'Alice' || battle.playerB === 'Alice') {
+        expect(battle.currentUserSide).toBe(battle.playerA === 'Alice' ? 'A' : 'B');
+      }
+    }
+  });
+
   it('returns empty sample for empty pool without pinned cards', () => {
     expect(sampleCrowdStats([])).toEqual([]);
   });

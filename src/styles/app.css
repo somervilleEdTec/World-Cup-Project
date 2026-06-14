@@ -1051,6 +1051,31 @@ td {
   background: #fffdf6;
 }
 
+@media (max-width: 839px) {
+  .crowd-stats-grid > :nth-child(n + 7) {
+    display: none;
+  }
+}
+
+@media (min-width: 840px) {
+  .crowd-stats-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.75rem;
+  }
+
+  .crowd-stat-card-hero,
+  .crowd-stat-card-ladder,
+  .crowd-stat-card-personal {
+    grid-column: auto;
+  }
+
+  .crowd-stat-card-fixture,
+  .crowd-stat-card-battle,
+  .crowd-stat-card-match {
+    min-height: unset;
+  }
+}
+
 .crowd-stat-card-hero {
   grid-column: 1 / -1;
 }
@@ -1300,14 +1325,79 @@ td {
 }
 
 .head-to-head-name {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-width: 0;
+  container-type: inline-size;
   font-weight: 600;
   color: #0f2f56;
+}
+
+.head-to-head-name-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.head-to-head-bonus-flags {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+  flex-shrink: 0;
+}
+
+.head-to-head-bonus-flag {
+  width: 1.1rem;
+}
+
+@container (max-width: 10.5rem) {
+  .head-to-head-bonus-flag-4 {
+    display: none;
+  }
+}
+
+@container (max-width: 9rem) {
+  .head-to-head-bonus-flag-3 {
+    display: none;
+  }
+}
+
+@container (max-width: 7.5rem) {
+  .head-to-head-bonus-flag-2 {
+    display: none;
+  }
+}
+
+@media (max-width: 380px) {
+  .head-to-head-bonus-flag-4 {
+    display: none;
+  }
+}
+
+@media (max-width: 340px) {
+  .head-to-head-bonus-flag-3 {
+    display: none;
+  }
+}
+
+@media (max-width: 300px) {
+  .head-to-head-bonus-flag-2 {
+    display: none;
+  }
 }
 
 .head-to-head-pick {
   font-weight: 700;
   color: #19a974;
   font-size: 0.95rem;
+  white-space: nowrap;
+}
+
+.head-to-head-you-row .head-to-head-name,
+.head-to-head-you-row .head-to-head-pick {
+  font-weight: 600;
 }
 
 .crowd-stat-card-battle {
@@ -1469,9 +1559,11 @@ td {
   color: #9a6700;
 }
 
-.personal-you-row {
+.personal-you-row,
+.head-to-head-you-row {
   background: #eef6fc;
   border-radius: 0.45rem;
+  outline: 1px solid #7eb8e8;
 }
 
 .personal-hive-mind {
