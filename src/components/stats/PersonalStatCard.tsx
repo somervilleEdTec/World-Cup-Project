@@ -1,6 +1,7 @@
 import { teams } from '../../data/tournament';
 import { TeamLabel } from '../TeamLabel';
 import { StatsTeamName } from './StatsTeamName';
+import { isFinishingPositionStage } from '../../lib/tournamentBonus';
 import { TournamentBonusFlags } from './TournamentBonusFlags';
 import { CrowdStatCard as CrowdStatCardType } from '../../types';
 
@@ -82,6 +83,7 @@ function NearestRivalBody({
   revealNames: boolean;
 }) {
   if (card.kind !== 'nearestRival') return null;
+  const showBonusFlags = isFinishingPositionStage(card.stage);
 
   return (
     <ul className="head-to-head-rows">
@@ -97,7 +99,11 @@ function NearestRivalBody({
             <span className="head-to-head-name-text">
               {player.isCurrentUser ? 'You' : player.displayName}
             </span>
-            <TournamentBonusFlags bonus={player.tournamentBonus} revealNames={revealNames} />
+            <TournamentBonusFlags
+              bonus={player.tournamentBonus}
+              revealNames={revealNames}
+              enabled={showBonusFlags}
+            />
           </span>
           <span className="head-to-head-pick">{player.pick}</span>
         </li>

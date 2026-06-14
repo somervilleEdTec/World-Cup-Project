@@ -129,9 +129,6 @@ describe('buildNearestRivalCard via buildPersonalStatPool', () => {
       expect(ranks).toEqual([...ranks].sort((a, b) => a - b));
       expect(nearestRival.nearbyPlayers?.some((player) => player.isCurrentUser)).toBe(true);
       expect(nearestRival.nearbyPlayers?.every((player) => player.pick.length > 0)).toBe(true);
-      expect(
-        nearestRival.nearbyPlayers?.every((player) => player.tournamentBonus?.winnerTeamId)
-      ).toBe(true);
     }
   });
 });

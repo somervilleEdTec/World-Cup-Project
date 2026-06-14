@@ -1,6 +1,5 @@
 import { teams, groupMatches } from '../data/tournament';
 import { computeGroupPositions } from './groupStandings';
-import { maxMatchPointsForStage } from './knockoutStageMultiplier';
 import {
   computeGroupConsensus,
   formatScorelineLabel,
@@ -16,7 +15,7 @@ import {
   rankPlayersForStats
 } from './leagueImpact';
 import { ActualResult, CrowdStatCard, Match, NearbyFixturePlayer } from '../types';
-import { committedBonusPickFromUser } from './tournamentBonus';
+import { committedBonusPickFromUser, leapfrogPointsThreshold } from './tournamentBonus';
 
 export interface PersonalStatsInput {
   currentUserId: string;
@@ -152,7 +151,6 @@ function buildNearbyPlayersForMatch(
   userIndex: number
 ): NearbyFixturePlayer[] {
   const userPoints = ranked[userIndex].points;
-  const threshold = maxMatchPointsForStage(match.stage);
   const players: NearbyFixturePlayer[] = [];
 
   for (let index = 0; index < ranked.length; index += 1) {
@@ -161,6 +159,7 @@ function buildNearbyPlayersForMatch(
     if (!leagueUser) continue;
     const pick = leagueUser.picks[match.id];
     if (!pick || pick.homeScore < 0) continue;
+    const threshold = leapfrogPointsThreshold(match, user, leagueUser);
     if (Math.abs(player.points - userPoints) > threshold) continue;
 
     players.push({

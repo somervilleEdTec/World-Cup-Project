@@ -11,6 +11,10 @@ import { scaledMatchPointsForStage } from './knockoutStageMultiplier';
 import { evaluateMatchScoring } from './matchScoring';
 import { formatScorelineLabel, MatchConsensusItem, pickKey, UserPicks } from './predictionStats';
 import { getUpcomingKickoffWindows } from './upcomingFixtures';
+import {
+  isFinishingPositionStage,
+  leapfrogPointsThreshold
+} from './tournamentBonus';
 import { ActualResult, LadderMover, Match } from '../types';
 
 interface RankedPlayer {
@@ -382,6 +386,22 @@ export function computePointsOnTheLine(
   return total;
 }
 
+function pairCanLeapfrogOnMatch(
+  match: Match,
+  userA: UserPicks,
+  userB: UserPicks,
+  ranked: RankedPlayer[],
+  rankA: number,
+  rankB: number
+): boolean {
+  if (isFinishingPositionStage(match.stage)) {
+    const pointsA = ranked.find((player) => player.userId === userA.userId)?.points ?? 0;
+    const pointsB = ranked.find((player) => player.userId === userB.userId)?.points ?? 0;
+    return Math.abs(pointsA - pointsB) <= leapfrogPointsThreshold(match, userA, userB);
+  }
+  return Math.abs(rankA - rankB) <= 2;
+}
+
 export function computeRankClusterBattles(
   matches: Match[],
   userPicks: UserPicks[],
@@ -423,11 +443,11 @@ export function computeRankClusterBattles(
         const rankA = rankByUser.get(ranked[i].userId) ?? 0;
         const rankB = rankByUser.get(ranked[j].userId) ?? 0;
         if (rankA === 0 || rankB === 0) continue;
-        if (Math.abs(rankA - rankB) > 2) continue;
 
         const userA = userPicks.find((u) => u.userId === ranked[i].userId);
         const userB = userPicks.find((u) => u.userId === ranked[j].userId);
         if (!userA || !userB) continue;
+        if (!pairCanLeapfrogOnMatch(match, userA, userB, ranked, rankA, rankB)) continue;
 
         const battle = tryBattle(match, userA, userB, rankA, rankB);
         if (battle) {
@@ -444,11 +464,11 @@ export function computeRankClusterBattles(
         const rankA = rankByUser.get(ranked[i].userId) ?? 0;
         const rankB = rankByUser.get(ranked[j].userId) ?? 0;
         if (rankA === 0 || rankB === 0) continue;
-        if (Math.abs(rankA - rankB) > 2) continue;
 
         const userA = userPicks.find((u) => u.userId === ranked[i].userId);
         const userB = userPicks.find((u) => u.userId === ranked[j].userId);
         if (!userA || !userB) continue;
+        if (!pairCanLeapfrogOnMatch(match, userA, userB, ranked, rankA, rankB)) continue;
 
         const battle = tryBattle(match, userA, userB, rankA, rankB);
         if (battle) {

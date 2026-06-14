@@ -5,12 +5,17 @@ import { CountryFlag } from '../CountryFlag';
 interface TournamentBonusFlagsProps {
   bonus?: TournamentBonusPick;
   revealNames: boolean;
+  enabled?: boolean;
 }
 
 const SLOT_LABELS = ['1st', '2nd', '3rd', '4th'] as const;
 
-export function TournamentBonusFlags({ bonus, revealNames }: TournamentBonusFlagsProps) {
-  if (!revealNames || !bonus) return null;
+export function TournamentBonusFlags({
+  bonus,
+  revealNames,
+  enabled = true
+}: TournamentBonusFlagsProps) {
+  if (!enabled || !revealNames || !bonus) return null;
 
   const teamIds = [
     bonus.winnerTeamId,

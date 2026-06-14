@@ -2,6 +2,7 @@ import { teams } from '../../data/tournament';
 import { TournamentBonusPick } from '../../types';
 import { TeamLabel } from '../TeamLabel';
 import { CrowdStatCard as CrowdStatCardType } from '../../types';
+import { isFinishingPositionStage } from '../../lib/tournamentBonus';
 import { TournamentBonusFlags } from './TournamentBonusFlags';
 
 interface HeadToHeadCardProps {
@@ -16,6 +17,7 @@ interface HeadToHeadRowProps {
   isYou: boolean;
   tournamentBonus?: TournamentBonusPick;
   revealNames: boolean;
+  showBonusFlags: boolean;
 }
 
 function HeadToHeadRow({
@@ -24,14 +26,19 @@ function HeadToHeadRow({
   pick,
   isYou,
   tournamentBonus,
-  revealNames
+  revealNames,
+  showBonusFlags
 }: HeadToHeadRowProps) {
   return (
     <li className={`head-to-head-row${isYou ? ' head-to-head-you-row personal-you-row' : ''}`}>
       <span className="head-to-head-rank">#{rank}</span>
       <span className="head-to-head-name">
         <span className="head-to-head-name-text">{isYou ? 'You' : displayName}</span>
-        <TournamentBonusFlags bonus={tournamentBonus} revealNames={revealNames} />
+        <TournamentBonusFlags
+          bonus={tournamentBonus}
+          revealNames={revealNames}
+          enabled={showBonusFlags}
+        />
       </span>
       <span className="head-to-head-pick">{pick}</span>
     </li>
@@ -41,6 +48,7 @@ function HeadToHeadRow({
 export function HeadToHeadCard({ card, revealNames }: HeadToHeadCardProps) {
   const homeTeam = teams.find((t) => t.id === card.homeTeamId);
   const awayTeam = teams.find((t) => t.id === card.awayTeamId);
+  const showBonusFlags = isFinishingPositionStage(card.stage);
 
   return (
     <article className="card crowd-stat-card crowd-stat-card-battle">
@@ -60,6 +68,7 @@ export function HeadToHeadCard({ card, revealNames }: HeadToHeadCardProps) {
           isYou={card.currentUserSide === 'A'}
           tournamentBonus={card.bonusA}
           revealNames={revealNames}
+          showBonusFlags={showBonusFlags}
         />
         <HeadToHeadRow
           rank={card.rankB}
@@ -68,6 +77,7 @@ export function HeadToHeadCard({ card, revealNames }: HeadToHeadCardProps) {
           isYou={card.currentUserSide === 'B'}
           tournamentBonus={card.bonusB}
           revealNames={revealNames}
+          showBonusFlags={showBonusFlags}
         />
       </ul>
     </article>
