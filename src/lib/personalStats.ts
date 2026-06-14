@@ -7,6 +7,7 @@ import {
   GroupConsensusItem,
   MatchConsensusItem,
   pickKey,
+  scorelinesForMatch,
   UserPicks
 } from './predictionStats';
 import { getUpcomingKickoffWindows } from './upcomingFixtures';
@@ -70,6 +71,12 @@ function pickAlignment(
   return correctResult ? 'result' : 'bold';
 }
 
+function upcomingMatchesWithUserPick(input: PersonalStatsInput, user: UserPicks): Match[] {
+  return input.matches
+    .filter((match) => input.viewableUpcomingMatchIds.has(match.id))
+    .filter((match) => userHasPick(user, match.id));
+}
+
 function windowMatchesWithUserPick(
   windows: ReturnType<typeof getUpcomingKickoffWindows>,
   user: UserPicks
@@ -78,6 +85,21 @@ function windowMatchesWithUserPick(
   if (next.length > 0) return next;
   return windows.secondNext.filter((m) => userHasPick(user, m.id));
 }
+
+function selectScorelineChips(
+  breakdown: ReturnType<typeof scorelinesForMatch>,
+  yourPick: string,
+  maxVisible = 5
+): ReturnType<typeof scorelinesForMatch> {
+  const top = breakdown.slice(0, maxVisible);
+  const yourEntry = breakdown.find((entry) => entry.label === yourPick);
+  if (!yourEntry || top.some((entry) => entry.label === yourPick)) {
+    return top;
+  }
+  return [...top.slice(0, maxVisible - 1), yourEntry];
+}
+
+const HIVE_MIND_MIN_MATCHES = 4;
 
 function buildLadderMoveCard(
   input: PersonalStatsInput,
@@ -134,6 +156,9 @@ function buildYouVsCrowdCard(input: PersonalStatsInput, user: UserPicks): CrowdS
   const pick = user.picks[match.id];
   if (!modal || !pick) return null;
 
+  const yourPick = formatUserPickLabel(match, pick);
+  const breakdown = scorelinesForMatch(match, input.userPicks);
+
   return {
     id: `personal-you-vs-crowd-${user.userId}-${match.id}`,
     visualType: 'personal',
@@ -144,10 +169,11 @@ function buildYouVsCrowdCard(input: PersonalStatsInput, user: UserPicks): CrowdS
     group: match.group,
     homeTeamId: match.homeTeamId,
     awayTeamId: match.awayTeamId,
-    yourPick: formatUserPickLabel(match, pick),
+    yourPick,
     crowdPick: modal.label,
     crowdPct: modal.pct,
-    alignment: pickAlignment(pick, modal.label, match)
+    alignment: pickAlignment(pick, modal.label, match),
+    scorelineBreakdown: selectScorelineChips(breakdown, yourPick)
   };
 }
 
@@ -239,8 +265,7 @@ function buildNearestRivalCard(input: PersonalStatsInput, user: UserPicks): Crow
 }
 
 function buildHiveMindCard(input: PersonalStatsInput, user: UserPicks): CrowdStatCard | null {
-  const windows = getUpcomingKickoffWindows(input.matches, input.viewableUpcomingMatchIds);
-  const eligible = windowMatchesWithUserPick(windows, user);
+  const eligible = upcomingMatchesWithUserPick(input, user);
   if (eligible.length === 0) return null;
 
   let userMatches = 0;
@@ -267,7 +292,7 @@ function buildHiveMindCard(input: PersonalStatsInput, user: UserPicks): CrowdSta
     }
   }
 
-  if (userMatches === 0) return null;
+  if (userMatches < HIVE_MIND_MIN_MATCHES) return null;
 
   return {
     id: `personal-hive-${user.userId}`,
@@ -310,20 +335,24 @@ function buildGroupDiffCard(input: PersonalStatsInput, user: UserPicks): CrowdSt
     const consensus = groupConsensusForGroup(groupConsensus, groupId);
     if (!consensus || consensus.modalOrder.length < 4) continue;
 
-    const yourOrder = computeGroupPositions(groupId, user.picks).map((teamId) => {
+    const yourOrderTeamIds = computeGroupPositions(groupId, user.picks);
+    const yourOrder = yourOrderTeamIds.map((teamId) => {
       const team = teams.find((t) => t.id === teamId);
       return input.revealNames
         ? (team?.name ?? teamId)
         : `Pick ${consensus.modalOrder.indexOf(teamId) + 1}`;
     });
-    const crowdOrder = consensus.modalOrder.map((teamId) => {
+    const crowdOrderTeamIds = consensus.modalOrder;
+    const crowdOrder = crowdOrderTeamIds.map((teamId) => {
       const team = teams.find((t) => t.id === teamId);
       return input.revealNames
         ? (team?.name ?? teamId)
         : `Pick ${consensus.modalOrder.indexOf(teamId) + 1}`;
     });
 
-    const mismatchCount = yourOrder.filter((team, idx) => team !== crowdOrder[idx]).length;
+    const mismatchCount = yourOrderTeamIds.filter(
+      (teamId, idx) => teamId !== crowdOrderTeamIds[idx]
+    ).length;
     if (mismatchCount === 0) continue;
 
     return {
@@ -334,6 +363,8 @@ function buildGroupDiffCard(input: PersonalStatsInput, user: UserPicks): CrowdSt
       groupId,
       yourOrder,
       crowdOrder,
+      yourOrderTeamIds,
+      crowdOrderTeamIds,
       mismatchCount
     };
   }
@@ -355,6 +386,34 @@ export function buildPersonalStatPool(input: PersonalStatsInput): CrowdStatCard[
   ];
 
   return builders.map((build) => build()).filter((card): card is CrowdStatCard => card !== null);
+}
+
+export function partitionPersonalStats(pool: CrowdStatCard[]): {
+  pinnedHeadToHead?: CrowdStatCard;
+  remainingPersonal: CrowdStatCard[];
+} {
+  const mixablePersonal = pool.filter(
+    (card): card is Extract<CrowdStatCard, { visualType: 'personal' }> =>
+      card.visualType === 'personal' && card.kind !== 'ladderMove'
+  );
+  const headToHead = mixablePersonal.find((card) => card.kind === 'nearestRival');
+
+  if (headToHead) {
+    return {
+      pinnedHeadToHead: headToHead,
+      remainingPersonal: mixablePersonal.filter((card) => card.id !== headToHead.id)
+    };
+  }
+
+  if (mixablePersonal.length === 0) {
+    return { remainingPersonal: [] };
+  }
+
+  const fallback = samplePersonalStat(mixablePersonal);
+  return {
+    pinnedHeadToHead: fallback,
+    remainingPersonal: mixablePersonal.filter((card) => card.id !== fallback?.id)
+  };
 }
 
 export function samplePersonalStat(

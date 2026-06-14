@@ -1,7 +1,10 @@
+import { teams } from '../../data/tournament';
+import { TeamLabel } from '../TeamLabel';
 import { CrowdStatCard as CrowdStatCardType } from '../../types';
 
 interface PodiumOutlookCardProps {
   card: Extract<CrowdStatCardType, { visualType: 'podium' }>;
+  revealNames: boolean;
 }
 
 const PODIUM_SUBTITLES: Record<
@@ -24,7 +27,7 @@ const PODIUM_LABELS: Record<Extract<CrowdStatCardType, { visualType: 'podium' }>
 
 const PODIUM_HEIGHTS = ['tall', 'medium', 'short'] as const;
 
-export function PodiumOutlookCard({ card }: PodiumOutlookCardProps) {
+export function PodiumOutlookCard({ card, revealNames }: PodiumOutlookCardProps) {
   const picks = card.picks.slice(0, 3);
 
   return (
@@ -32,16 +35,21 @@ export function PodiumOutlookCard({ card }: PodiumOutlookCardProps) {
       <p className="crowd-stat-panel-kicker">{PODIUM_SUBTITLES[card.slot]}</p>
       <h4>{PODIUM_LABELS[card.slot]}</h4>
       <div className="podium-steps">
-        {picks.map((pick, index) => (
-          <div
-            key={pick.label}
-            className={`podium-step podium-step-${PODIUM_HEIGHTS[index] ?? 'short'}`}
-          >
-            <span className="podium-step-label">{pick.label}</span>
-            <span className="podium-step-pct">{pick.pct}%</span>
-            <span className="podium-step-count">{pick.count}</span>
-          </div>
-        ))}
+        {picks.map((pick, index) => {
+          const team = pick.teamId ? teams.find((t) => t.id === pick.teamId) : undefined;
+          return (
+            <div
+              key={pick.label}
+              className={`podium-step podium-step-${PODIUM_HEIGHTS[index] ?? 'short'}`}
+            >
+              <span className="podium-step-label">
+                {revealNames && team ? <TeamLabel team={team} /> : pick.label}
+              </span>
+              <span className="podium-step-pct">{pick.pct}%</span>
+              <span className="podium-step-count">{pick.count}</span>
+            </div>
+          );
+        })}
       </div>
     </article>
   );

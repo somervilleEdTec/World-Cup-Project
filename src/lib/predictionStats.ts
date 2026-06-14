@@ -8,6 +8,7 @@ export interface PickCount {
   label: string;
   count: number;
   pct: number;
+  teamId?: string;
 }
 
 export interface MatchPickInput {
@@ -62,15 +63,33 @@ function resultLabel(pick: MatchPick, stage: Stage, match: FixtureTeams): string
 function countMapToSortedList(
   counts: Map<string, number>,
   total: number,
-  formatLabel = (k: string) => k
+  formatLabel = (k: string) => k,
+  options: { teamIdKeys?: boolean } = {}
 ): PickCount[] {
   return [...counts.entries()]
     .sort((a, b) => b[1] - a[1])
     .map(([key, count]) => ({
       label: formatLabel(key),
       count,
-      pct: total > 0 ? Math.round((count / total) * 100) : 0
+      pct: total > 0 ? Math.round((count / total) * 100) : 0,
+      ...(options.teamIdKeys ? { teamId: key } : {})
     }));
+}
+
+export function scorelinesForMatch(match: Match, userPicks: UserPicks[]): PickCount[] {
+  const scoreCounts = new Map<string, number>();
+  let total = 0;
+
+  for (const user of userPicks) {
+    const pick = user.picks[match.id];
+    if (!pick || pick.homeScore < 0 || pick.awayScore < 0) continue;
+    total += 1;
+    const key = pickKey(pick, match.stage, match);
+    scoreCounts.set(key, (scoreCounts.get(key) ?? 0) + 1);
+  }
+
+  if (total === 0) return [];
+  return countMapToSortedList(scoreCounts, total, formatScorelineLabel);
 }
 
 export interface MatchConsensusItem {
@@ -289,10 +308,15 @@ function buildGroupConsensusForUsers(userPicks: UserPicks[]): GroupConsensusItem
         playersWithFullGroup > 0 ? Math.round((modalCount / playersWithFullGroup) * 100) : 0,
       positionPopularity: ([1, 2, 3, 4] as const).map((rank) => ({
         rank,
-        teams: countMapToSortedList(positionCounts[rank - 1], playersWithFullGroup, (teamId) => {
-          const team = teams.find((t) => t.id === teamId);
-          return team?.name ?? teamId;
-        })
+        teams: countMapToSortedList(
+          positionCounts[rank - 1],
+          playersWithFullGroup,
+          (teamId) => {
+            const team = teams.find((t) => t.id === teamId);
+            return team?.name ?? teamId;
+          },
+          { teamIdKeys: true }
+        )
       })),
       distinctWinners: winners.size
     };
@@ -513,10 +537,15 @@ function countBonusPicks(
     total += 1;
     counts.set(teamId, (counts.get(teamId) ?? 0) + 1);
   }
-  return countMapToSortedList(counts, total, (teamId) => {
-    const team = teams.find((t) => t.id === teamId);
-    return team?.name ?? teamId;
-  });
+  return countMapToSortedList(
+    counts,
+    total,
+    (teamId) => {
+      const team = teams.find((t) => t.id === teamId);
+      return team?.name ?? teamId;
+    },
+    { teamIdKeys: true }
+  );
 }
 
 export function computeTournamentOutlook(

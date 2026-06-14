@@ -64,8 +64,9 @@ export interface CrowdStatPoolOptions {
 
 export interface SampleCrowdStatsOptions {
   shuffle?: boolean;
-  pinnedPersonal?: CrowdStatCard;
+  pinnedHeadToHead?: CrowdStatCard;
   pinnedLadder?: CrowdStatCard;
+  remainingPersonal?: CrowdStatCard[];
 }
 
 function anonymizePickCounts(items: StatisticsPickCount[]): StatisticsPickCount[] {
@@ -151,6 +152,7 @@ function groupCardsFromConsensus(
       modalCount: strongest.modalCount,
       distinctWinners: strongest.distinctWinners,
       modalOrder,
+      modalOrderTeamIds: strongest.modalOrder,
       positions: strongest.positionPopularity.map((slot) => ({
         rank: slot.rank,
         teams: revealNames ? slot.teams.slice(0, 2) : anonymizePickCounts(slot.teams.slice(0, 2))
@@ -542,34 +544,37 @@ export function buildCrowdStatPool(
   return pool;
 }
 
-/** Sample exactly six cards: pinned personal, pinned ladder, then four from pool. */
+/** Sample exactly six cards: pinned head to head, pinned ladder, then four from pool. */
 export function sampleCrowdStats(
   pool: CrowdStatCard[],
   options: SampleCrowdStatsOptions = {}
 ): CrowdStatCard[] {
-  const pinnedPersonal = options.pinnedPersonal;
+  const pinnedHeadToHead = options.pinnedHeadToHead;
   const pinnedLadder = options.pinnedLadder;
+  const remainingPersonal = options.remainingPersonal ?? [];
   const pinnedIds = new Set(
-    [pinnedPersonal?.id, pinnedLadder?.id].filter((id): id is string => Boolean(id))
+    [pinnedHeadToHead?.id, pinnedLadder?.id].filter((id): id is string => Boolean(id))
   );
 
   const poolExcludingPinned = pool.filter((card) => !pinnedIds.has(card.id));
-  const excludePinnedTypes = poolExcludingPinned.filter(
+  const crowdOnly = poolExcludingPinned.filter(
     (card) => card.visualType !== 'ladder' && card.visualType !== 'personal'
   );
+  const personalMix = remainingPersonal.filter((card) => !pinnedIds.has(card.id));
+  const shufflePool = [...personalMix, ...crowdOnly];
 
-  const pinnedCount = (pinnedPersonal ? 1 : 0) + (pinnedLadder ? 1 : 0);
+  const pinnedCount = (pinnedHeadToHead ? 1 : 0) + (pinnedLadder ? 1 : 0);
   const sampleSlots = Math.max(0, CROWD_STATS_COUNT - pinnedCount);
 
   if (options.shuffle === false) {
-    const remainder = excludePinnedTypes.slice(0, sampleSlots);
-    return [pinnedPersonal, pinnedLadder, ...remainder]
+    const remainder = shufflePool.slice(0, sampleSlots);
+    return [pinnedHeadToHead, pinnedLadder, ...remainder]
       .filter((card): card is CrowdStatCard => card !== undefined)
       .slice(0, CROWD_STATS_COUNT);
   }
 
   const byVisual = new Map<CrowdStatVisualType, CrowdStatCard[]>();
-  for (const card of excludePinnedTypes) {
+  for (const card of shufflePool) {
     const list = byVisual.get(card.visualType) ?? [];
     list.push(card);
     byVisual.set(card.visualType, list);
@@ -578,7 +583,7 @@ export function sampleCrowdStats(
   const selected: CrowdStatCard[] = [];
   const usedIds = new Set<string>();
 
-  const sampleOrder = VISUAL_TYPE_ORDER.filter((type) => type !== 'personal' && type !== 'ladder');
+  const sampleOrder = VISUAL_TYPE_ORDER.filter((type) => type !== 'ladder');
 
   for (const visualType of sampleOrder) {
     const candidates = shuffleItems(byVisual.get(visualType) ?? []).filter(
@@ -589,7 +594,7 @@ export function sampleCrowdStats(
     usedIds.add(candidates[0].id);
   }
 
-  const remaining = shuffleItems(excludePinnedTypes.filter((card) => !usedIds.has(card.id)));
+  const remaining = shuffleItems(shufflePool.filter((card) => !usedIds.has(card.id)));
   for (const card of remaining) {
     if (selected.length >= sampleSlots) break;
     selected.push(card);
@@ -601,13 +606,13 @@ export function sampleCrowdStats(
     .filter((card): card is CrowdStatCard => card !== undefined);
   const extras = selected.filter((card) => !ordered.includes(card));
 
-  const combined = [pinnedPersonal, pinnedLadder, ...ordered, ...extras].filter(
+  const combined = [pinnedHeadToHead, pinnedLadder, ...ordered, ...extras].filter(
     (card): card is CrowdStatCard => card !== undefined
   );
 
   if (combined.length < CROWD_STATS_COUNT) {
     const insightPool = shuffleItems(
-      excludePinnedTypes.filter(
+      shufflePool.filter(
         (card) =>
           card.visualType === 'insight' && !combined.some((existing) => existing.id === card.id)
       )
