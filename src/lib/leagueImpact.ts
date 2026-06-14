@@ -265,6 +265,8 @@ export function computePinnedLadderSwings(
 
 export interface RankClusterBattle {
   match: Match;
+  userIdA: string;
+  userIdB: string;
   playerA: string;
   playerB: string;
   rankA: number;
@@ -311,6 +313,8 @@ function tryBattle(
 
   return {
     match,
+    userIdA: userA.userId,
+    userIdB: userB.userId,
     playerA: userA.displayName,
     playerB: userB.displayName,
     rankA,

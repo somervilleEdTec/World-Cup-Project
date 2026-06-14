@@ -70,6 +70,12 @@ describe('buildNearestRivalCard via buildPersonalStatPool', () => {
         picks: {
           'g-a-1': { matchId: 'g-a-1', homeScore: 2, awayScore: 1 },
           'g-a-2': { matchId: 'g-a-2', homeScore: 1, awayScore: 1 }
+        },
+        bonus: {
+          winnerTeamId: 'brazil',
+          runnerUpTeamId: 'france',
+          thirdTeamId: 'germany',
+          fourthTeamId: 'spain'
         }
       },
       {
@@ -78,6 +84,12 @@ describe('buildNearestRivalCard via buildPersonalStatPool', () => {
         picks: {
           'g-a-1': { matchId: 'g-a-1', homeScore: 2, awayScore: 1 },
           'g-a-2': { matchId: 'g-a-2', homeScore: 0, awayScore: 0 }
+        },
+        bonus: {
+          winnerTeamId: 'brazil',
+          runnerUpTeamId: 'argentina',
+          thirdTeamId: 'germany',
+          fourthTeamId: 'spain'
         }
       },
       {
@@ -86,6 +98,12 @@ describe('buildNearestRivalCard via buildPersonalStatPool', () => {
         picks: {
           'g-a-1': { matchId: 'g-a-1', homeScore: 1, awayScore: 0 },
           'g-a-2': { matchId: 'g-a-2', homeScore: 3, awayScore: 3 }
+        },
+        bonus: {
+          winnerTeamId: 'argentina',
+          runnerUpTeamId: 'france',
+          thirdTeamId: 'germany',
+          fourthTeamId: 'spain'
         }
       }
     ];
@@ -111,6 +129,9 @@ describe('buildNearestRivalCard via buildPersonalStatPool', () => {
       expect(ranks).toEqual([...ranks].sort((a, b) => a - b));
       expect(nearestRival.nearbyPlayers?.some((player) => player.isCurrentUser)).toBe(true);
       expect(nearestRival.nearbyPlayers?.every((player) => player.pick.length > 0)).toBe(true);
+      expect(
+        nearestRival.nearbyPlayers?.every((player) => player.tournamentBonus?.winnerTeamId)
+      ).toBe(true);
     }
   });
 });
