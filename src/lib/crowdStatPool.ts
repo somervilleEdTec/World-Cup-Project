@@ -18,6 +18,7 @@ import {
   computeMostVolatileFixture
 } from './leagueImpact';
 import { ladderCandidateToCard } from './personalStats';
+import { committedBonusPickFromUser } from './tournamentBonus';
 import {
   buildMysteryStatPool,
   computeFunFacts,
@@ -30,7 +31,9 @@ import {
   UserPicks
 } from './predictionStats';
 
-export const CROWD_STATS_COUNT = 6;
+export const CROWD_STATS_MOBILE_COUNT = 6;
+export const CROWD_STATS_DESKTOP_COUNT = 9;
+export const CROWD_STATS_COUNT = CROWD_STATS_DESKTOP_COUNT;
 export const CROWD_STATS_MIN = CROWD_STATS_COUNT;
 export const CROWD_STATS_MAX = CROWD_STATS_COUNT;
 
@@ -189,7 +192,8 @@ function buildFixtureInsightCards(
   userPicks: UserPicks[],
   results: Record<string, ActualResult>,
   viewableUpcomingMatchIds: Set<string>,
-  revealNames: boolean
+  revealNames: boolean,
+  currentUserId?: string
 ): CrowdStatCard[] {
   const cards: CrowdStatCard[] = [];
   const upcoming = matches
@@ -251,6 +255,12 @@ function buildFixtureInsightCards(
 
   const battles = computeRankClusterBattles(matches, userPicks, results, viewableUpcomingMatchIds);
   for (const battle of battles.slice(0, 1)) {
+    const userA = userPicks.find((user) => user.userId === battle.userIdA);
+    const userB = userPicks.find((user) => user.userId === battle.userIdB);
+    let currentUserSide: 'A' | 'B' | undefined;
+    if (currentUserId === battle.userIdA) currentUserSide = 'A';
+    else if (currentUserId === battle.userIdB) currentUserSide = 'B';
+
     cards.push({
       id: `battle-${battle.match.id}-${battle.playerA}-${battle.playerB}`,
       visualType: 'insight',
@@ -265,7 +275,10 @@ function buildFixtureInsightCards(
       rankA: battle.rankA,
       rankB: battle.rankB,
       pickA: battle.pickALabel,
-      pickB: battle.pickBLabel
+      pickB: battle.pickBLabel,
+      currentUserSide,
+      bonusA: userA ? committedBonusPickFromUser(userA) : undefined,
+      bonusB: userB ? committedBonusPickFromUser(userB) : undefined
     });
   }
 
@@ -431,7 +444,8 @@ export function buildCrowdStatPool(
         userPicks,
         results,
         viewableUpcomingMatchIds,
-        revealNames
+        revealNames,
+        input.currentUserId
       )
     );
 

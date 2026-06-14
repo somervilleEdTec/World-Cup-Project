@@ -1,6 +1,7 @@
 import { teams } from '../../data/tournament';
 import { TeamLabel } from '../TeamLabel';
 import { StatsTeamName } from './StatsTeamName';
+import { TournamentBonusFlags } from './TournamentBonusFlags';
 import { CrowdStatCard as CrowdStatCardType } from '../../types';
 
 interface PersonalStatCardProps {
@@ -73,7 +74,13 @@ function ContrarianBody({ card }: { card: PersonalStatCardProps['card'] }) {
   );
 }
 
-function NearestRivalBody({ card }: { card: PersonalStatCardProps['card'] }) {
+function NearestRivalBody({
+  card,
+  revealNames
+}: {
+  card: PersonalStatCardProps['card'];
+  revealNames: boolean;
+}) {
   if (card.kind !== 'nearestRival') return null;
 
   return (
@@ -81,11 +88,16 @@ function NearestRivalBody({ card }: { card: PersonalStatCardProps['card'] }) {
       {(card.nearbyPlayers ?? []).map((player) => (
         <li
           key={player.userId}
-          className={`head-to-head-row${player.isCurrentUser ? ' personal-you-row' : ''}`}
+          className={`head-to-head-row${
+            player.isCurrentUser ? ' head-to-head-you-row personal-you-row' : ''
+          }`}
         >
           <span className="head-to-head-rank">#{player.rank}</span>
           <span className="head-to-head-name">
-            {player.isCurrentUser ? 'You' : player.displayName}
+            <span className="head-to-head-name-text">
+              {player.isCurrentUser ? 'You' : player.displayName}
+            </span>
+            <TournamentBonusFlags bonus={player.tournamentBonus} revealNames={revealNames} />
           </span>
           <span className="head-to-head-pick">{player.pick}</span>
         </li>
@@ -174,7 +186,7 @@ export function PersonalStatCard({ card, revealNames }: PersonalStatCardProps) {
       <FixtureHeader card={card} revealNames={revealNames} />
       {card.kind === 'ladderMove' && <LadderMoveBody card={card} />}
       {card.kind === 'contrarian' && <ContrarianBody card={card} />}
-      {card.kind === 'nearestRival' && <NearestRivalBody card={card} />}
+      {card.kind === 'nearestRival' && <NearestRivalBody card={card} revealNames={revealNames} />}
       {card.kind === 'hiveMind' && <HiveMindBody card={card} />}
       {card.kind === 'groupDiff' && <GroupDiffBody card={card} revealNames={revealNames} />}
     </article>

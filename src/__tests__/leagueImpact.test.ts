@@ -126,5 +126,7 @@ describe('leagueImpact', () => {
     expect(battles[0].pickALabel).toBeTruthy();
     expect(battles[0].pickBLabel).toBeTruthy();
     expect(battles[0].pickALabel).not.toBe(battles[0].pickBLabel);
+    expect(battles[0].userIdA).toBeTruthy();
+    expect(battles[0].userIdB).toBeTruthy();
   });
 });
