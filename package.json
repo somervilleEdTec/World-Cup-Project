@@ -25,6 +25,7 @@
     "db:purge": "tsx scripts/purge-database.ts",
     "db:purge:live": "tsx scripts/purge-database.ts --confirm-live",
     "db:remove-player": "tsx scripts/remove-player.ts",
+    "db:set-player-bonus": "tsx scripts/set-player-bonus.ts",
     "seed:debug": "tsx scripts/seed-ko-environment.ts",
     "seed:debug-random": "tsx scripts/seed-ko-environment.ts -- --with-predictions --random-results",
     "seed:ko-environment": "tsx scripts/seed-ko-environment.ts -- --with-predictions --random-results",
