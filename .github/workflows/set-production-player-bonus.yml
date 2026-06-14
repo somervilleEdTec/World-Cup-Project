@@ -1,0 +1,83 @@
+# Manual only — set tournament bonus (overall results) picks for a player on production.
+
+name: Set production player bonus (manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      display_name:
+        description: 'Player display name'
+        required: true
+        type: string
+      winner:
+        description: 'Winner team slug (e.g. england)'
+        required: true
+        type: string
+      runner_up:
+        description: 'Runner-up team slug'
+        required: true
+        type: string
+      third:
+        description: 'Third place team slug'
+        required: true
+        type: string
+      fourth:
+        description: 'Fourth place team slug'
+        required: true
+        type: string
+      confirm:
+        description: 'Type SET_BONUS to confirm'
+        required: true
+        type: string
+
+concurrency:
+  group: production-set-player-bonus
+  cancel-in-progress: false
+
+jobs:
+  set-player-bonus:
+    name: Set player bonus on production host
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Require confirmation phrase
+        run: |
+          if [ "${{ github.event.inputs.confirm }}" != "SET_BONUS" ]; then
+            echo "Refusing: input must be exactly SET_BONUS"
+            exit 1
+          fi
+
+      - name: Check deploy secrets
+        run: |
+          missing=0
+          check() { if [ -z "$1" ]; then echo "  MISSING: $2"; missing=1; else echo "  OK: $2"; fi; }
+          check "${{ secrets.DEPLOY_HOST }}" "DEPLOY_HOST"
+          check "${{ secrets.DEPLOY_USER }}" "DEPLOY_USER"
+          check "${{ secrets.DEPLOY_SSH_KEY }}" "DEPLOY_SSH_KEY"
+          check "${{ secrets.DEPLOY_PATH }}" "DEPLOY_PATH"
+          if [ "${missing}" -ne 0 ]; then exit 1; fi
+
+      - name: Configure SSH
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
+        run: bash scripts/ci-ssh-setup.sh
+
+      - name: Set player bonus over SSH
+        env:
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+          PLAYER_NAME: ${{ github.event.inputs.display_name }}
+          WINNER: ${{ github.event.inputs.winner }}
+          RUNNER_UP: ${{ github.event.inputs.runner_up }}
+          THIRD: ${{ github.event.inputs.third }}
+          FOURTH: ${{ github.event.inputs.fourth }}
+          SSH_MAX_ATTEMPTS: 3
+          SSH_RETRY_WAIT_SEC: 30
+        timeout-minutes: 15
+        run: |
+          set -euo pipefail
+          bash scripts/ci-ssh-exec.sh "cd '${DEPLOY_PATH}' && git fetch origin main && git checkout main && git pull --ff-only origin main && npm run db:backup && echo '=== Before ===' && sqlite3 data.db \"SELECT u.display_name, pm.bonus_committed FROM users u LEFT JOIN prediction_meta pm ON pm.user_id = u.id WHERE LOWER(u.display_name) = LOWER('${PLAYER_NAME}');\" && npm run db:set-player-bonus -- \"${PLAYER_NAME}\" \"${WINNER}\" \"${RUNNER_UP}\" \"${THIRD}\" \"${FOURTH}\" && echo '=== After ===' && sqlite3 data.db \"SELECT u.display_name, pm.bonus_committed FROM users u LEFT JOIN prediction_meta pm ON pm.user_id = u.id WHERE LOWER(u.display_name) = LOWER('${PLAYER_NAME}');\""
