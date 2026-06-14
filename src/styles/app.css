@@ -516,6 +516,45 @@ td {
   white-space: normal;
 }
 
+.league-table-prizes {
+  margin: 0.75rem 0 0.65rem;
+  padding: 0.65rem 0.75rem;
+  border-radius: 0.55rem;
+  border: 1px solid #dce5ef;
+  background: #f7fafc;
+  font-size: 0.9rem;
+}
+
+.league-prize-first {
+  font-weight: 700;
+  color: #8a6a00;
+}
+
+.league-prize-second {
+  font-weight: 700;
+  color: #0b7a35;
+}
+
+.league-row-first td {
+  background: #fff8e1;
+  border-bottom-color: #f0e0a8;
+}
+
+.league-row-first .league-col-player,
+.league-row-first td:first-child {
+  font-weight: 700;
+}
+
+.league-row-second td {
+  background: #e8f8ef;
+  border-bottom-color: #b8e6c8;
+}
+
+.league-row-second .league-col-player,
+.league-row-second td:first-child {
+  font-weight: 700;
+}
+
 @media (max-width: 639px) {
   .league-table-page th,
   .league-table-page td {

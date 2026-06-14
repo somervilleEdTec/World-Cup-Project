@@ -95,10 +95,17 @@ export function LeagueTablePage() {
       {error && <p className="warning">{error}</p>}
       {coinFlipNote && <p className="kicker">{coinFlipNote}</p>}
 
+      <p className="league-table-prizes" aria-label="League prizes">
+        <strong>Prizes:</strong>{' '}
+        <span className="league-prize-first">1st £50</span>
+        {' · '}
+        <span className="league-prize-second">2nd £20</span>
+      </p>
+
       <table className="league-table-page">
         <thead>
           <tr>
-            <th>Rank</th>
+            <th>Pos</th>
             <th className="league-col-player">Player</th>
             <th className="league-total" title="Points (total)">
               Pts
@@ -111,7 +118,16 @@ export function LeagueTablePage() {
         </thead>
         <tbody>
           {entries.map((entry) => (
-            <tr key={entry.userId}>
+            <tr
+              key={entry.userId}
+              className={
+                entry.rank === 1
+                  ? 'league-row-first'
+                  : entry.rank === 2
+                    ? 'league-row-second'
+                    : undefined
+              }
+            >
               <td>{entry.rank}</td>
               <td className="league-col-player">{entry.name}</td>
               <td className="league-total">{entry.points}</td>
