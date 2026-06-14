@@ -14,7 +14,7 @@ export function WelcomePage() {
         </p>
         <p>
           Knockout games lock 15 minutes before each fixture&apos;s kickoff. If you have any
-          questions, you can fuck off!
+          questions, ask in the WhatsApp group.
         </p>
       </article>
 
