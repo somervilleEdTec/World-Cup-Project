@@ -207,7 +207,9 @@ describe('crowdStatPool', () => {
       ...pool.filter((card) => card.visualType !== 'ladder' && card.visualType !== 'personal')
     ];
     expect(sampled.slice(0, pinnedCount).filter(Boolean)).toHaveLength(pinnedCount);
-    expect(sampled.slice(pinnedCount)).toEqual(shufflePool.slice(0, CROWD_STATS_COUNT - pinnedCount));
+    expect(sampled.slice(pinnedCount)).toEqual(
+      shufflePool.slice(0, CROWD_STATS_COUNT - pinnedCount)
+    );
   });
 
   it('excludes past fixtures from upcoming count', () => {

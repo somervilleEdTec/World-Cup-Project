@@ -39,10 +39,7 @@ describe('buildHiveMindCard via buildPersonalStatPool', () => {
   });
 
   it('includes hive mind when at least four upcoming picks exist', () => {
-    const users = [
-      buildUser('u1', 'Alice', fourMatchIds),
-      buildUser('u2', 'Bob', fourMatchIds)
-    ];
+    const users = [buildUser('u1', 'Alice', fourMatchIds), buildUser('u2', 'Bob', fourMatchIds)];
     const matchConsensus = computeMatchConsensus(groupMatches, users, viewableIds);
 
     const pool = buildPersonalStatPool({
@@ -110,9 +107,9 @@ describe('buildYouVsCrowdCard via buildPersonalStatPool', () => {
     expect(youVsCrowd).toBeDefined();
     if (youVsCrowd && youVsCrowd.kind === 'youVsCrowd') {
       expect(youVsCrowd.scorelineBreakdown?.length).toBeGreaterThan(1);
-      expect(youVsCrowd.scorelineBreakdown?.some((entry) => entry.label === youVsCrowd.yourPick)).toBe(
-        true
-      );
+      expect(
+        youVsCrowd.scorelineBreakdown?.some((entry) => entry.label === youVsCrowd.yourPick)
+      ).toBe(true);
     }
   });
 });
