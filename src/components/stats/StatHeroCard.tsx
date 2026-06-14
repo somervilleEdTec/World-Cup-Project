@@ -16,7 +16,7 @@ export function StatHeroCard({
   return (
     <article className={`stat-hero-card stat-hero-card-${variant}`}>
       <p className="crowd-stat-panel-kicker">{subtitle}</p>
-      <p className="stat-hero-kicker">{title}</p>
+      {title ? <p className="stat-hero-kicker">{title}</p> : null}
       <p className="stat-hero-value">{value}</p>
       <p className="stat-hero-detail">{detail}</p>
     </article>

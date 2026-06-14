@@ -1,5 +1,6 @@
 import { teams } from '../../data/tournament';
 import { TeamLabel } from '../TeamLabel';
+import { StatsTeamName } from './StatsTeamName';
 import { formatFixtureStageLabel } from '../../lib/fixtureLabels';
 import { CrowdStatCard as CrowdStatCardType } from '../../types';
 
@@ -61,28 +62,26 @@ function LadderMoveBody({ card }: { card: PersonalStatCardProps['card'] }) {
 
 function YouVsCrowdBody({ card }: { card: PersonalStatCardProps['card'] }) {
   if (card.kind !== 'youVsCrowd') return null;
-  const badge =
-    card.alignment === 'exact'
-      ? 'Exact match'
-      : card.alignment === 'result'
-        ? 'Same result'
-        : 'Going bold';
 
   return (
     <div className="personal-you-vs-crowd">
-      <div className="personal-pick-column">
+      <div className="personal-pick-column personal-pick-column-you">
         <span className="personal-pick-heading">You</span>
         <span className="personal-pick-value">{card.yourPick}</span>
       </div>
-      <div className="personal-pick-column">
-        <span className="personal-pick-heading">Crowd</span>
-        <span className="personal-pick-value">
-          {card.crowdPick} ({card.crowdPct}%)
-        </span>
+      <div className="personal-scoreline-chips" aria-label="Crowd scoreline breakdown">
+        {(card.scorelineBreakdown ?? []).map((entry) => {
+          const isYou = entry.label === card.yourPick;
+          return (
+            <span
+              key={entry.label}
+              className={`personal-scoreline-chip${isYou ? ' personal-scoreline-chip-you' : ''}`}
+            >
+              {entry.label} · {entry.pct}%
+            </span>
+          );
+        })}
       </div>
-      <span className={`personal-alignment-badge personal-alignment-${card.alignment}`}>
-        {badge}
-      </span>
     </div>
   );
 }
@@ -125,12 +124,13 @@ function NearestRivalBody({ card }: { card: PersonalStatCardProps['card'] }) {
 
 function HiveMindBody({ card }: { card: PersonalStatCardProps['card'] }) {
   if (card.kind !== 'hiveMind') return null;
+  const ringPct = Math.min(Math.max(card.hiveMindPct ?? 0, 1), 99);
 
   return (
     <div className="personal-hive-mind">
       <div
         className="personal-hive-ring"
-        style={{ '--hive-pct': `${card.hiveMindPct ?? 0}%` } as Record<string, string>}
+        style={{ '--hive-pct': `${ringPct}%` } as Record<string, string>}
       >
         <span className="personal-hive-pct">{card.hiveMindPct}%</span>
       </div>
@@ -142,7 +142,13 @@ function HiveMindBody({ card }: { card: PersonalStatCardProps['card'] }) {
   );
 }
 
-function GroupDiffBody({ card }: { card: PersonalStatCardProps['card'] }) {
+function GroupDiffBody({
+  card,
+  revealNames
+}: {
+  card: PersonalStatCardProps['card'];
+  revealNames: boolean;
+}) {
   if (card.kind !== 'groupDiff') return null;
 
   return (
@@ -158,11 +164,17 @@ function GroupDiffBody({ card }: { card: PersonalStatCardProps['card'] }) {
               <li
                 key={`you-${team}-${index}`}
                 className={`mini-standings-order-row${
-                  team !== card.crowdOrder?.[index] ? ' personal-group-mismatch' : ''
+                  card.yourOrderTeamIds?.[index] !== card.crowdOrderTeamIds?.[index]
+                    ? ' personal-group-mismatch'
+                    : ''
                 }`}
               >
                 <span className="mini-standings-rank">#{index + 1}</span>
-                <span className="mini-standings-team">{team}</span>
+                <StatsTeamName
+                  teamId={card.yourOrderTeamIds?.[index]}
+                  label={team}
+                  revealNames={revealNames}
+                />
               </li>
             ))}
           </ol>
@@ -173,7 +185,11 @@ function GroupDiffBody({ card }: { card: PersonalStatCardProps['card'] }) {
             {(card.crowdOrder ?? []).map((team, index) => (
               <li key={`crowd-${team}-${index}`} className="mini-standings-order-row">
                 <span className="mini-standings-rank">#{index + 1}</span>
-                <span className="mini-standings-team">{team}</span>
+                <StatsTeamName
+                  teamId={card.crowdOrderTeamIds?.[index]}
+                  label={team}
+                  revealNames={revealNames}
+                />
               </li>
             ))}
           </ol>
@@ -196,7 +212,7 @@ export function PersonalStatCard({ card, revealNames }: PersonalStatCardProps) {
       {card.kind === 'groupDiff' && (
         <>
           <h4>Group {card.groupId}</h4>
-          <GroupDiffBody card={card} />
+          <GroupDiffBody card={card} revealNames={revealNames} />
         </>
       )}
     </article>

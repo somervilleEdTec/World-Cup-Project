@@ -31,7 +31,7 @@ export function CrowdStatCard({ card, revealNames, pinned = false }: CrowdStatCa
         <div className={`crowd-stat-card crowd-stat-card-hero${pinnedClass}`}>
           <StatHeroCard
             subtitle={HERO_SUBTITLES[card.title] ?? 'League highlight'}
-            title={card.title}
+            title={card.title === 'The Hive Mind' ? '' : card.title}
             value={card.value}
             detail={card.detail}
             variant={card.variant}
@@ -53,13 +53,13 @@ export function CrowdStatCard({ card, revealNames, pinned = false }: CrowdStatCa
     case 'standings':
       return (
         <div className={pinnedClass || undefined}>
-          <MiniGroupStandingsCard card={card} />
+          <MiniGroupStandingsCard card={card} revealNames={revealNames} />
         </div>
       );
     case 'podium':
       return (
         <div className={pinnedClass || undefined}>
-          <PodiumOutlookCard card={card} />
+          <PodiumOutlookCard card={card} revealNames={revealNames} />
         </div>
       );
     case 'personal':

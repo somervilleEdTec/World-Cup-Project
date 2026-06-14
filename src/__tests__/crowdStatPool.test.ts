@@ -10,7 +10,7 @@ import {
   VISUAL_TYPE_ORDER
 } from '../lib/crowdStatPool';
 import { computeMatchConsensus, UserPicks } from '../lib/predictionStats';
-import { buildPersonalStatPool, samplePersonalStat } from '../lib/personalStats';
+import { buildPersonalStatPool, partitionPersonalStats } from '../lib/personalStats';
 import { isUpcomingFixture } from '../lib/comparisonVisibility';
 
 describe('crowdStatPool', () => {
@@ -133,7 +133,7 @@ describe('crowdStatPool', () => {
     expect(pool.some((c) => c.visualType === 'insight')).toBe(true);
   });
 
-  it('samples exactly six cards with personal and ladder pinned first', () => {
+  it('samples exactly six cards with head to head and ladder pinned first', () => {
     const pool = buildCrowdStatPool(poolInput, { revealNames: true });
 
     const pinnedLadder = buildPinnedLadderCard(
@@ -153,15 +153,20 @@ describe('crowdStatPool', () => {
       groupPhaseLocked: true,
       revealNames: true
     });
-    const pinnedPersonal = samplePersonalStat(personalPool, false);
+    const { pinnedHeadToHead, remainingPersonal } = partitionPersonalStats(personalPool);
 
-    const sampled = sampleCrowdStats(pool, { pinnedPersonal, pinnedLadder, shuffle: false });
+    const sampled = sampleCrowdStats(pool, {
+      pinnedHeadToHead,
+      pinnedLadder,
+      remainingPersonal,
+      shuffle: false
+    });
     expect(sampled.length).toBe(CROWD_STATS_COUNT);
-    if (pinnedPersonal) {
+    if (pinnedHeadToHead) {
       expect(sampled[0].visualType).toBe('personal');
     }
     if (pinnedLadder) {
-      expect(sampled[pinnedPersonal ? 1 : 0].visualType).toBe('ladder');
+      expect(sampled[pinnedHeadToHead ? 1 : 0].visualType).toBe('ladder');
     }
     const visualTypes = new Set(sampled.map((c) => c.visualType));
     expect(visualTypes.size).toBeGreaterThanOrEqual(3);
@@ -177,7 +182,7 @@ describe('crowdStatPool', () => {
       matchConsensus,
       viewableIds
     );
-    const pinnedPersonal = samplePersonalStat(
+    const { pinnedHeadToHead, remainingPersonal } = partitionPersonalStats(
       buildPersonalStatPool({
         currentUserId: 'u1',
         matches: groupMatches,
@@ -187,17 +192,22 @@ describe('crowdStatPool', () => {
         viewableUpcomingMatchIds: viewableIds,
         groupPhaseLocked: true,
         revealNames: true
-      }),
-      false
+      })
     );
 
-    const sampled = sampleCrowdStats(pool, { shuffle: false, pinnedPersonal, pinnedLadder });
-    const pinnedCount = (pinnedPersonal ? 1 : 0) + (pinnedLadder ? 1 : 0);
-    const nonPinned = pool.filter(
-      (card) => card.visualType !== 'ladder' && card.visualType !== 'personal'
-    );
+    const sampled = sampleCrowdStats(pool, {
+      shuffle: false,
+      pinnedHeadToHead,
+      pinnedLadder,
+      remainingPersonal
+    });
+    const pinnedCount = (pinnedHeadToHead ? 1 : 0) + (pinnedLadder ? 1 : 0);
+    const shufflePool = [
+      ...remainingPersonal,
+      ...pool.filter((card) => card.visualType !== 'ladder' && card.visualType !== 'personal')
+    ];
     expect(sampled.slice(0, pinnedCount).filter(Boolean)).toHaveLength(pinnedCount);
-    expect(sampled.slice(pinnedCount)).toEqual(nonPinned.slice(0, CROWD_STATS_COUNT - pinnedCount));
+    expect(sampled.slice(pinnedCount)).toEqual(shufflePool.slice(0, CROWD_STATS_COUNT - pinnedCount));
   });
 
   it('excludes past fixtures from upcoming count', () => {

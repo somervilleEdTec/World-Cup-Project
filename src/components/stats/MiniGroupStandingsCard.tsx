@@ -1,11 +1,13 @@
 import { ConsensusBar } from './ConsensusBar';
+import { StatsTeamName } from './StatsTeamName';
 import { CrowdStatCard as CrowdStatCardType } from '../../types';
 
 interface MiniGroupStandingsCardProps {
   card: Extract<CrowdStatCardType, { visualType: 'standings' }>;
+  revealNames: boolean;
 }
 
-export function MiniGroupStandingsCard({ card }: MiniGroupStandingsCardProps) {
+export function MiniGroupStandingsCard({ card, revealNames }: MiniGroupStandingsCardProps) {
   const isConsensus = card.variant === 'consensus';
 
   return (
@@ -24,7 +26,11 @@ export function MiniGroupStandingsCard({ card }: MiniGroupStandingsCardProps) {
             {(card.modalOrder ?? []).map((team, index) => (
               <li key={`${team}-${index}`} className="mini-standings-order-row">
                 <span className="mini-standings-rank">#{index + 1}</span>
-                <span className="mini-standings-team">{team}</span>
+                <StatsTeamName
+                  teamId={card.modalOrderTeamIds?.[index]}
+                  label={team}
+                  revealNames={revealNames}
+                />
               </li>
             ))}
           </ol>
@@ -37,7 +43,7 @@ export function MiniGroupStandingsCard({ card }: MiniGroupStandingsCardProps) {
               <div key={team.label} className="mini-standings-row">
                 <span className="mini-standings-rank">1st</span>
                 <div className="mini-standings-bar-wrap">
-                  <ConsensusBar item={team} maxCount={team.count} />
+                  <ConsensusBar item={team} maxCount={team.count} revealNames={revealNames} />
                 </div>
               </div>
             ))}

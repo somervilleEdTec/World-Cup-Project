@@ -8,7 +8,7 @@ import {
   sampleCrowdStats
 } from '../../lib/crowdStatPool';
 import { computePinnedLadderSwing } from '../../lib/leagueImpact';
-import { buildPersonalStatPool, samplePersonalStat } from '../../lib/personalStats';
+import { buildPersonalStatPool, partitionPersonalStats } from '../../lib/personalStats';
 import { computeMatchConsensus } from '../../lib/predictionStats';
 import { shouldLockGroup } from '../../lib/tournamentLogic';
 import { TournamentBonusPick } from '../../types';
@@ -120,27 +120,31 @@ export async function computeStatistics(nowIso = new Date().toISOString(), curre
     ? buildPinnedLadderCard(matches, userPicks, results, matchConsensus, viewableUpcomingMatchIds)
     : undefined;
 
-  const pinnedPersonal =
+  const personalPool =
     currentUserId && groupPhaseLocked
-      ? samplePersonalStat(
-          buildPersonalStatPool({
-            currentUserId,
-            matches,
-            userPicks,
-            results,
-            matchConsensus,
-            viewableUpcomingMatchIds,
-            groupPhaseLocked,
-            revealNames: groupPhaseLocked,
-            pinnedLadder: pinnedLadderCandidate
-          })
-        )
-      : undefined;
+      ? buildPersonalStatPool({
+          currentUserId,
+          matches,
+          userPicks,
+          results,
+          matchConsensus,
+          viewableUpcomingMatchIds,
+          groupPhaseLocked,
+          revealNames: groupPhaseLocked,
+          pinnedLadder: pinnedLadderCandidate
+        })
+      : [];
 
-  const crowdCards = sampleCrowdStats(pool, { pinnedPersonal, pinnedLadder });
+  const { pinnedHeadToHead, remainingPersonal } = partitionPersonalStats(personalPool);
+
+  const crowdCards = sampleCrowdStats(pool, {
+    pinnedHeadToHead,
+    pinnedLadder,
+    remainingPersonal
+  });
 
   const message = groupPhaseLocked
-    ? pinnedPersonal
+    ? pinnedHeadToHead
       ? 'Your stat plus five crowd picks — shuffle for a fresh mix.'
       : 'Six upcoming-fixture crowd stats — shuffle for a fresh mix.'
     : 'Six teasers until first kickoff — team names hidden. Shuffle for more.';

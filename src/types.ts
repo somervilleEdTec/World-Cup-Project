@@ -110,6 +110,7 @@ export interface StatisticsPickCount {
   label: string;
   count: number;
   pct: number;
+  teamId?: string;
 }
 
 export type CrowdStatVisualType =
@@ -209,6 +210,7 @@ export type CrowdStatCard =
       modalCount: number;
       distinctWinners: number;
       modalOrder?: string[];
+      modalOrderTeamIds?: string[];
       positions: Array<{ rank: 1 | 2 | 3 | 4; teams: StatisticsPickCount[] }>;
     }
   | {
@@ -230,6 +232,7 @@ export type CrowdStatCard =
       crowdPick?: string;
       crowdPct?: number;
       alignment?: PickAlignment;
+      scorelineBreakdown?: StatisticsPickCount[];
       rivalName?: string;
       rivalRank?: number;
       yourRank?: number;
@@ -241,6 +244,8 @@ export type CrowdStatCard =
       groupId?: string;
       yourOrder?: string[];
       crowdOrder?: string[];
+      yourOrderTeamIds?: string[];
+      crowdOrderTeamIds?: string[];
       mismatchCount?: number;
     }
   | {
