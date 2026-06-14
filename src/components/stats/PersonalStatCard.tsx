@@ -83,7 +83,7 @@ function NearestRivalBody({
   revealNames: boolean;
 }) {
   if (card.kind !== 'nearestRival') return null;
-  const showBonusFlags = isFinishingPositionStage(card.stage);
+  const showBonusFlags = card.stage ? isFinishingPositionStage(card.stage) : false;
 
   return (
     <ul className="head-to-head-rows">
