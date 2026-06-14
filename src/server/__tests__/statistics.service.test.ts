@@ -5,6 +5,7 @@ import { createPlayer } from './authHelpers';
 import { computeStatistics } from '../services/statistics';
 import { saveDraftPick } from '../services/predictions';
 import { getDb } from '../database';
+import { CROWD_STATS_COUNT } from '../../lib/crowdStatPool';
 import type { Express } from 'express';
 
 const PRE_LOCK_NOW = '2026-06-11T18:00:00Z';
@@ -47,10 +48,10 @@ describe('computeStatistics', () => {
     const stats = await computeStatistics(PRE_LOCK_NOW);
     expect(stats.meta.groupPhaseLocked).toBe(false);
     expect(stats.crowdCards.length).toBeGreaterThan(0);
-    expect(stats.crowdCards.length).toBeLessThanOrEqual(8);
+    expect(stats.crowdCards.length).toBeLessThanOrEqual(CROWD_STATS_COUNT);
     expect(stats.meta.cardCount).toBe(stats.crowdCards.length);
-    expect(stats.crowdCards.some((c) => c.kind === 'match')).toBe(false);
-    expect(stats.crowdCards.some((c) => c.kind === 'hero')).toBe(false);
+    expect(stats.crowdCards.some((c) => c.visualType === 'fixture')).toBe(false);
+    expect(stats.crowdCards.some((c) => c.visualType === 'hero')).toBe(false);
     const text = JSON.stringify(stats.crowdCards);
     expect(text.includes('Brazil')).toBe(false);
   });
@@ -63,9 +64,13 @@ describe('computeStatistics', () => {
 
     const stats = await computeStatistics(POST_LOCK_NOW);
     expect(stats.meta.groupPhaseLocked).toBe(true);
-    expect(stats.crowdCards.length).toBeGreaterThan(0);
-    expect(stats.crowdCards.length).toBeLessThanOrEqual(8);
-    const kinds = stats.crowdCards.map((c) => c.kind);
-    expect(kinds.some((k) => ['hero', 'match', 'fact', 'group'].includes(k))).toBe(true);
+    expect(stats.crowdCards.length).toBe(CROWD_STATS_COUNT);
+    const visualTypes = stats.crowdCards.map((c) => c.visualType);
+    expect(visualTypes.some((k) => ['hero', 'fixture', 'insight', 'standings'].includes(k))).toBe(
+      true
+    );
+    const text = JSON.stringify(stats.crowdCards);
+    expect(text.includes('locked in their tournament podium')).toBe(false);
+    expect(text.includes('back the home team')).toBe(false);
   });
 });

@@ -121,8 +121,10 @@ export function computeMatchConsensus(
       totalPicks: total,
       topScorelines,
       resultSplit: countMapToSortedList(resultCounts, total, (k) => {
-        if (k === 'H') return 'Home win';
-        if (k === 'A') return 'Away win';
+        const homeName = teams.find((t) => t.id === match.homeTeamId)?.name ?? match.homeTeamId;
+        const awayName = teams.find((t) => t.id === match.awayTeamId)?.name ?? match.awayTeamId;
+        if (k === 'H') return `${homeName} win`;
+        if (k === 'A') return `${awayName} win`;
         if (k === 'D') return 'Draw';
         const team = teams.find((t) => t.id === k);
         return team ? `${team.name} advances` : `${k} advances`;
@@ -376,20 +378,6 @@ export function buildMysteryStatPool(
       });
     }
 
-    const homeWins = groupPicks.filter((p) => p.homeScore > p.awayScore).length;
-    const homePct = Math.round((homeWins / groupPicks.length) * 100);
-    pool.push({
-      icon: '🏠',
-      text: `${homePct}% of submitted group picks back the home team to win.`
-    });
-
-    const awayWins = groupPicks.filter((p) => p.homeScore < p.awayScore).length;
-    const awayPct = Math.round((awayWins / groupPicks.length) * 100);
-    pool.push({
-      icon: '✈️',
-      text: `${awayPct}% of submitted group picks back an away win.`
-    });
-
     const cleanSheets = groupPicks.filter((p) => p.homeScore === 0 || p.awayScore === 0).length;
     const cleanPct = Math.round((cleanSheets / groupPicks.length) * 100);
     pool.push({
@@ -466,15 +454,6 @@ export function buildMysteryStatPool(
     'runner-up'
   );
   if (runnerUpStat) pool.push(runnerUpStat);
-
-  const bonusSubmitted = userPicks.filter((u) => u.bonus).length;
-  if (bonusSubmitted > 0 && playersWithPicks > 0) {
-    const bonusPct = Math.round((bonusSubmitted / playersWithPicks) * 100);
-    pool.push({
-      icon: '🎯',
-      text: `${bonusPct}% of players with picks have locked in their tournament podium predictions.`
-    });
-  }
 
   if (playersWithPicks > 0) {
     pool.push({
@@ -599,15 +578,6 @@ export function computeFunFacts(
     facts.push({
       icon: '🤝',
       text: `${drawPct}% of group-stage predictions end in a draw.`
-    });
-
-    const homeWins = groupPicks.filter((p) => p.pick.homeScore > p.pick.awayScore).length;
-    const awayWins = groupPicks.filter((p) => p.pick.homeScore < p.pick.awayScore).length;
-    const homePct = Math.round((homeWins / groupPicks.length) * 100);
-    const awayPct = Math.round((awayWins / groupPicks.length) * 100);
-    facts.push({
-      icon: '🏠',
-      text: `Home wins ${homePct}%, draws ${drawPct}%, away wins ${awayPct}% across group picks.`
     });
 
     const cleanSheets = groupPicks.filter(

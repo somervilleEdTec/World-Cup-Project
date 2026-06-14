@@ -1055,10 +1055,192 @@ td {
   grid-column: 1 / -1;
 }
 
+.crowd-stat-card-ladder {
+  grid-column: 1 / -1;
+}
+
 @media (min-width: 640px) {
   .crowd-stat-card-hero {
     grid-column: span 2;
   }
+
+  .crowd-stat-card-ladder {
+    grid-column: span 2;
+  }
+}
+
+.crowd-stat-card-fixture {
+  min-height: 12rem;
+}
+
+.fixture-scorelines-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.ladder-swing-header {
+  margin-bottom: 0.75rem;
+}
+
+.ladder-swing-kicker {
+  margin: 0 0 0.35rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #0f2f56;
+}
+
+.ladder-swing-scoreline {
+  margin: 0.35rem 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #0f2f56;
+}
+
+.ladder-swing-pct {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #4a6278;
+}
+
+.ladder-swing-movers {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.ladder-swing-mover {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 0.5rem;
+  align-items: center;
+  padding: 0.45rem 0.55rem;
+  border-radius: 0.45rem;
+  background: #f4f8fc;
+}
+
+.ladder-swing-name {
+  font-weight: 600;
+  color: #0f2f56;
+}
+
+.ladder-swing-ranks {
+  font-size: 0.85rem;
+  color: #4a6278;
+}
+
+.ladder-swing-delta {
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.ladder-swing-delta.up {
+  color: #19a974;
+}
+
+.ladder-swing-delta.down {
+  color: #b42318;
+}
+
+.mini-standings-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.mini-standings-row {
+  display: grid;
+  grid-template-columns: 2rem 1fr;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.mini-standings-rank {
+  font-weight: 700;
+  color: #0f2f56;
+  font-size: 0.85rem;
+}
+
+.podium-steps {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.5rem;
+  min-height: 7rem;
+  margin-top: 0.5rem;
+}
+
+.podium-step {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  padding: 0.5rem 0.35rem;
+  border-radius: 0.45rem 0.45rem 0 0;
+  background: linear-gradient(180deg, #e8f2fb 0%, #d4e4f4 100%);
+  text-align: center;
+}
+
+.podium-step-tall {
+  min-height: 6.5rem;
+}
+
+.podium-step-medium {
+  min-height: 5rem;
+}
+
+.podium-step-short {
+  min-height: 3.5rem;
+}
+
+.podium-step-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #0f2f56;
+  line-height: 1.2;
+}
+
+.podium-step-pct {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #19a974;
+}
+
+.podium-step-count {
+  font-size: 0.75rem;
+  color: #4a6278;
+}
+
+.insight-tile {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+  min-height: 5.5rem;
+}
+
+.insight-tile-icon {
+  font-size: 1.6rem;
+  line-height: 1;
+}
+
+.insight-tile-text {
+  margin: 0;
+  color: #0f2f56;
+  line-height: 1.45;
+}
+
+.crowd-stat-card-insight {
+  padding: 0;
+  overflow: hidden;
+}
+
+.crowd-stat-card-insight .insight-tile {
+  padding: 1rem;
 }
 
 .crowd-stat-card-match {
