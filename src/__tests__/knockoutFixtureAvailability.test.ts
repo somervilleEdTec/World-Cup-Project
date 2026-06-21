@@ -63,8 +63,8 @@ describe('match mapping with official results', () => {
     finishGroup('A', actuals);
     finishGroup('B', actuals);
 
-    expect(explainMappingFailure('Czechia', 'Switzerland', null, actuals)).toBe('mappable');
-    expect(explainMappingFailure('Czechia', 'Switzerland', null, {})).toBe(
+    expect(explainMappingFailure('Mexico', 'Canada', null, actuals)).toBe('mappable');
+    expect(explainMappingFailure('Mexico', 'Canada', null, {})).toBe(
       'no_matching_internal_fixture'
     );
   });

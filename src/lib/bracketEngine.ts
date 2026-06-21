@@ -2,7 +2,7 @@ import { groupMatches, teams } from '../data/tournament';
 import { officialKickoffFor } from '../data/officialKickoffs';
 import { THIRD_PLACE_MAPPINGS, ThirdPlaceSlot } from '../data/thirdPlaceMappings';
 import { ActualResult, Match, Pick, Stage, TournamentBonusPick } from '../types';
-import { computeGroupStandings } from './groupStandings';
+import { compareThirdPlaceStats, computeGroupStandings } from './groupStandings';
 
 const GROUPS = 'ABCDEFGHIJKL'.split('');
 
@@ -250,7 +250,7 @@ export function rankThirdPlaceTeams(picks: Record<string, Pick>): GroupQualifier
   const thirds = GROUPS.map((g) => buildThirdPlaceQualifier(g, picks)).filter(
     (q): q is GroupQualifier => q !== null
   );
-  return thirds.sort((a, b) => b.pts - a.pts || b.gd - a.gd || b.gf - a.gf);
+  return thirds.sort(compareThirdPlaceStats);
 }
 
 export function thirdPlaceCombinationKey(qualifiers: GroupQualifier[]): string {
