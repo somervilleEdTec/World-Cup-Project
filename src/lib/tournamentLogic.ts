@@ -84,7 +84,7 @@ export function affectedFutureMatches(changedMatchId: string): string[] {
   return getDownstreamKnockoutMatchIds(changedMatchId);
 }
 
-export { computeGroupPositions, computeGroupStandings, type GroupRow } from './groupStandings';
+export { computeGroupPositions, computeGroupStandings, type GroupRow, type StandingsOptions } from './groupStandings';
 
 export function computeScore(
   picks: Record<string, Pick>,

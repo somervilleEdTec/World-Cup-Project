@@ -40,7 +40,9 @@ const ALIASES: Record<string, string> = {
   'bosnia h': 'bosnia and herzegovina',
   england: 'england',
   scotland: 'scotland',
-  'congo dr': 'dr congo'
+  'congo dr': 'dr congo',
+  'cabo verde': 'cape verde',
+  'cape verde': 'cape verde'
 };
 
 export function teamIdFromProviderName(name: string | null | undefined): string | null {

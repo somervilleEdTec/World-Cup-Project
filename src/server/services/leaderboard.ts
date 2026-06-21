@@ -1,5 +1,5 @@
 import { getDb } from '../database';
-import { TournamentBonusPick, ActualResult } from '../../types';
+import { TournamentBonusPick, ActualResult, MatchDiscipline } from '../../types';
 import { computeScore } from '../../lib/tournamentLogic';
 import { deriveFinalPlacings } from '../../lib/bracketEngine';
 import { picksFromActuals } from '../../lib/pickUtils';
@@ -19,20 +19,32 @@ export async function getResultsMap(): Promise<Record<string, ActualResult>> {
     home_score: number;
     away_score: number;
     progressing_team_id: string | null;
+    discipline: string | null;
   }>(
-    `SELECT match_id, home_score, away_score, progressing_team_id FROM results WHERE status = 'FINISHED'`
+    `SELECT match_id, home_score, away_score, progressing_team_id, discipline FROM results WHERE status = 'FINISHED'`
   );
 
   return Object.fromEntries(
-    rows.map((row) => [
-      row.match_id,
-      {
-        matchId: row.match_id,
-        homeScore: row.home_score,
-        awayScore: row.away_score,
-        progressingTeamId: row.progressing_team_id ?? undefined
+    rows.map((row) => {
+      let discipline: MatchDiscipline | undefined;
+      if (row.discipline) {
+        try {
+          discipline = JSON.parse(row.discipline) as MatchDiscipline;
+        } catch {
+          discipline = undefined;
+        }
       }
-    ])
+      return [
+        row.match_id,
+        {
+          matchId: row.match_id,
+          homeScore: row.home_score,
+          awayScore: row.away_score,
+          progressingTeamId: row.progressing_team_id ?? undefined,
+          discipline
+        }
+      ];
+    })
   );
 }
 

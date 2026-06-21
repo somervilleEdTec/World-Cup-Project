@@ -1,5 +1,11 @@
+import { fifaWorldRankJune2026 } from '../data/fifaWorldRankingJune2026';
 import { groupMatches, teams } from '../data/tournament';
 import { Match, Pick as MatchPick } from '../types';
+
+export interface StandingsOptions {
+  /** Cumulative fair-play points per team (higher is better). Defaults to 0. */
+  fairPlayByTeam?: Record<string, number>;
+}
 
 export interface GroupRow {
   teamId: string;
@@ -102,16 +108,25 @@ function splitByDistinctGroups<T>(items: T[], key: (item: T) => number): T[][] {
   return groups;
 }
 
+function fairPlayScore(teamId: string, options?: StandingsOptions): number {
+  return options?.fairPlayByTeam?.[teamId] ?? 0;
+}
+
+function fifaRankKey(teamId: string): number {
+  return 1000 - fifaWorldRankJune2026(teamId);
+}
+
 /**
  * FIFA World Cup 2026 group ranking for teams tied on points.
  * Step one: head-to-head mini-league (pts, gd, gf).
  * Step two: overall group gd, gf.
- * Fair play and FIFA ranking are not tracked; team id is a stable final fallback.
+ * Step three: fair play (team conduct), then June 2026 FIFA world ranking, then stable team id.
  */
 function resolveTiedGroup(
   tied: GroupRow[],
   picks: Record<string, MatchPick>,
-  matches: Match[]
+  matches: Match[],
+  options?: StandingsOptions
 ): GroupRow[] {
   if (tied.length <= 1) return tied;
 
@@ -120,27 +135,37 @@ function resolveTiedGroup(
 
   const byMiniPts = splitByDistinctGroups(tied, (row) => mini.get(row.teamId)!.pts);
   if (byMiniPts.length > 1) {
-    return byMiniPts.flatMap((group) => resolveTiedGroup(group, picks, matches));
+    return byMiniPts.flatMap((group) => resolveTiedGroup(group, picks, matches, options));
   }
 
   const byMiniGd = splitByDistinctGroups(tied, (row) => mini.get(row.teamId)!.gd);
   if (byMiniGd.length > 1) {
-    return byMiniGd.flatMap((group) => resolveTiedGroup(group, picks, matches));
+    return byMiniGd.flatMap((group) => resolveTiedGroup(group, picks, matches, options));
   }
 
   const byMiniGf = splitByDistinctGroups(tied, (row) => mini.get(row.teamId)!.gf);
   if (byMiniGf.length > 1) {
-    return byMiniGf.flatMap((group) => resolveTiedGroup(group, picks, matches));
+    return byMiniGf.flatMap((group) => resolveTiedGroup(group, picks, matches, options));
   }
 
   const byOverallGd = splitByDistinctGroups(tied, (row) => row.gd);
   if (byOverallGd.length > 1) {
-    return byOverallGd.flatMap((group) => resolveTiedGroup(group, picks, matches));
+    return byOverallGd.flatMap((group) => resolveTiedGroup(group, picks, matches, options));
   }
 
   const byOverallGf = splitByDistinctGroups(tied, (row) => row.gf);
   if (byOverallGf.length > 1) {
-    return byOverallGf.flatMap((group) => resolveTiedGroup(group, picks, matches));
+    return byOverallGf.flatMap((group) => resolveTiedGroup(group, picks, matches, options));
+  }
+
+  const byFairPlay = splitByDistinctGroups(tied, (row) => fairPlayScore(row.teamId, options));
+  if (byFairPlay.length > 1) {
+    return byFairPlay.flatMap((group) => resolveTiedGroup(group, picks, matches, options));
+  }
+
+  const byFifaRank = splitByDistinctGroups(tied, (row) => fifaRankKey(row.teamId));
+  if (byFifaRank.length > 1) {
+    return byFifaRank.flatMap((group) => resolveTiedGroup(group, picks, matches, options));
   }
 
   return [...tied].sort((a, b) => a.teamId.localeCompare(b.teamId));
@@ -149,11 +174,12 @@ function resolveTiedGroup(
 function rankGroupRows(
   rows: GroupRow[],
   picks: Record<string, MatchPick>,
-  matches: Match[]
+  matches: Match[],
+  options?: StandingsOptions
 ): GroupRow[] {
   const byPoints = splitByDistinctGroups(rows, (row) => row.pts);
   return byPoints.flatMap((group) =>
-    group.length === 1 ? group : resolveTiedGroup(group, picks, matches)
+    group.length === 1 ? group : resolveTiedGroup(group, picks, matches, options)
   );
 }
 
@@ -165,18 +191,26 @@ interface ThirdPlaceStats {
 }
 
 /** Compare third-placed teams from different groups (no head-to-head between groups). */
-export function compareThirdPlaceStats(a: ThirdPlaceStats, b: ThirdPlaceStats): number {
+export function compareThirdPlaceStats(
+  a: ThirdPlaceStats,
+  b: ThirdPlaceStats,
+  options?: StandingsOptions
+): number {
+  const fairPlay = (teamId: string) => options?.fairPlayByTeam?.[teamId] ?? 0;
   return (
     b.pts - a.pts ||
     b.gd - a.gd ||
     b.gf - a.gf ||
+    fairPlay(b.teamId) - fairPlay(a.teamId) ||
+    fifaWorldRankJune2026(a.teamId) - fifaWorldRankJune2026(b.teamId) ||
     a.teamId.localeCompare(b.teamId)
   );
 }
 
 export function computeGroupStandings(
   groupId: string,
-  picks: Record<string, MatchPick>
+  picks: Record<string, MatchPick>,
+  options?: StandingsOptions
 ): GroupRow[] {
   const matchesInGroup = groupMatches.filter((m) => m.group === groupId);
   const rows = new Map<string, GroupRow>();
@@ -199,9 +233,13 @@ export function computeGroupStandings(
     applyGroupResult(home, away, pick.homeScore, pick.awayScore);
   });
 
-  return rankGroupRows([...rows.values()], picks, matchesInGroup);
+  return rankGroupRows([...rows.values()], picks, matchesInGroup, options);
 }
 
-export function computeGroupPositions(groupId: string, picks: Record<string, MatchPick>): string[] {
-  return computeGroupStandings(groupId, picks).map((row) => row.teamId);
+export function computeGroupPositions(
+  groupId: string,
+  picks: Record<string, MatchPick>,
+  options?: StandingsOptions
+): string[] {
+  return computeGroupStandings(groupId, picks, options).map((row) => row.teamId);
 }

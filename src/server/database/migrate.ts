@@ -17,6 +17,10 @@ const MIGRATION_FILES: Record<number, { sqlite: string; postgres: string }> = {
   3: {
     sqlite: '003_user_password_flags.sqlite.sql',
     postgres: '003_user_password_flags.postgres.sql'
+  },
+  4: {
+    sqlite: '004_match_discipline.sqlite.sql',
+    postgres: '004_match_discipline.postgres.sql'
   }
 };
 

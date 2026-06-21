@@ -139,7 +139,7 @@ describe('groupStandings', () => {
     );
   });
 
-  it('uses stable team id when every FIFA stat is tied', () => {
+  it('uses FIFA world ranking when stats and fair play are tied', () => {
     const picks: Record<string, Pick> = {
       'g-a-1': { matchId: 'g-a-1', homeScore: 0, awayScore: 0 },
       'g-a-2': { matchId: 'g-a-2', homeScore: 0, awayScore: 0 },
@@ -152,16 +152,46 @@ describe('groupStandings', () => {
     const rows = computeGroupStandings('A', picks);
     expect(rows.every((row) => row.pts === 3 && row.gd === 0 && row.gf === 0)).toBe(true);
     expect(rows.map((row) => row.teamId)).toEqual([
-      'czechia',
       'mexico',
-      'south-africa',
-      'south-korea'
+      'south-korea',
+      'czechia',
+      'south-africa'
+    ]);
+  });
+
+  it('matches FIFA Group H order after MD1 (fair play + ranking)', () => {
+    const picks: Record<string, Pick> = {
+      'g-h-1': { matchId: 'g-h-1', homeScore: 0, awayScore: 0 },
+      'g-h-2': { matchId: 'g-h-2', homeScore: 1, awayScore: 1 }
+    };
+
+    const rows = computeGroupStandings('H', picks, {
+      fairPlayByTeam: {
+        'saudi-arabia': -1,
+        uruguay: 0,
+        spain: 0,
+        'cape-verde': 0
+      }
+    });
+
+    expect(rows.map((row) => row.teamId)).toEqual([
+      'uruguay',
+      'saudi-arabia',
+      'spain',
+      'cape-verde'
     ]);
   });
 });
 
 describe('compareThirdPlaceStats', () => {
-  it('breaks third-place ties with team id after pts, gd, and gf', () => {
+  it('breaks third-place ties with FIFA rank after pts, gd, and gf', () => {
+    const better = { teamId: 'spain', pts: 4, gd: 1, gf: 3 };
+    const worse = { teamId: 'cape-verde', pts: 4, gd: 1, gf: 3 };
+    expect(compareThirdPlaceStats(better, worse)).toBeLessThan(0);
+    expect(compareThirdPlaceStats(worse, better)).toBeGreaterThan(0);
+  });
+
+  it('breaks third-place ties with team id when FIFA rank is also tied', () => {
     const better = { teamId: 'zzz', pts: 4, gd: 1, gf: 3 };
     const worse = { teamId: 'aaa', pts: 4, gd: 1, gf: 3 };
     expect(compareThirdPlaceStats(better, worse)).toBeGreaterThan(0);

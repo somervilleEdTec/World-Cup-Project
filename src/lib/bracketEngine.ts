@@ -2,7 +2,8 @@ import { groupMatches, teams } from '../data/tournament';
 import { officialKickoffFor } from '../data/officialKickoffs';
 import { THIRD_PLACE_MAPPINGS, ThirdPlaceSlot } from '../data/thirdPlaceMappings';
 import { ActualResult, Match, Pick, Stage, TournamentBonusPick } from '../types';
-import { compareThirdPlaceStats, computeGroupStandings } from './groupStandings';
+import { compareThirdPlaceStats, computeGroupStandings, StandingsOptions } from './groupStandings';
+import { computeFairPlayByTeamAllGroups } from './fairPlay';
 
 const GROUPS = 'ABCDEFGHIJKL'.split('');
 
@@ -230,10 +231,11 @@ export const KNOCKOUT_TEMPLATES: KoTemplate[] = [...R32_TEMPLATES, ...LATER_KO_T
 
 function buildThirdPlaceQualifier(
   groupId: string,
-  picks: Record<string, Pick>
+  picks: Record<string, Pick>,
+  standingsOptions?: StandingsOptions
 ): GroupQualifier | null {
   if (!isGroupFullyPlayedInPicks(groupId, picks)) return null;
-  const standings = computeGroupStandings(groupId, picks);
+  const standings = computeGroupStandings(groupId, picks, standingsOptions);
   if (standings.length < 3) return null;
   const third = standings[2];
   return {
@@ -246,11 +248,14 @@ function buildThirdPlaceQualifier(
   };
 }
 
-export function rankThirdPlaceTeams(picks: Record<string, Pick>): GroupQualifier[] {
-  const thirds = GROUPS.map((g) => buildThirdPlaceQualifier(g, picks)).filter(
+export function rankThirdPlaceTeams(
+  picks: Record<string, Pick>,
+  standingsOptions?: StandingsOptions
+): GroupQualifier[] {
+  const thirds = GROUPS.map((g) => buildThirdPlaceQualifier(g, picks, standingsOptions)).filter(
     (q): q is GroupQualifier => q !== null
   );
-  return thirds.sort(compareThirdPlaceStats);
+  return thirds.sort((a, b) => compareThirdPlaceStats(a, b, standingsOptions));
 }
 
 export function thirdPlaceCombinationKey(qualifiers: GroupQualifier[]): string {
@@ -262,11 +267,12 @@ export function thirdPlaceCombinationKey(qualifiers: GroupQualifier[]): string {
 
 export function resolveThirdPlaceTeam(
   slot: ThirdPlaceSlot,
-  picks: Record<string, Pick>
+  picks: Record<string, Pick>,
+  standingsOptions?: StandingsOptions
 ): string | null {
   const allGroupsPlayed = GROUPS.every((groupId) => isGroupFullyPlayedInPicks(groupId, picks));
   if (!allGroupsPlayed) return null;
-  const ranked = rankThirdPlaceTeams(picks);
+  const ranked = rankThirdPlaceTeams(picks, standingsOptions);
   const topEight = ranked.slice(0, 8);
   if (topEight.length < 8) return null;
   const key = thirdPlaceCombinationKey(topEight);
@@ -282,9 +288,14 @@ function isGroupFullyPlayedInPicks(group: string, picks: Record<string, Pick>): 
   return matches.length > 0 && matches.every((m) => picks[m.id] !== undefined);
 }
 
-function resolvePos(group: string, position: 1 | 2, picks: Record<string, Pick>): string | null {
+function resolvePos(
+  group: string,
+  position: 1 | 2,
+  picks: Record<string, Pick>,
+  standingsOptions?: StandingsOptions
+): string | null {
   if (!isGroupFullyPlayedInPicks(group, picks)) return null;
-  const standings = computeGroupStandings(group, picks);
+  const standings = computeGroupStandings(group, picks, standingsOptions);
   const idx = position - 1;
   return standings[idx]?.teamId ?? null;
 }
@@ -318,13 +329,14 @@ function resolveSlot(
   slot: SlotRef,
   picks: Record<string, Pick>,
   resolvedMatches: Match[],
-  actuals: Record<string, ActualResult>
+  actuals: Record<string, ActualResult>,
+  standingsOptions?: StandingsOptions
 ): string | null {
   if (slot.kind === 'pos') {
-    return resolvePos(slot.group, slot.position, picks);
+    return resolvePos(slot.group, slot.position, picks, standingsOptions);
   }
   if (slot.kind === 'third') {
-    return resolveThirdPlaceTeam(slot.slot, picks);
+    return resolveThirdPlaceTeam(slot.slot, picks, standingsOptions);
   }
 
   const feeder = resolvedMatches.find((m) => m.id === slot.matchId);
@@ -342,11 +354,14 @@ export function buildKnockoutMatches(
   picks: Record<string, Pick>,
   actuals: Record<string, ActualResult> = {}
 ): Match[] {
+  const standingsOptions: StandingsOptions = {
+    fairPlayByTeam: computeFairPlayByTeamAllGroups(picks, actuals)
+  };
   const resolved: Match[] = [];
 
   for (const template of KNOCKOUT_TEMPLATES) {
-    const homeTeamId = resolveSlot(template.home, picks, resolved, actuals);
-    const awayTeamId = resolveSlot(template.away, picks, resolved, actuals);
+    const homeTeamId = resolveSlot(template.home, picks, resolved, actuals, standingsOptions);
+    const awayTeamId = resolveSlot(template.away, picks, resolved, actuals, standingsOptions);
     resolved.push({
       id: template.id,
       stage: template.stage,

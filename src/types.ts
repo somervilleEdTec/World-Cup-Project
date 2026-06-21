@@ -48,11 +48,24 @@ export interface PlayerPredictionState {
   commitState: CommitState;
 }
 
+export interface TeamDiscipline {
+  yellowCards: number;
+  secondYellowReds: number;
+  directReds: number;
+}
+
+export interface MatchDiscipline {
+  home: TeamDiscipline;
+  away: TeamDiscipline;
+}
+
 export interface ActualResult {
   matchId: string;
   homeScore: number;
   awayScore: number;
   progressingTeamId?: string;
+  /** Card counts for FIFA fair-play tiebreaker (from sync, admin, or static snapshot). */
+  discipline?: MatchDiscipline;
 }
 
 export interface LeaderboardEntry {
