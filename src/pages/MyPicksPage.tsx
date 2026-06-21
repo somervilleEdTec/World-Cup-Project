@@ -32,7 +32,7 @@ import {
   predictionLockTimeIso,
   shouldLockGroup
 } from '../lib/tournamentLogic';
-import { computeFairPlayByTeam } from '../lib/fairPlay';
+import { actualStandingsOptions, predictedStandingsOptions } from '../lib/fairPlay';
 import { ActualResult, Match, Pick, Stage, TournamentBonusPick } from '../types';
 
 const groupSequence = ALL_GROUP_IDS;
@@ -175,7 +175,7 @@ export function MyPicksPage() {
         effectiveGroupPick(match.id, { ...savedPicks, ...pendingGroupPicks })
       ])
     );
-    return computeGroupStandings(activeGroup, picksForStandings);
+    return computeGroupStandings(activeGroup, picksForStandings, predictedStandingsOptions());
   }, [activeGroup, activeGroupMatches, pendingGroupPicks, savedPicks, userGroupLocked]);
 
   const actualPicksForGroup = useMemo(() => {
@@ -187,14 +187,15 @@ export function MyPicksPage() {
     );
   }, [activeGroupMatches, officialResults]);
 
-  const actualGroupStandings = useMemo(() => {
-    const fairPlayByTeam = computeFairPlayByTeam(
-      activeGroup,
-      actualPicksForGroup,
-      officialResults
-    );
-    return computeGroupStandings(activeGroup, actualPicksForGroup, { fairPlayByTeam });
-  }, [activeGroup, actualPicksForGroup, officialResults]);
+  const actualGroupStandings = useMemo(
+    () =>
+      computeGroupStandings(
+        activeGroup,
+        actualPicksForGroup,
+        actualStandingsOptions(actualPicksForGroup, officialResults)
+      ),
+    [activeGroup, actualPicksForGroup, officialResults]
+  );
 
   const hasActualGroupResults = activeGroupMatches.some(
     (match) => officialResults[match.id] !== undefined

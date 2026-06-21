@@ -4,6 +4,8 @@ import { groupMatches, teams } from '../data/tournament';
 import { Match, Pick as MatchPick } from '../types';
 
 export interface StandingsOptions {
+  /** When false, skip fair-play tiebreaker (predictions). Defaults to false. */
+  useFairPlay?: boolean;
   /** Cumulative fair-play points per team (higher is better). Defaults to 0. */
   fairPlayByTeam?: Record<string, number>;
 }
@@ -159,9 +161,11 @@ function resolveTiedGroup(
     return byOverallGf.flatMap((group) => resolveTiedGroup(group, picks, matches, options));
   }
 
-  const byFairPlay = splitByDistinctGroups(tied, (row) => fairPlayScore(row.teamId, options));
-  if (byFairPlay.length > 1) {
-    return byFairPlay.flatMap((group) => resolveTiedGroup(group, picks, matches, options));
+  if (options?.useFairPlay) {
+    const byFairPlay = splitByDistinctGroups(tied, (row) => fairPlayScore(row.teamId, options));
+    if (byFairPlay.length > 1) {
+      return byFairPlay.flatMap((group) => resolveTiedGroup(group, picks, matches, options));
+    }
   }
 
   const byFifaRank = splitByDistinctGroups(tied, (row) => fifaRankKey(row.teamId));
@@ -198,11 +202,15 @@ export function compareThirdPlaceStats(
   options?: StandingsOptions
 ): number {
   const fairPlay = (teamId: string) => options?.fairPlayByTeam?.[teamId] ?? 0;
+  const fairPlayCompare =
+    options?.useFairPlay && fairPlay(b.teamId) !== fairPlay(a.teamId)
+      ? fairPlay(b.teamId) - fairPlay(a.teamId)
+      : 0;
   return (
     b.pts - a.pts ||
     b.gd - a.gd ||
     b.gf - a.gf ||
-    fairPlay(b.teamId) - fairPlay(a.teamId) ||
+    fairPlayCompare ||
     fifaWorldRankTournamentStart2026(a.teamId) - fifaWorldRankTournamentStart2026(b.teamId) ||
     a.teamId.localeCompare(b.teamId)
   );

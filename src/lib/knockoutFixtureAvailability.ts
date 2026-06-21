@@ -14,7 +14,7 @@ export function isGroupCompleteInResults(
 /** Knockout fixtures whose home and away are known from official results only. */
 export function buildConfirmedKnockoutFixtures(actuals: Record<string, ActualResult>): Match[] {
   const officialPicks = picksFromActuals(actuals);
-  return buildKnockoutMatches(officialPicks, actuals).filter(
+  return buildKnockoutMatches(officialPicks, actuals, { useFairPlay: true }).filter(
     (match) => match.homeTeamId !== 'tbd' && match.awayTeamId !== 'tbd'
   );
 }

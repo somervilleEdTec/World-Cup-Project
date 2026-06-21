@@ -3,7 +3,7 @@ import { officialKickoffFor } from '../data/officialKickoffs';
 import { THIRD_PLACE_MAPPINGS, ThirdPlaceSlot } from '../data/thirdPlaceMappings';
 import { ActualResult, Match, Pick, Stage, TournamentBonusPick } from '../types';
 import { compareThirdPlaceStats, computeGroupStandings, StandingsOptions } from './groupStandings';
-import { computeFairPlayByTeamAllGroups } from './fairPlay';
+import { actualStandingsOptions } from './fairPlay';
 
 const GROUPS = 'ABCDEFGHIJKL'.split('');
 
@@ -352,11 +352,12 @@ function resolveSlot(
 
 export function buildKnockoutMatches(
   picks: Record<string, Pick>,
-  actuals: Record<string, ActualResult> = {}
+  actuals: Record<string, ActualResult> = {},
+  options?: { useFairPlay?: boolean }
 ): Match[] {
-  const standingsOptions: StandingsOptions = {
-    fairPlayByTeam: computeFairPlayByTeamAllGroups(picks, actuals)
-  };
+  const standingsOptions: StandingsOptions = options?.useFairPlay
+    ? actualStandingsOptions(picks, actuals)
+    : { useFairPlay: false };
   const resolved: Match[] = [];
 
   for (const template of KNOCKOUT_TEMPLATES) {

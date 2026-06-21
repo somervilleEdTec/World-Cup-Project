@@ -1,6 +1,7 @@
 import { groupMatches, teams } from '../data/tournament';
 import { getDownstreamKnockoutMatchIds } from './bracketEngine';
 import { computeGroupPositions } from './groupStandings';
+import { actualStandingsOptions } from './fairPlay';
 import { getMatches } from './matchResolver';
 import { scaledMatchPointsForStage } from './knockoutStageMultiplier';
 import { evaluateMatchScoring } from './matchScoring';
@@ -142,7 +143,11 @@ export function computeScore(
     if (!groupComplete) return;
 
     const predictedPositions = computeGroupPositions(groupId, picks);
-    const actualPositions = computeGroupPositions(groupId, actualPicks);
+    const actualPositions = computeGroupPositions(
+      groupId,
+      actualPicks,
+      actualStandingsOptions(actualPicks, actuals)
+    );
     predictedPositions.forEach((teamId, idx) => {
       if (actualPositions[idx] === teamId) {
         exactGroupPositions += 1;

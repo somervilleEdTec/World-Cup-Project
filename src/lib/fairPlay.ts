@@ -1,6 +1,7 @@
 import { WORLD_CUP_DISCIPLINE_SNAPSHOT } from '../data/worldCupDiscipline2026';
 import { groupMatches } from '../data/tournament';
 import { ActualResult, MatchDiscipline, Pick, TeamDiscipline } from '../types';
+import type { StandingsOptions } from './groupStandings';
 
 /** FIFA fair-play points for one team in one match (higher is better, 0 = clean). */
 export function fairPlayPointsFromDiscipline(discipline: TeamDiscipline): number {
@@ -57,4 +58,22 @@ export function computeFairPlayByTeamAllGroups(
   return groups.reduce<Record<string, number>>((acc, groupId) => {
     return { ...acc, ...computeFairPlayByTeam(groupId, picks, results) };
   }, {});
+}
+
+
+
+/** Standings options for official/actual tables — fair play enabled. */
+export function actualStandingsOptions(
+  picks: Record<string, Pick>,
+  results: Record<string, ActualResult> = {}
+): StandingsOptions {
+  return {
+    useFairPlay: true,
+    fairPlayByTeam: computeFairPlayByTeamAllGroups(picks, results)
+  };
+}
+
+/** Standings options for user predictions — fair play skipped, FIFA rank only. */
+export function predictedStandingsOptions(): StandingsOptions {
+  return { useFairPlay: false };
 }

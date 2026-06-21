@@ -166,6 +166,7 @@ describe('groupStandings', () => {
     };
 
     const rows = computeGroupStandings('H', picks, {
+      useFairPlay: true,
       fairPlayByTeam: {
         'saudi-arabia': -1,
         uruguay: 0,
@@ -180,6 +181,33 @@ describe('groupStandings', () => {
       'spain',
       'cape-verde'
     ]);
+  });
+
+  it('matches FIFA Group G order after MD1 via discipline snapshot', () => {
+    const picks: Record<string, Pick> = {
+      'g-g-1': { matchId: 'g-g-1', homeScore: 1, awayScore: 1 },
+      'g-g-2': { matchId: 'g-g-2', homeScore: 2, awayScore: 2 }
+    };
+    const rows = computeGroupStandings('G', picks, {
+      useFairPlay: true,
+      fairPlayByTeam: { iran: -1, 'new-zealand': 0, belgium: 0, egypt: 0 }
+    });
+    expect(rows.map((row) => row.teamId)).toEqual([
+      'new-zealand',
+      'iran',
+      'belgium',
+      'egypt'
+    ]);
+  });
+
+  it('uses FIFA ranking not fair play for projected tables', () => {
+    const picks: Record<string, Pick> = {
+      'g-g-1': { matchId: 'g-g-1', homeScore: 1, awayScore: 1 },
+      'g-g-2': { matchId: 'g-g-2', homeScore: 2, awayScore: 2 }
+    };
+    const rows = computeGroupStandings('G', picks, { useFairPlay: false });
+    expect(rows[0]!.teamId).toBe('iran');
+    expect(rows[1]!.teamId).toBe('new-zealand');
   });
 });
 

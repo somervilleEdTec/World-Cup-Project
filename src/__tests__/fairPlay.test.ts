@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
+  actualStandingsOptions,
   computeFairPlayByTeam,
   fairPlayPointsFromDiscipline
 } from '../lib/fairPlay';
@@ -28,13 +29,20 @@ describe('fairPlay', () => {
     expect(fairPlay.uruguay).toBe(0);
   });
 
-  it('orders Group H MD1 via snapshot discipline without explicit fairPlay map', () => {
+  it('includes Iran yellow in g-g-2 discipline snapshot', () => {
+    const fairPlay = computeFairPlayByTeam('G', {
+      'g-g-2': { matchId: 'g-g-2', homeScore: 2, awayScore: 2 }
+    });
+    expect(fairPlay.iran).toBe(-1);
+    expect(fairPlay['new-zealand']).toBe(0);
+  });
+
+  it('orders Group H MD1 via snapshot discipline with actual standings options', () => {
     const picks = {
       'g-h-1': { matchId: 'g-h-1', homeScore: 0, awayScore: 0 },
       'g-h-2': { matchId: 'g-h-2', homeScore: 1, awayScore: 1 }
     };
-    const fairPlay = computeFairPlayByTeam('H', picks);
-    const rows = computeGroupStandings('H', picks, { fairPlayByTeam: fairPlay });
+    const rows = computeGroupStandings('H', picks, actualStandingsOptions(picks, {}));
     expect(rows.map((row) => row.teamId)).toEqual([
       'uruguay',
       'saudi-arabia',
