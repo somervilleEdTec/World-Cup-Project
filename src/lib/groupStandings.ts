@@ -1,4 +1,5 @@
-import { fifaWorldRankJune2026 } from '../data/fifaWorldRankingJune2026';
+/** Tiebreaker ranks: frozen tournament-start snapshot only — never live FIFA data. */
+import { fifaWorldRankTournamentStart2026 } from '../data/fifaWorldRankingTournamentStart2026';
 import { groupMatches, teams } from '../data/tournament';
 import { Match, Pick as MatchPick } from '../types';
 
@@ -113,7 +114,7 @@ function fairPlayScore(teamId: string, options?: StandingsOptions): number {
 }
 
 function fifaRankKey(teamId: string): number {
-  return 1000 - fifaWorldRankJune2026(teamId);
+  return 1000 - fifaWorldRankTournamentStart2026(teamId);
 }
 
 /**
@@ -202,7 +203,7 @@ export function compareThirdPlaceStats(
     b.gd - a.gd ||
     b.gf - a.gf ||
     fairPlay(b.teamId) - fairPlay(a.teamId) ||
-    fifaWorldRankJune2026(a.teamId) - fifaWorldRankJune2026(b.teamId) ||
+    fifaWorldRankTournamentStart2026(a.teamId) - fifaWorldRankTournamentStart2026(b.teamId) ||
     a.teamId.localeCompare(b.teamId)
   );
 }

@@ -1,5 +1,11 @@
 import { ActualResult } from '../types';
 
+/**
+ * football-data.org client — match scores, fixtures, and kickoffs only.
+ *
+ * Do NOT add FIFA world ranking fetch/sync here. Group tiebreakers use the frozen
+ * tournament-start snapshot in `src/data/fifaWorldRankingTournamentStart2026.ts`.
+ */
 const API_BASE = 'https://api.football-data.org/v4';
 const WORLD_CUP_CODE = 'WC';
 const PROVIDER = 'football-data.org';
