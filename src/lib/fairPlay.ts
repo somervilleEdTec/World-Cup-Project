@@ -1,5 +1,6 @@
 import { WORLD_CUP_DISCIPLINE_SNAPSHOT } from '../data/worldCupDiscipline2026';
-import { groupMatches } from '../data/tournament';
+import { OFFICIAL_GROUP_FIXTURE_ORIENTATIONS } from '../data/officialGroupFixtureOrientations';
+import { groupMatches, teams } from '../data/tournament';
 import { ActualResult, MatchDiscipline, Pick, TeamDiscipline } from '../types';
 import type { StandingsOptions } from './groupStandings';
 
@@ -76,4 +77,21 @@ export function actualStandingsOptions(
 /** Standings options for user predictions — fair play skipped, FIFA rank only. */
 export function predictedStandingsOptions(): StandingsOptions {
   return { useFairPlay: false };
+}
+
+/** Cumulative fair-play deductions (positive) per team from the static discipline snapshot. */
+export function cumulativeDeductionPointsFromSnapshot(): Record<string, number> {
+  const totals = Object.fromEntries(teams.map((team) => [team.id, 0]));
+
+  for (const [matchId, discipline] of Object.entries(WORLD_CUP_DISCIPLINE_SNAPSHOT)) {
+    const fixture = OFFICIAL_GROUP_FIXTURE_ORIENTATIONS[matchId];
+    if (!fixture) continue;
+
+    const homeDeduction = -fairPlayPointsFromDiscipline(discipline.home);
+    const awayDeduction = -fairPlayPointsFromDiscipline(discipline.away);
+    totals[fixture.homeTeamId] = (totals[fixture.homeTeamId] ?? 0) + homeDeduction;
+    totals[fixture.awayTeamId] = (totals[fixture.awayTeamId] ?? 0) + awayDeduction;
+  }
+
+  return totals;
 }

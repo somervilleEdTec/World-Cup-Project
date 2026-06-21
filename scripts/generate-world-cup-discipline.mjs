@@ -1,6 +1,7 @@
 /**
  * Regenerates src/data/worldCupDiscipline2026.ts from Wikipedia group Discipline tables.
- * Run: node scripts/generate-world-cup-discipline.mjs
+ * Run: npm run generate:discipline
+ * Validate against Transfermarkt: npm run validate:discipline
  */
 import { writeFileSync } from 'node:fs';
 import { OFFICIAL_GROUP_FIXTURE_ORIENTATIONS } from '../src/data/officialGroupFixtureOrientations.ts';

@@ -38,7 +38,9 @@
     "generate:group-kickoffs": "tsx scripts/generate-group-kickoffs.ts",
     "start:production": "bash scripts/start-production.sh",
     "dev:full": "vite --host 0.0.0.0",
-    "generate:discipline": "tsx scripts/generate-world-cup-discipline.mjs"
+    "generate:discipline": "tsx scripts/generate-world-cup-discipline.mjs",
+    "validate:discipline": "tsx scripts/validate-discipline-transfermarkt.ts",
+    "validate:discipline:offline": "tsx scripts/validate-discipline-transfermarkt.ts --offline"
   },
   "repository": {
     "type": "git",
