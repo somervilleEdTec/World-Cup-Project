@@ -38,8 +38,34 @@ describe('groupStandings', () => {
     expect(awayRow.gp).toBe(0);
   });
 
-  it('ranks by overall goal difference when points are equal', () => {
+  it('ranks by head-to-head before overall goal difference when points are equal', () => {
     const mexico = teamId('A', 0);
+    const southKorea = teamId('A', 2);
+
+    const picks: Record<string, Pick> = {
+      'g-a-1': { matchId: 'g-a-1', homeScore: 3, awayScore: 0 },
+      'g-a-2': { matchId: 'g-a-2', homeScore: 1, awayScore: 1 },
+      'g-a-3': { matchId: 'g-a-3', homeScore: 0, awayScore: 1 },
+      'g-a-4': { matchId: 'g-a-4', homeScore: 0, awayScore: 1 },
+      'g-a-5': { matchId: 'g-a-5', homeScore: 1, awayScore: 1 },
+      'g-a-6': { matchId: 'g-a-6', homeScore: 1, awayScore: 0 }
+    };
+
+    const rows = computeGroupStandings('A', picks);
+    const mexicoRow = rows.find((row) => row.teamId === mexico)!;
+    const southKoreaRow = rows.find((row) => row.teamId === southKorea)!;
+
+    expect(mexicoRow.pts).toBe(4);
+    expect(southKoreaRow.pts).toBe(4);
+    expect(mexicoRow.gd).toBeGreaterThan(southKoreaRow.gd);
+    expect(rows.findIndex((row) => row.teamId === southKorea)).toBeLessThan(
+      rows.findIndex((row) => row.teamId === mexico)
+    );
+  });
+
+  it('falls back to overall goal difference when head-to-head is tied', () => {
+    const mexico = teamId('A', 0);
+    const southKorea = teamId('A', 2);
 
     const picks: Record<string, Pick> = {
       'g-a-1': { matchId: 'g-a-1', homeScore: 2, awayScore: 0 },
@@ -54,6 +80,7 @@ describe('groupStandings', () => {
     expect(rows[0]!.teamId).toBe(mexico);
     expect(rows[0]!.pts).toBe(5);
     expect(rows[0]!.gd).toBe(2);
+    expect(rows[1]!.teamId).toBe(southKorea);
     expect(rows[1]!.pts).toBe(5);
     expect(rows[1]!.gd).toBe(1);
   });

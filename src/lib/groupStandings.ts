@@ -94,23 +94,18 @@ function splitByDistinctGroups<T>(items: T[], key: (item: T) => number): T[][] {
   return groups;
 }
 
-/** FIFA group ranking for teams tied on points (steps 2–6, then deterministic draw). */
+/**
+ * FIFA World Cup 2026 group ranking for teams tied on points.
+ * Step one: head-to-head mini-league (pts, gd, gf).
+ * Step two: overall group gd, gf.
+ * Fair play and FIFA ranking are not tracked; team id is a stable final fallback.
+ */
 function resolveTiedGroup(
   tied: GroupRow[],
   picks: Record<string, Pick>,
   matches: Match[]
 ): GroupRow[] {
   if (tied.length <= 1) return tied;
-
-  const byOverallGd = splitByDistinctGroups(tied, (row) => row.gd);
-  if (byOverallGd.length > 1) {
-    return byOverallGd.flatMap((group) => resolveTiedGroup(group, picks, matches));
-  }
-
-  const byOverallGf = splitByDistinctGroups(tied, (row) => row.gf);
-  if (byOverallGf.length > 1) {
-    return byOverallGf.flatMap((group) => resolveTiedGroup(group, picks, matches));
-  }
 
   const teamIds = new Set(tied.map((row) => row.teamId));
   const mini = computeMiniLeague(teamIds, picks, matches);
@@ -130,7 +125,16 @@ function resolveTiedGroup(
     return byMiniGf.flatMap((group) => resolveTiedGroup(group, picks, matches));
   }
 
-  // Fair-play points are not tracked; use stable team id as draw-of-lots stand-in.
+  const byOverallGd = splitByDistinctGroups(tied, (row) => row.gd);
+  if (byOverallGd.length > 1) {
+    return byOverallGd.flatMap((group) => resolveTiedGroup(group, picks, matches));
+  }
+
+  const byOverallGf = splitByDistinctGroups(tied, (row) => row.gf);
+  if (byOverallGf.length > 1) {
+    return byOverallGf.flatMap((group) => resolveTiedGroup(group, picks, matches));
+  }
+
   return [...tied].sort((a, b) => a.teamId.localeCompare(b.teamId));
 }
 
