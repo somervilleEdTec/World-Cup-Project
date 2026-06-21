@@ -4,6 +4,8 @@
 
 ## Before inviting friends — read this first
 
+**Future World Cup editions:** complete the **[FIFA ranking tiebreaker checklist](./FIFA_RANKING_TIEBREAKER_CHECKLIST.md)** after loading the opening-day ranking snapshot and **before** the first match. If two teams share the same FIFA rank **and** are in the **same group**, you must resolve that (drawing-of-lots failsafe) before relying on this app for live scoring.
+
 **[LAUNCH_RULES.md](./LAUNCH_RULES.md)** is mandatory for the real tournament start:
 
 1. **Wipe** the live database one last time  
@@ -93,5 +95,6 @@ Backups: [DATABASE_BACKUP.md](./DATABASE_BACKUP.md) · `npm run db:backup`
 ## Related
 
 - [LAUNCH_RULES.md](./LAUNCH_RULES.md) — **mandatory** one-time live launch  
+- [FIFA_RANKING_TIEBREAKER_CHECKLIST.md](./FIFA_RANKING_TIEBREAKER_CHECKLIST.md) — pre-kickoff duplicate-rank check (future tournaments)  
 - [PRODUCTION.md](./PRODUCTION.md) — VM, deploy, wipe, nginx  
 - [BRANCHING.md](./BRANCHING.md) — Debug vs main  

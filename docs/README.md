@@ -44,6 +44,7 @@
 |-----|-------------|
 | [FINAL_PLAN.md](./FINAL_PLAN.md) | Locked competition rules (owner approval to change) |
 | [COMPLIANCE.md](./COMPLIANCE.md) | Implementation vs FINAL_PLAN checklist |
+| [FIFA_RANKING_TIEBREAKER_CHECKLIST.md](./FIFA_RANKING_TIEBREAKER_CHECKLIST.md) | **Future tournaments:** pre-kickoff check for identical FIFA ranks in the same group |
 
 ---
 

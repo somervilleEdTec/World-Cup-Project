@@ -27,6 +27,7 @@
 
 ## Go-live
 
+- [ ] **Future tournaments:** pre-kickoff FIFA ranking duplicate check — [FIFA_RANKING_TIEBREAKER_CHECKLIST.md](./FIFA_RANKING_TIEBREAKER_CHECKLIST.md) (2026 snapshot has unique ranks; lots failsafe not implemented)
 - [x] Stress test playbook (archived — see [GO_LIVE.md](./GO_LIVE.md))
 - [x] KO-environment UX merged to `main` (predictions UI, comparison, seed script)
 - [x] Production VM + app at `/home/ubuntu/World-Cup-Project` ([PRODUCTION.md](./PRODUCTION.md))

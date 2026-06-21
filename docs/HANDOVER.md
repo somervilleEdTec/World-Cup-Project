@@ -297,13 +297,14 @@ npm run db:purge      # reset local SQLite data
 
 ## 11. Known risks
 
-1. Third-place mappings from Wikipedia Annex C — regenerate if FIFA errata.
-2. football-data team name aliases may miss fixtures — run Admin diagnostics or `npm run diagnose:mappings`.
-3. Stale `match_kickoffs` in production DB — trigger Admin **Import kickoffs** after deploy if dates look wrong.
-4. **72 KO gate** vs friendly UX — saves blocked until 72 group picks committed.
-5. Auto-save debounce — last edit may be lost on fast navigation.
-6. No HTTPS/CORS in dev — configure for production.
-7. `COMPLIANCE.md` may describe old draft/commit UI — trust code and [UI_HANDOVER.md](./UI_HANDOVER.md).
+1. **Identical FIFA ranks in the same group** — if a full tie reaches the ranking step and two teams share the same opening-day rank, FIFA uses drawing of lots; the app currently falls back to alphabetical `teamId` (not official). **Before any future tournament:** run [FIFA_RANKING_TIEBREAKER_CHECKLIST.md](./FIFA_RANKING_TIEBREAKER_CHECKLIST.md) and implement a lots failsafe if needed.
+2. Third-place mappings from Wikipedia Annex C — regenerate if FIFA errata.
+3. football-data team name aliases may miss fixtures — run Admin diagnostics or `npm run diagnose:mappings`.
+4. Stale `match_kickoffs` in production DB — trigger Admin **Import kickoffs** after deploy if dates look wrong.
+5. **72 KO gate** vs friendly UX — saves blocked until 72 group picks committed.
+6. Auto-save debounce — last edit may be lost on fast navigation.
+7. No HTTPS/CORS in dev — configure for production.
+8. `COMPLIANCE.md` may describe old draft/commit UI — trust code and [UI_HANDOVER.md](./UI_HANDOVER.md).
 
 ---
 
