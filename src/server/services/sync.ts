@@ -49,6 +49,11 @@ export async function syncFootballData(apiToken: string) {
     let updated = 0;
     let skipped = 0;
 
+    const manualOverrideRows = await db.all<{ match_id: string }>(
+      `SELECT match_id FROM results WHERE source = 'manual-override'`
+    );
+    const manualOverrideIds = new Set(manualOverrideRows.map((row) => row.match_id));
+
     await db.transaction(async (tx) => {
       for (const result of apiResults) {
         const internalId = await resolveInternalMatchId(
@@ -59,6 +64,11 @@ export async function syncFootballData(apiToken: string) {
           syncActuals
         );
         if (!internalId) {
+          skipped += 1;
+          continue;
+        }
+
+        if (manualOverrideIds.has(internalId)) {
           skipped += 1;
           continue;
         }
