@@ -1,5 +1,5 @@
 import { groupMatches, teams } from '../data/tournament';
-import { Match, Pick } from '../types';
+import { Match, Pick as MatchPick } from '../types';
 
 export interface GroupRow {
   teamId: string;
@@ -19,46 +19,54 @@ interface MiniLeagueRow {
   gf: number;
 }
 
-function applyResult(
-  home: GroupRow | MiniLeagueRow,
-  away: GroupRow | MiniLeagueRow,
+function applyMiniLeagueResult(
+  home: MiniLeagueRow,
+  away: MiniLeagueRow,
   homeScore: number,
   awayScore: number
 ): void {
   home.gf += homeScore;
   away.gf += awayScore;
-  if ('ga' in home) {
-    home.ga += awayScore;
-    away.ga += homeScore;
-  }
   home.gd += homeScore - awayScore;
   away.gd += awayScore - homeScore;
 
   if (homeScore > awayScore) {
     home.pts += 3;
-    if ('w' in home) {
-      home.w += 1;
-      away.l += 1;
-    }
   } else if (homeScore < awayScore) {
     away.pts += 3;
-    if ('w' in away) {
-      away.w += 1;
-      home.l += 1;
-    }
   } else {
     home.pts += 1;
     away.pts += 1;
-    if ('d' in home) {
-      home.d += 1;
-      away.d += 1;
-    }
+  }
+}
+
+function applyGroupResult(home: GroupRow, away: GroupRow, homeScore: number, awayScore: number): void {
+  home.gf += homeScore;
+  away.gf += awayScore;
+  home.ga += awayScore;
+  away.ga += homeScore;
+  home.gd += homeScore - awayScore;
+  away.gd += awayScore - homeScore;
+
+  if (homeScore > awayScore) {
+    home.pts += 3;
+    home.w += 1;
+    away.l += 1;
+  } else if (homeScore < awayScore) {
+    away.pts += 3;
+    away.w += 1;
+    home.l += 1;
+  } else {
+    home.pts += 1;
+    away.pts += 1;
+    home.d += 1;
+    away.d += 1;
   }
 }
 
 function computeMiniLeague(
   teamIds: ReadonlySet<string>,
-  picks: Record<string, Pick>,
+  picks: Record<string, MatchPick>,
   matches: Match[]
 ): Map<string, MiniLeagueRow> {
   const rows = new Map<string, MiniLeagueRow>();
@@ -73,7 +81,7 @@ function computeMiniLeague(
     const away = rows.get(match.awayTeamId);
     if (!home || !away) return;
 
-    applyResult(home, away, pick.homeScore, pick.awayScore);
+    applyMiniLeagueResult(home, away, pick.homeScore, pick.awayScore);
   });
 
   return rows;
@@ -102,7 +110,7 @@ function splitByDistinctGroups<T>(items: T[], key: (item: T) => number): T[][] {
  */
 function resolveTiedGroup(
   tied: GroupRow[],
-  picks: Record<string, Pick>,
+  picks: Record<string, MatchPick>,
   matches: Match[]
 ): GroupRow[] {
   if (tied.length <= 1) return tied;
@@ -138,18 +146,26 @@ function resolveTiedGroup(
   return [...tied].sort((a, b) => a.teamId.localeCompare(b.teamId));
 }
 
-function rankGroupRows(rows: GroupRow[], picks: Record<string, Pick>, matches: Match[]): GroupRow[] {
+function rankGroupRows(
+  rows: GroupRow[],
+  picks: Record<string, MatchPick>,
+  matches: Match[]
+): GroupRow[] {
   const byPoints = splitByDistinctGroups(rows, (row) => row.pts);
   return byPoints.flatMap((group) =>
     group.length === 1 ? group : resolveTiedGroup(group, picks, matches)
   );
 }
 
+interface ThirdPlaceStats {
+  teamId: string;
+  pts: number;
+  gd: number;
+  gf: number;
+}
+
 /** Compare third-placed teams from different groups (no head-to-head between groups). */
-export function compareThirdPlaceStats(
-  a: Pick<GroupRow, 'pts' | 'gd' | 'gf' | 'teamId'>,
-  b: Pick<GroupRow, 'pts' | 'gd' | 'gf' | 'teamId'>
-): number {
+export function compareThirdPlaceStats(a: ThirdPlaceStats, b: ThirdPlaceStats): number {
   return (
     b.pts - a.pts ||
     b.gd - a.gd ||
@@ -158,7 +174,10 @@ export function compareThirdPlaceStats(
   );
 }
 
-export function computeGroupStandings(groupId: string, picks: Record<string, Pick>): GroupRow[] {
+export function computeGroupStandings(
+  groupId: string,
+  picks: Record<string, MatchPick>
+): GroupRow[] {
   const matchesInGroup = groupMatches.filter((m) => m.group === groupId);
   const rows = new Map<string, GroupRow>();
 
@@ -177,12 +196,12 @@ export function computeGroupStandings(groupId: string, picks: Record<string, Pic
 
     home.gp += 1;
     away.gp += 1;
-    applyResult(home, away, pick.homeScore, pick.awayScore);
+    applyGroupResult(home, away, pick.homeScore, pick.awayScore);
   });
 
   return rankGroupRows([...rows.values()], picks, matchesInGroup);
 }
 
-export function computeGroupPositions(groupId: string, picks: Record<string, Pick>): string[] {
+export function computeGroupPositions(groupId: string, picks: Record<string, MatchPick>): string[] {
   return computeGroupStandings(groupId, picks).map((row) => row.teamId);
 }
