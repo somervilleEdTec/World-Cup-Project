@@ -40,7 +40,8 @@
     "dev:full": "vite --host 0.0.0.0",
     "generate:discipline": "tsx scripts/generate-world-cup-discipline.mjs",
     "validate:discipline": "tsx scripts/validate-discipline-transfermarkt.ts",
-    "validate:discipline:offline": "tsx scripts/validate-discipline-transfermarkt.ts --offline"
+    "validate:discipline:offline": "tsx scripts/validate-discipline-transfermarkt.ts --offline",
+    "audit:standings": "node scripts/audit-group-standings.mjs"
   },
   "repository": {
     "type": "git",

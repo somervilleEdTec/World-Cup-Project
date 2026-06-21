@@ -22,10 +22,21 @@ const FIFA_TO_TEAM = {
   ENG: 'england', CRO: 'croatia', GHA: 'ghana', PAN: 'panama'
 };
 
-async function fetchJson(url) {
-  const res = await fetch(url);
+async function fetchJson(url, attempt = 0) {
+  const res = await fetch(url, {
+    headers: { 'User-Agent': 'WorldCupBoys/1.0 (discipline snapshot generator)' }
+  });
+  if (res.status === 429 && attempt < 5) {
+    const delayMs = 2000 * 2 ** attempt;
+    await new Promise((resolve) => setTimeout(resolve, delayMs));
+    return fetchJson(url, attempt + 1);
+  }
   if (!res.ok) throw new Error(`Fetch failed ${url}: ${res.status}`);
   return res.json();
+}
+
+async function pauseBetweenGroups() {
+  await new Promise((resolve) => setTimeout(resolve, 1200));
 }
 
 function parseDisciplineRows(wikitext) {
@@ -80,10 +91,12 @@ function mergeDiscipline(existing, next) {
 async function main() {
   const snapshot = {};
   for (const groupId of 'ABCDEFGHIJKL') {
+    await pauseBetweenGroups();
     const page = `2026_FIFA_World_Cup_Group_${groupId}`;
     const sections = await fetchJson(`https://en.wikipedia.org/w/api.php?action=parse&page=${page}&prop=sections&format=json`);
     const disciplineSection = sections.parse.sections.find((s) => s.line === 'Discipline');
     if (!disciplineSection) continue;
+    await pauseBetweenGroups();
     const parsed = await fetchJson(`https://en.wikipedia.org/w/api.php?action=parse&page=${page}&prop=wikitext&section=${disciplineSection.index}&format=json`);
     const rows = parseDisciplineRows(parsed.parse.wikitext['*']);
     const byTeam = teamMatchIds(groupId);

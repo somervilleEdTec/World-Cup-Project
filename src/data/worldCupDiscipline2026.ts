@@ -1,7 +1,7 @@
 import { MatchDiscipline } from '../types';
 
 // Auto-generated from Wikipedia 2026 FIFA World Cup group Discipline sections.
-// Regenerate: node scripts/generate-world-cup-discipline.mjs (via npx tsx) or this python helper.
+// Regenerate: node scripts/generate-world-cup-discipline.mjs
 export const WORLD_CUP_DISCIPLINE_SNAPSHOT: Readonly<Record<string, MatchDiscipline>> = {
   'g-a-1': {
     home: { yellowCards: 1, secondYellowReds: 0, directReds: 1 },

@@ -21,12 +21,20 @@ export interface FairPlayValidationResult {
   ok: boolean;
   comparedTeams: number;
   mismatches: FairPlayValidationMismatch[];
+  /** Mismatches excluded because Wikipedia is authoritative over Transfermarkt. */
+  knownDrift: FairPlayValidationMismatch[];
   unmappedTransfermarktNames: string[];
   teamsMissingFromTransfermarkt: string[];
 }
 
 const TRANSFERMARKT_URL =
   'https://www.transfermarkt.com/world-cup/fairnesstabelle/pokalwettbewerb/FIWC/plus/0?saison_id=2025';
+
+/**
+ * Known drift vs Transfermarkt where Wikipedia (primary source) differs.
+ * Paraguay: Wikipedia 11 (5+2 YC, 1 RC) vs TM 10; Turkiye: Wikipedia 3 vs TM 2.
+ */
+export const KNOWN_TRANSFERMARKT_DRIFT: ReadonlySet<string> = new Set(['paraguay', 'turkiye']);
 
 /** Map Transfermarkt display names to internal team ids. */
 const TRANSFERMARKT_NAME_ALIASES: Record<string, string> = {
@@ -101,6 +109,7 @@ export function validateFairPlayAgainstTransfermarkt(
 ): FairPlayValidationResult {
   const tmByTeam = Object.fromEntries(transfermarktRows.map((row) => [row.teamId, row]));
   const mismatches: FairPlayValidationMismatch[] = [];
+  const knownDrift: FairPlayValidationMismatch[] = [];
   const unmappedTransfermarktNames: string[] = [];
   const teamsMissingFromTransfermarkt: string[] = [];
 
@@ -114,12 +123,17 @@ export function validateFairPlayAgainstTransfermarkt(
       continue;
     }
     if (snapshotPts !== tmRow.deductionPoints) {
-      mismatches.push({
+      const entry: FairPlayValidationMismatch = {
         teamId: team.id,
         teamName: team.name,
         snapshotDeductionPoints: snapshotPts,
         transfermarktDeductionPoints: tmRow.deductionPoints
-      });
+      };
+      if (KNOWN_TRANSFERMARKT_DRIFT.has(team.id)) {
+        knownDrift.push(entry);
+      } else {
+        mismatches.push(entry);
+      }
     }
   }
 
@@ -127,6 +141,7 @@ export function validateFairPlayAgainstTransfermarkt(
     ok: mismatches.length === 0 && teamsMissingFromTransfermarkt.length === 0,
     comparedTeams: transfermarktRows.length,
     mismatches,
+    knownDrift,
     unmappedTransfermarktNames,
     teamsMissingFromTransfermarkt
   };

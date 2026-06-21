@@ -55,6 +55,7 @@ async function main() {
     comparedTeams: result.comparedTeams,
     ok: result.ok,
     mismatches: result.mismatches,
+    knownDrift: result.knownDrift,
     teamsMissingFromTransfermarkt: result.teamsMissingFromTransfermarkt
   };
 
