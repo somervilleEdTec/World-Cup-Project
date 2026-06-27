@@ -17,6 +17,7 @@ import {
   shouldLockGroup
 } from '../../lib/pickLocks';
 import { defaultDrawPick, defaultKnockoutDrawPick } from '../../lib/pickUtils';
+import { sortMatchesByKickoff } from '../../lib/upcomingFixtures';
 import { Match, Pick, TournamentBonusPick } from '../../types';
 import {
   assertKnockoutFixtureConfirmed,
@@ -86,7 +87,9 @@ export async function getUserPredictionState(userId: string) {
   const groupPicksCommittedCount = countCommittedGroupPicks(committedPicks);
   const results = await getResultsMap();
   const confirmedIds = new Set(buildConfirmedKnockoutFixtures(results).map((m) => m.id));
-  const confirmedKnockoutFixtures = getMatches({}, results).filter((m) => confirmedIds.has(m.id));
+  const confirmedKnockoutFixtures = sortMatchesByKickoff(
+    getMatches({}, results).filter((m) => confirmedIds.has(m.id))
+  );
   const groupStageFixtures = getMatches({}, results).filter((m) => m.stage === 'GROUP');
   return {
     committedPicks,

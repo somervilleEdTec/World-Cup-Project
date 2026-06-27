@@ -24,6 +24,7 @@ import {
 } from '../lib/pickLocks';
 import { computeMissingPicks } from '../lib/missingPicks';
 import { formatKickoffBst } from '../lib/formatDateTime';
+import { sortMatchesByKickoff } from '../lib/upcomingFixtures';
 import { getFirstMatchKickoff } from '../lib/kickoffOverrides';
 import {
   computeGroupStandings,
@@ -42,7 +43,7 @@ const KNOCKOUT_PHASES = [
   { id: 'r16' as const, label: 'Round of 16', stages: ['R16'] as Stage[] },
   { id: 'qf' as const, label: 'Quarter Final', stages: ['QF'] as Stage[] },
   { id: 'sf' as const, label: 'Semi Final', stages: ['SF'] as Stage[] },
-  { id: 'finals' as const, label: 'Final / 3rd Place', stages: ['FINAL', 'THIRD_PLACE'] as Stage[] }
+  { id: 'finals' as const, label: 'Final / 3rd Place', stages: ['THIRD_PLACE', 'FINAL'] as Stage[] }
 ];
 
 type PicksPhase = 'bonus' | 'group' | (typeof KNOCKOUT_PHASES)[number]['id'];
@@ -54,7 +55,7 @@ function isKnockoutPhase(phase: PicksPhase): phase is (typeof KNOCKOUT_PHASES)[n
 function knockoutFixturesForPhase(phase: PicksPhase, fixtures: Match[]): Match[] {
   const config = KNOCKOUT_PHASES.find((entry) => entry.id === phase);
   if (!config) return [];
-  return fixtures.filter((match) => config.stages.includes(match.stage));
+  return sortMatchesByKickoff(fixtures.filter((match) => config.stages.includes(match.stage)));
 }
 
 function bonusValues(state: RemoteState): TournamentBonusPick {

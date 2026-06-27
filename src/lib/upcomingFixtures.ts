@@ -1,5 +1,10 @@
 import { Match } from '../types';
 
+/** Chronological match order (kickoff, then stable id tiebreaker). */
+export function sortMatchesByKickoff(matches: Match[]): Match[] {
+  return [...matches].sort((a, b) => a.kickoff.localeCompare(b.kickoff) || a.id.localeCompare(b.id));
+}
+
 export interface UpcomingKickoffWindows {
   next: Match[];
   secondNext: Match[];
@@ -10,9 +15,9 @@ export function getUpcomingKickoffWindows(
   matches: Match[],
   viewableUpcomingMatchIds: Set<string>
 ): UpcomingKickoffWindows {
-  const upcoming = matches
-    .filter((match) => viewableUpcomingMatchIds.has(match.id))
-    .sort((a, b) => a.kickoff.localeCompare(b.kickoff));
+  const upcoming = sortMatchesByKickoff(
+    matches.filter((match) => viewableUpcomingMatchIds.has(match.id))
+  );
 
   if (upcoming.length === 0) {
     return { next: [], secondNext: [] };

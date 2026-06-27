@@ -32,4 +32,30 @@ describe('missingPicks', () => {
     const missing = computeMissingPicks(picks, bonus, []);
     expect(missing).toHaveLength(0);
   });
+
+  it('lists knockout missing picks in kickoff order', () => {
+    const earlier = {
+      id: 'r16-5',
+      stage: 'R16' as const,
+      kickoff: '2026-07-05T20:00:00.000Z',
+      homeTeamId: teams[2].id,
+      awayTeamId: teams[3].id
+    };
+    const later = {
+      id: 'r16-3',
+      stage: 'R16' as const,
+      kickoff: '2026-07-06T19:00:00.000Z',
+      homeTeamId: teams[0].id,
+      awayTeamId: teams[1].id
+    };
+    const missing = computeMissingPicks({}, undefined, [later, earlier]);
+
+    const knockoutLabels = missing
+      .filter((item) => item.kind === 'knockout')
+      .map((item) => item.label);
+    expect(knockoutLabels).toEqual([
+      `Knockout: R16 — ${teams[2].name} vs ${teams[3].name}`,
+      `Knockout: R16 — ${teams[0].name} vs ${teams[1].name}`
+    ]);
+  });
 });

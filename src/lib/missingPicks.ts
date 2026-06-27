@@ -1,5 +1,6 @@
 import { groupMatches, teams } from '../data/tournament';
 import { ALL_GROUP_IDS } from './pickLocks';
+import { sortMatchesByKickoff } from './upcomingFixtures';
 import { Match, Pick, TournamentBonusPick } from '../types';
 
 export interface MissingPickItem {
@@ -45,7 +46,7 @@ export function computeMissingPicks(
     }
   }
 
-  for (const match of confirmedKnockoutFixtures) {
+  for (const match of sortMatchesByKickoff(confirmedKnockoutFixtures)) {
     if (picks[match.id] === undefined) {
       missing.push({ kind: 'knockout', label: formatKnockoutFixture(match) });
     }
