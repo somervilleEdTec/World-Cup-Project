@@ -25,24 +25,46 @@ function clampScore(value: number): number {
   return Math.min(MAX_SCORE, Math.max(0, Math.floor(value)));
 }
 
-/** Accept a single digit (0–9); when multiple digits appear, keep only the last typed one. */
+/** Accept a single digit (0–9); strip leading-zero prefixes (01 → 1) and keep only the last typed digit otherwise. */
 function parseScoreInput(raw: string): number {
   const trimmed = raw.trim();
   if (trimmed === '') return 0;
   if (/[.,]/.test(trimmed)) {
     const intPart = trimmed.split(/[.,]/)[0]?.replace(/\D/g, '') ?? '';
-    const digit = intPart.slice(-1) || '0';
-    return clampScore(Number.parseInt(digit, 10));
+    return parseSingleScoreDigit(intPart);
   }
   const digitsOnly = trimmed.replace(/\D/g, '');
+  return parseSingleScoreDigit(digitsOnly);
+}
+
+function parseSingleScoreDigit(digitsOnly: string): number {
   if (digitsOnly === '') return 0;
+  if (digitsOnly.length > 1 && digitsOnly.startsWith('0')) {
+    const withoutLeadingZeros = digitsOnly.replace(/^0+/, '');
+    if (withoutLeadingZeros === '') return 0;
+    return clampScore(Number.parseInt(withoutLeadingZeros.slice(-1), 10));
+  }
   return clampScore(Number.parseInt(digitsOnly.slice(-1), 10));
+}
+
+function formatScoreDisplay(score: number): string {
+  return String(score);
 }
 
 function blockNonIntegerScoreKeys(event: KeyboardEvent<HTMLInputElement>) {
   if (['e', 'E', '+', '-', '.', ','].includes(event.key)) {
     event.preventDefault();
   }
+}
+
+function handleScoreDigitKey(
+  event: KeyboardEvent<HTMLInputElement>,
+  onDigit: (digit: number) => void
+) {
+  blockNonIntegerScoreKeys(event);
+  if (!/^\d$/.test(event.key)) return;
+  event.preventDefault();
+  onDigit(clampScore(Number.parseInt(event.key, 10)));
 }
 
 function formatPickLine(pick: Pick | undefined, match: Match): string {
@@ -228,21 +250,34 @@ function EditableScoreInputs({
     }
   };
 
-  const homeDisplayValue = homeEditingEmpty ? '' : hasSavedPick || edited ? homeScore : '';
-  const awayDisplayValue = awayEditingEmpty ? '' : hasSavedPick || edited ? awayScore : '';
+  const homeDisplayValue = homeEditingEmpty ? '' : hasSavedPick || edited ? formatScoreDisplay(homeScore) : '';
+  const awayDisplayValue = awayEditingEmpty ? '' : hasSavedPick || edited ? formatScoreDisplay(awayScore) : '';
   const scoreInputClass = scoreInputStatusClass(colorScoreInputs, hasSavedPick, edited, saving);
+
+  const applyHomeScore = (next: number) => {
+    setHomeEditingEmpty(false);
+    setEdited(true);
+    setHomeScore(next);
+    notifyChange(next, awayScore);
+  };
+
+  const applyAwayScore = (next: number) => {
+    setAwayEditingEmpty(false);
+    setEdited(true);
+    setAwayScore(next);
+    notifyChange(homeScore, next);
+  };
 
   return (
     <>
       <div className="score-inputs">
         <input
           className={scoreInputClass}
-          type="number"
-          min="0"
-          max={MAX_SCORE}
-          step="1"
+          type="text"
           inputMode="numeric"
           pattern="[0-9]*"
+          maxLength={1}
+          aria-label="Home score"
           value={homeDisplayValue}
           placeholder="0"
           disabled={disabled}
@@ -252,23 +287,18 @@ function EditableScoreInputs({
           onFocus={() => handleScoreFocus('home')}
           onBlur={() => handleScoreBlur('home')}
           onWheel={handleScoreWheel}
-          onKeyDown={blockNonIntegerScoreKeys}
+          onKeyDown={(event) => handleScoreDigitKey(event, applyHomeScore)}
           onChange={(event) => {
-            setHomeEditingEmpty(false);
-            const next = parseScoreInput(event.target.value);
-            setEdited(true);
-            setHomeScore(next);
-            notifyChange(next, awayScore);
+            applyHomeScore(parseScoreInput(event.target.value));
           }}
         />
         <input
           className={scoreInputClass}
-          type="number"
-          min="0"
-          max={MAX_SCORE}
-          step="1"
+          type="text"
           inputMode="numeric"
           pattern="[0-9]*"
+          maxLength={1}
+          aria-label="Away score"
           value={awayDisplayValue}
           placeholder="0"
           disabled={disabled}
@@ -278,13 +308,9 @@ function EditableScoreInputs({
           onFocus={() => handleScoreFocus('away')}
           onBlur={() => handleScoreBlur('away')}
           onWheel={handleScoreWheel}
-          onKeyDown={blockNonIntegerScoreKeys}
+          onKeyDown={(event) => handleScoreDigitKey(event, applyAwayScore)}
           onChange={(event) => {
-            setAwayEditingEmpty(false);
-            const next = parseScoreInput(event.target.value);
-            setEdited(true);
-            setAwayScore(next);
-            notifyChange(homeScore, next);
+            applyAwayScore(parseScoreInput(event.target.value));
           }}
         />
       </div>

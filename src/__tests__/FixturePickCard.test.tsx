@@ -14,6 +14,10 @@ const koMatch: Match = {
 const pick: Pick = { matchId: 'r32-1', homeScore: 2, awayScore: 1 };
 const actual: ActualResult = { matchId: 'r32-1', homeScore: 1, awayScore: 0 };
 
+function getScoreInputs(): HTMLInputElement[] {
+  return [screen.getByLabelText('Home score'), screen.getByLabelText('Away score')];
+}
+
 describe('FixturePickCard', () => {
   afterEach(() => {
     cleanup();
@@ -34,7 +38,7 @@ describe('FixturePickCard', () => {
     expect(screen.getByText(/Your prediction:/)).toBeTruthy();
     expect(screen.getByText(/Official result:/)).toBeTruthy();
     expect(screen.getByText(/Points scored:/)).toBeTruthy();
-    expect(screen.queryByRole('spinbutton')).toBeNull();
+    expect(screen.queryByLabelText('Home score')).toBeNull();
   });
 
   it('shows plain score text when group is user-locked before kickoff', () => {
@@ -58,7 +62,7 @@ describe('FixturePickCard', () => {
       />
     );
     expect(screen.getByText('2–1')).toBeTruthy();
-    expect(screen.queryByRole('spinbutton')).toBeNull();
+    expect(screen.queryByLabelText('Home score')).toBeNull();
     expect(screen.queryByText(/Your prediction:/)).toBeNull();
   });
 
@@ -86,7 +90,7 @@ describe('FixturePickCard', () => {
     expect(screen.getByText(/Your prediction:/)).toBeTruthy();
     expect(screen.getByText(/Official result:/)).toBeTruthy();
     expect(screen.getByText(/Points scored:/)).toBeTruthy();
-    expect(screen.queryByRole('spinbutton')).toBeNull();
+    expect(screen.queryByLabelText('Home score')).toBeNull();
   });
 
   it('rejects decimal characters in score inputs', () => {
@@ -100,7 +104,7 @@ describe('FixturePickCard', () => {
         onSave={vi.fn()}
       />
     );
-    const inputs = screen.getAllByRole('spinbutton');
+    const inputs = getScoreInputs();
     fireEvent.keyDown(inputs[0], { key: '.' });
     fireEvent.change(inputs[0], { target: { value: '2.5' } });
     expect((inputs[0] as HTMLInputElement).value).toBe('2');
@@ -117,7 +121,7 @@ describe('FixturePickCard', () => {
         onSave={vi.fn()}
       />
     );
-    const inputs = screen.getAllByRole('spinbutton') as HTMLInputElement[];
+    const inputs = getScoreInputs();
     expect(inputs[0].value).toBe('2');
 
     fireEvent.change(inputs[0], { target: { value: '23' } });
@@ -127,7 +131,54 @@ describe('FixturePickCard', () => {
     expect(inputs[0].value).toBe('7');
   });
 
-  it('shows editable inputs with spinners before kickoff when not locked', () => {
+  it('overwrites a leading zero when typing a second digit', () => {
+    const onScoresChange = vi.fn();
+    render(
+      <FixturePickCard
+        match={koMatch}
+        pick={{ matchId: 'r32-1', homeScore: 0, awayScore: 0 }}
+        nowIso="2026-06-28T18:00:00Z"
+        inputsDisabled={false}
+        showLockedSummary={false}
+        onSave={vi.fn()}
+        onScoresChange={onScoresChange}
+      />
+    );
+    const inputs = getScoreInputs();
+    expect(inputs[0].value).toBe('0');
+
+    fireEvent.change(inputs[0], { target: { value: '01' } });
+    expect(onScoresChange).toHaveBeenLastCalledWith(
+      expect.objectContaining({ homeScore: 1, awayScore: 0 })
+    );
+    expect(inputs[0].value).toBe('1');
+
+    fireEvent.change(inputs[0], { target: { value: '02' } });
+    expect(inputs[0].value).toBe('2');
+
+    fireEvent.change(inputs[0], { target: { value: '03' } });
+    expect(inputs[0].value).toBe('3');
+  });
+
+  it('replaces a leading zero when typing a digit key', () => {
+    render(
+      <FixturePickCard
+        match={koMatch}
+        pick={{ matchId: 'r32-1', homeScore: 0, awayScore: 0 }}
+        nowIso="2026-06-28T18:00:00Z"
+        inputsDisabled={false}
+        showLockedSummary={false}
+        onSave={vi.fn()}
+      />
+    );
+    const inputs = getScoreInputs();
+    expect(inputs[0].value).toBe('0');
+
+    fireEvent.keyDown(inputs[0], { key: '2' });
+    expect(inputs[0].value).toBe('2');
+  });
+
+  it('shows editable score inputs before kickoff when not locked', () => {
     render(
       <FixturePickCard
         match={koMatch}
@@ -138,7 +189,8 @@ describe('FixturePickCard', () => {
         onSave={vi.fn()}
       />
     );
-    expect(screen.getAllByRole('spinbutton').length).toBe(2);
+    expect(screen.getByLabelText('Home score')).toBeTruthy();
+    expect(screen.getByLabelText('Away score')).toBeTruthy();
     expect(screen.queryByText(/Points scored:/)).toBeNull();
   });
 
@@ -154,7 +206,7 @@ describe('FixturePickCard', () => {
         onSave={vi.fn()}
       />
     );
-    expect(screen.queryByRole('spinbutton')).toBeNull();
+    expect(screen.queryByLabelText('Home score')).toBeNull();
     expect(screen.getByText(/2–1/)).toBeTruthy();
   });
 
@@ -181,7 +233,7 @@ describe('FixturePickCard', () => {
       />
     );
 
-    const inputs = screen.getAllByRole('spinbutton') as HTMLInputElement[];
+    const inputs = getScoreInputs();
     expect(inputs[0].value).toBe('2');
 
     fireEvent.focus(inputs[0]);
@@ -216,7 +268,7 @@ describe('FixturePickCard', () => {
       />
     );
 
-    const inputs = screen.getAllByRole('spinbutton') as HTMLInputElement[];
+    const inputs = getScoreInputs();
     fireEvent.focus(inputs[0]);
     expect(inputs[0].value).toBe('');
     fireEvent.blur(inputs[0]);
@@ -248,7 +300,7 @@ describe('FixturePickCard', () => {
       />
     );
 
-    const inputs = screen.getAllByRole('spinbutton') as HTMLInputElement[];
+    const inputs = getScoreInputs();
     fireEvent.focus(inputs[0]);
     expect(inputs[0].value).toBe('2');
 
@@ -266,7 +318,7 @@ describe('FixturePickCard', () => {
       />
     );
 
-    let inputs = screen.getAllByRole('spinbutton') as HTMLInputElement[];
+    let inputs = getScoreInputs();
     expect(inputs[0].className).toContain('score-input-unpicked');
     expect(inputs[1].className).toContain('score-input-unpicked');
 
@@ -281,7 +333,7 @@ describe('FixturePickCard', () => {
       />
     );
 
-    inputs = screen.getAllByRole('spinbutton') as HTMLInputElement[];
+    inputs = getScoreInputs();
     expect(inputs[0].className).toContain('score-input-saved');
     expect(inputs[1].className).toContain('score-input-saved');
 
@@ -311,7 +363,7 @@ describe('FixturePickCard', () => {
       />
     );
 
-    const inputs = screen.getAllByRole('spinbutton') as HTMLInputElement[];
+    const inputs = getScoreInputs();
     expect(inputs[0].className).not.toContain('score-input-saved');
     expect(inputs[0].className).not.toContain('score-input-pending');
     expect(inputs[0].className).not.toContain('score-input-unpicked');
