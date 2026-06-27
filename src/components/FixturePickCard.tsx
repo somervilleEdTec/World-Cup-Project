@@ -18,22 +18,25 @@ import { shouldClearScoreInputOnFocus } from '../lib/touchDevice';
 
 const AUTOSAVE_MS = 450;
 
-const MAX_SCORE = 20;
+const MAX_SCORE = 9;
 
 function clampScore(value: number): number {
   if (!Number.isFinite(value)) return 0;
   return Math.min(MAX_SCORE, Math.max(0, Math.floor(value)));
 }
 
+/** Accept a single digit (0–9); when multiple digits appear, keep only the last typed one. */
 function parseScoreInput(raw: string): number {
   const trimmed = raw.trim();
   if (trimmed === '') return 0;
   if (/[.,]/.test(trimmed)) {
     const intPart = trimmed.split(/[.,]/)[0]?.replace(/\D/g, '') ?? '';
-    return clampScore(Number.parseInt(intPart || '0', 10));
+    const digit = intPart.slice(-1) || '0';
+    return clampScore(Number.parseInt(digit, 10));
   }
   const digitsOnly = trimmed.replace(/\D/g, '');
-  return clampScore(Number.parseInt(digitsOnly || '0', 10));
+  if (digitsOnly === '') return 0;
+  return clampScore(Number.parseInt(digitsOnly.slice(-1), 10));
 }
 
 function blockNonIntegerScoreKeys(event: KeyboardEvent<HTMLInputElement>) {

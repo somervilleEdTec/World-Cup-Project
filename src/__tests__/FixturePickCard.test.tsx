@@ -106,6 +106,27 @@ describe('FixturePickCard', () => {
     expect((inputs[0] as HTMLInputElement).value).toBe('2');
   });
 
+  it('keeps only the last typed digit and overwrites the previous value', () => {
+    render(
+      <FixturePickCard
+        match={koMatch}
+        pick={pick}
+        nowIso="2026-06-28T18:00:00Z"
+        inputsDisabled={false}
+        showLockedSummary={false}
+        onSave={vi.fn()}
+      />
+    );
+    const inputs = screen.getAllByRole('spinbutton') as HTMLInputElement[];
+    expect(inputs[0].value).toBe('2');
+
+    fireEvent.change(inputs[0], { target: { value: '23' } });
+    expect(inputs[0].value).toBe('3');
+
+    fireEvent.change(inputs[0], { target: { value: '37' } });
+    expect(inputs[0].value).toBe('7');
+  });
+
   it('shows editable inputs with spinners before kickoff when not locked', () => {
     render(
       <FixturePickCard
