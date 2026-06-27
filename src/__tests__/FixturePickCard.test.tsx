@@ -247,4 +247,66 @@ describe('FixturePickCard', () => {
 
     window.matchMedia = originalMatchMedia;
   });
+
+  it('colors knockout score inputs by save status', () => {
+    const { rerender } = render(
+      <FixturePickCard
+        match={koMatch}
+        nowIso="2026-06-28T18:00:00Z"
+        inputsDisabled={false}
+        showLockedSummary={false}
+        onSave={vi.fn()}
+      />
+    );
+
+    let inputs = screen.getAllByRole('spinbutton') as HTMLInputElement[];
+    expect(inputs[0].className).toContain('score-input-unpicked');
+    expect(inputs[1].className).toContain('score-input-unpicked');
+
+    rerender(
+      <FixturePickCard
+        match={koMatch}
+        pick={pick}
+        nowIso="2026-06-28T18:00:00Z"
+        inputsDisabled={false}
+        showLockedSummary={false}
+        onSave={vi.fn()}
+      />
+    );
+
+    inputs = screen.getAllByRole('spinbutton') as HTMLInputElement[];
+    expect(inputs[0].className).toContain('score-input-saved');
+    expect(inputs[1].className).toContain('score-input-saved');
+
+    fireEvent.change(inputs[0], { target: { value: '3' } });
+    expect(inputs[0].className).toContain('score-input-pending');
+    expect(inputs[1].className).toContain('score-input-pending');
+  });
+
+  it('does not color group-stage score inputs', () => {
+    const groupMatch: Match = {
+      id: 'g-a-1',
+      stage: 'GROUP',
+      group: 'A',
+      kickoff: '2026-06-11T19:00:00Z',
+      homeTeamId: 'mexico',
+      awayTeamId: 'canada'
+    };
+
+    render(
+      <FixturePickCard
+        match={groupMatch}
+        pick={{ matchId: 'g-a-1', homeScore: 2, awayScore: 1 }}
+        nowIso="2026-06-01T00:00:00Z"
+        inputsDisabled={false}
+        showLockedSummary={false}
+        onSave={vi.fn()}
+      />
+    );
+
+    const inputs = screen.getAllByRole('spinbutton') as HTMLInputElement[];
+    expect(inputs[0].className).not.toContain('score-input-saved');
+    expect(inputs[0].className).not.toContain('score-input-pending');
+    expect(inputs[0].className).not.toContain('score-input-unpicked');
+  });
 });

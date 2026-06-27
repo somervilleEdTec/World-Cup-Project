@@ -61,16 +61,30 @@ function formatActualLine(actual: ActualResult, match: Match): string {
   );
 }
 
+function scoreInputStatusClass(
+  enabled: boolean,
+  hasSavedPick: boolean,
+  edited: boolean,
+  saving: boolean
+): string {
+  if (!enabled) return '';
+  if (edited || saving) return 'score-input-pending';
+  if (hasSavedPick) return 'score-input-saved';
+  return 'score-input-unpicked';
+}
+
 function EditableScoreInputs({
   match,
   pick,
   disabled,
+  colorScoreInputs = false,
   onSave,
   onScoresChange
 }: {
   match: Match;
   pick?: Pick;
   disabled: boolean;
+  colorScoreInputs?: boolean;
   onSave: (pick: Pick) => Promise<void>;
   onScoresChange?: (pick: Pick) => void;
 }) {
@@ -79,6 +93,7 @@ function EditableScoreInputs({
   const [awayScore, setAwayScore] = useState(pick?.awayScore ?? 0);
   const [progressingTeamId, setProgressingTeamId] = useState(pick?.progressingTeamId ?? '');
   const [edited, setEdited] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [homeEditingEmpty, setHomeEditingEmpty] = useState(false);
   const [awayEditingEmpty, setAwayEditingEmpty] = useState(false);
   const homeBeforeEditRef = useRef(pick?.homeScore ?? 0);
@@ -96,6 +111,7 @@ function EditableScoreInputs({
     setAwayScore(pick?.awayScore ?? 0);
     setProgressingTeamId(pick?.progressingTeamId ?? '');
     setEdited(false);
+    setSaving(false);
     setHomeEditingEmpty(false);
     setAwayEditingEmpty(false);
     homeBeforeEditRef.current = pick?.homeScore ?? 0;
@@ -133,13 +149,23 @@ function EditableScoreInputs({
     [match.id, onScoresChange, progressingTeamId]
   );
 
+  const performSave = useCallback(async () => {
+    if (disabled || !editedRef.current) return;
+    setSaving(true);
+    try {
+      await onSaveRef.current(buildPickRef.current());
+    } finally {
+      setSaving(false);
+    }
+  }, [disabled]);
+
   const scheduleSave = useCallback(() => {
     if (disabled || !edited) return;
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     saveTimerRef.current = setTimeout(() => {
-      void onSaveRef.current(buildPickRef.current());
+      void performSave();
     }, AUTOSAVE_MS);
-  }, [disabled, edited]);
+  }, [disabled, edited, performSave]);
 
   useEffect(() => {
     scheduleSave();
@@ -201,11 +227,13 @@ function EditableScoreInputs({
 
   const homeDisplayValue = homeEditingEmpty ? '' : hasSavedPick || edited ? homeScore : '';
   const awayDisplayValue = awayEditingEmpty ? '' : hasSavedPick || edited ? awayScore : '';
+  const scoreInputClass = scoreInputStatusClass(colorScoreInputs, hasSavedPick, edited, saving);
 
   return (
     <>
       <div className="score-inputs">
         <input
+          className={scoreInputClass}
           type="number"
           min="0"
           max={MAX_SCORE}
@@ -231,6 +259,7 @@ function EditableScoreInputs({
           }}
         />
         <input
+          className={scoreInputClass}
           type="number"
           min="0"
           max={MAX_SCORE}
@@ -369,6 +398,7 @@ export function FixturePickCard({
             match={match}
             pick={pick}
             disabled={inputsSaveDisabled}
+            colorScoreInputs={isKnockout(match)}
             onSave={onSave}
             onScoresChange={onScoresChange}
           />

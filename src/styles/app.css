@@ -391,6 +391,21 @@ select {
   margin-bottom: 0.5rem;
 }
 
+.score-inputs input.score-input-unpicked {
+  background: #fde2e2;
+  border-color: #e8a0a0;
+}
+
+.score-inputs input.score-input-pending {
+  background: #fff0c2;
+  border-color: #e6c76a;
+}
+
+.score-inputs input.score-input-saved {
+  background: #d8f3dc;
+  border-color: #8bc49a;
+}
+
 .success {
   color: #0b7a35;
   font-weight: 700;
