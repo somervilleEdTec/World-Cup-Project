@@ -7,7 +7,7 @@ import {
   type WheelEvent
 } from 'react';
 import { teams } from '../data/tournament';
-import { knockoutStageHeading, knockoutStageMultiplierLabel } from '../lib/knockoutStageMultiplier';
+import { knockoutStageMultiplierLabel } from '../lib/knockoutStageMultiplier';
 import { computeMatchPoints } from '../lib/matchScoring';
 import { formatKickoffBst } from '../lib/formatDateTime';
 import { isKnockout, predictionLockReached, predictionLockTimeIso } from '../lib/tournamentLogic';
@@ -349,7 +349,6 @@ export function FixturePickCard({
 
   return (
     <div className="fixture-card">
-      {match.stage !== 'GROUP' && <p className="kicker">{knockoutStageHeading(match.stage)}</p>}
       <div className="fixture-row">
         {homeOk ? <TeamLabel team={homeTeam!} /> : <span>TBD</span>} <strong>vs</strong>{' '}
         {awayOk ? <TeamLabel team={awayTeam!} /> : <span>TBD</span>}
