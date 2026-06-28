@@ -4,7 +4,7 @@ import { ActualResult, Match, Pick } from '../types';
 import { buildKnockoutMatches } from './bracketEngine';
 import { picksFromActuals } from './pickUtils';
 
-function withKickoffOverride(match: Match): Match {
+export function withKickoffOverride(match: Match): Match {
   const kickoff = getKickoffOverrides()[match.id] ?? match.kickoff;
   return kickoff === match.kickoff ? match : { ...match, kickoff };
 }

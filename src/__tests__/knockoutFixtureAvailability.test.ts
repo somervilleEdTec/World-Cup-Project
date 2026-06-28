@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { groupMatches } from '../data/tournament';
 import {
   buildConfirmedKnockoutFixtures,
+  getKnockoutUnlockSummary,
   isGroupCompleteInResults,
   isKnockoutFixtureConfirmed
 } from '../lib/knockoutFixtureAvailability';
@@ -54,6 +55,30 @@ describe('knockoutFixtureAvailability', () => {
 
     expect(isKnockoutFixtureConfirmed('r16-2', actuals)).toBe(true);
     expect(buildConfirmedKnockoutFixtures(actuals).some((m) => m.id === 'r16-2')).toBe(true);
+  });
+
+  it('reports pending groups blocking third-place and direct R32 unlocks', () => {
+    const actuals: Record<string, ActualResult> = {};
+    finishGroup('A', actuals);
+    finishGroup('B', actuals);
+    finishGroup('C', actuals);
+    finishGroup('F', actuals);
+    finishGroup('E', actuals);
+    finishGroup('I', actuals);
+    finishGroup('K', actuals);
+    finishGroup('L', actuals);
+    finishGroup('D', actuals);
+    finishGroup('G', actuals);
+    finishGroup('H', actuals);
+    // Group J missing all six results
+
+    const summary = getKnockoutUnlockSummary(actuals);
+    expect(summary.confirmedCount).toBe(6);
+    expect(summary.pendingGroups).toEqual([
+      expect.objectContaining({ groupId: 'J', played: 0, required: 6 })
+    ]);
+    expect(summary.thirdPlaceSlotsPending).toBe(true);
+    expect(summary.blockedDirectR32MatchIds).toEqual(expect.arrayContaining(['r32-12', 'r32-14']));
   });
 });
 
