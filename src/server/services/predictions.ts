@@ -1,6 +1,6 @@
 import { getDb } from '../database';
 import { groupMatches } from '../../data/tournament';
-import { getMatches } from '../../lib/matchResolver';
+import { getMatches, withKickoffOverride } from '../../lib/matchResolver';
 import { validateBonusPick, validatePick } from '../../lib/tournamentLogic';
 import {
   allGroupPicksCommitted,
@@ -21,7 +21,8 @@ import { sortMatchesByKickoff } from '../../lib/upcomingFixtures';
 import { Match, Pick, TournamentBonusPick } from '../../types';
 import {
   assertKnockoutFixtureConfirmed,
-  buildConfirmedKnockoutFixtures
+  buildConfirmedKnockoutFixtures,
+  getKnockoutUnlockSummary
 } from '../../lib/knockoutFixtureAvailability';
 import { getResultsMap } from './leaderboard';
 import { competitionUserWhere, competitionUserBindParams } from './competitionUsers';
@@ -86,9 +87,8 @@ export async function getUserPredictionState(userId: string) {
   const meta = await getMeta(userId);
   const groupPicksCommittedCount = countCommittedGroupPicks(committedPicks);
   const results = await getResultsMap();
-  const confirmedIds = new Set(buildConfirmedKnockoutFixtures(results).map((m) => m.id));
   const confirmedKnockoutFixtures = sortMatchesByKickoff(
-    getMatches({}, results).filter((m) => confirmedIds.has(m.id))
+    buildConfirmedKnockoutFixtures(results).map(withKickoffOverride)
   );
   const groupStageFixtures = getMatches({}, results).filter((m) => m.stage === 'GROUP');
   return {
@@ -100,6 +100,7 @@ export async function getUserPredictionState(userId: string) {
     groupPicksRequired: GROUP_MATCH_COUNT,
     allGroupPicksCommitted: allGroupPicksCommitted(committedPicks),
     confirmedKnockoutFixtures,
+    knockoutUnlockSummary: getKnockoutUnlockSummary(results),
     groupStageFixtures,
     officialResults: results,
     commitState: {

@@ -34,6 +34,7 @@ import {
   shouldLockGroup
 } from '../lib/tournamentLogic';
 import { actualStandingsOptions, predictedStandingsOptions } from '../lib/fairPlay';
+import type { KnockoutUnlockSummary } from '../lib/knockoutFixtureAvailability';
 import { ActualResult, Match, Pick, Stage, TournamentBonusPick } from '../types';
 
 const groupSequence = ALL_GROUP_IDS;
@@ -68,6 +69,27 @@ function bonusValues(state: RemoteState): TournamentBonusPick {
   };
 }
 
+function formatKnockoutUnlockMessage(summary: KnockoutUnlockSummary | undefined): string | null {
+  if (!summary) return null;
+  const r32Confirmed = summary.confirmedCount;
+  const pending = summary.pendingGroups;
+  if (pending.length === 0) return null;
+
+  const groupLabels = pending
+    .map((entry) => `Group ${entry.groupId} (${entry.played}/${entry.required} results)`)
+    .join(', ');
+  const waitingOnGroups = pending.reduce(
+    (total, entry) => total + (entry.required - entry.played),
+    0
+  );
+  const blockedDirect = summary.blockedDirectR32MatchIds.length;
+  const thirdPlaceNote = summary.thirdPlaceSlotsPending
+    ? ' Eight third-place Round of 32 slots also need every group to finish before they unlock.'
+    : '';
+
+  return `${r32Confirmed} knockout fixture${r32Confirmed === 1 ? '' : 's'} confirmed so far. Waiting on ${waitingOnGroups} official group result${waitingOnGroups === 1 ? '' : 's'} (${groupLabels})${blockedDirect ? `; ${blockedDirect} direct Round of 32 fixture${blockedDirect === 1 ? '' : 's'} need those groups too` : ''}.${thirdPlaceNote}`;
+}
+
 interface RemoteState {
   committedPicks: Record<string, Pick>;
   draftPicks: Record<string, Pick>;
@@ -80,6 +102,7 @@ interface RemoteState {
   bonusCommitted?: TournamentBonusPick;
   commitState: { groupLocked: boolean };
   confirmedKnockoutFixtures?: Match[];
+  knockoutUnlockSummary?: KnockoutUnlockSummary;
   groupStageFixtures?: Match[];
   officialResults?: Record<string, ActualResult>;
 }
@@ -167,6 +190,7 @@ export function MyPicksPage() {
   const savedPicks = { ...state.committedPicks, ...state.draftPicks };
   const mergedPicks = { ...savedPicks, ...pendingGroupPicks };
   const confirmedKnockoutFixtures = state.confirmedKnockoutFixtures ?? [];
+  const knockoutUnlockMessage = formatKnockoutUnlockMessage(state.knockoutUnlockSummary);
   const officialResults = state.officialResults ?? {};
   const groupStandings = useMemo(() => {
     if (!userGroupLocked) return [];
@@ -633,6 +657,9 @@ export function MyPicksPage() {
             Only officially confirmed fixtures are listed — not projected from your group
             predictions.
           </p>
+          {knockoutUnlockMessage && (
+            <p className="warning">{knockoutUnlockMessage}</p>
+          )}
           {!koPicksAllowed && (
             <p className="warning">
               Complete and save all 72 group-stage match scores before knockout predictions can be
