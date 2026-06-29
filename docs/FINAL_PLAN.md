@@ -72,8 +72,8 @@ Rules:
 - **Round multipliers** (applied to both result and exact bonus for that fixture):
   - Round of 32 / Round of 16: **1×**
   - Quarter-finals: **1.5×**
-  - Semi-finals: **2×**
-  - Final and third-place play-off: **3×**
+  - Semi-finals and third-place play-off: **2×**
+  - Final: **3×**
 - Knockout draw: must select **team to progress** (ET/pens).
 
 ### Tournament preselection bonuses

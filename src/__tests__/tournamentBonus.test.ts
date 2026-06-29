@@ -87,4 +87,17 @@ describe('tournamentBonus leapfrog helpers', () => {
     const userB = userWithBonus('u2', bonusB);
     expect(leapfrogPointsThreshold(match, userA, userB)).toBe(27);
   });
+
+  it('uses 2× match threshold on third-place fixtures', () => {
+    const match: Match = {
+      id: 'third-place',
+      stage: 'THIRD_PLACE',
+      kickoff: '2026-07-18T21:00:00.000Z',
+      homeTeamId: 'germany',
+      awayTeamId: 'spain'
+    };
+    const userA = userWithBonus('u1', bonusA);
+    const userB = userWithBonus('u2', bonusB);
+    expect(leapfrogPointsThreshold(match, userA, userB)).toBe(21);
+  });
 });

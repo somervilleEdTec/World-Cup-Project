@@ -21,8 +21,8 @@ function ScoringInfoPanel() {
           scoreline matches the official result.
         </li>
         <li>Quarter-finals: 1.5× match points</li>
-        <li>Semi-finals: 2× match points</li>
-        <li>Final and third-place play-off: 3× match points</li>
+        <li>Semi-finals and third-place play-off: 2× match points</li>
+        <li>Final: 3× match points</li>
       </ul>
       <h4>Group standings bonus</h4>
       <p>

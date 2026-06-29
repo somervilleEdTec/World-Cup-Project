@@ -22,8 +22,8 @@ describe('knockoutStagePointsMultiplier', () => {
   it('returns late-round multipliers', () => {
     expect(knockoutStagePointsMultiplier('QF')).toBe(1.5);
     expect(knockoutStagePointsMultiplier('SF')).toBe(2);
+    expect(knockoutStagePointsMultiplier('THIRD_PLACE')).toBe(2);
     expect(knockoutStagePointsMultiplier('FINAL')).toBe(3);
-    expect(knockoutStagePointsMultiplier('THIRD_PLACE')).toBe(3);
   });
 });
 
@@ -37,8 +37,8 @@ describe('maxMatchPointsForStage', () => {
   it('returns scaled thresholds for late knockout rounds', () => {
     expect(maxMatchPointsForStage('QF')).toBe(9);
     expect(maxMatchPointsForStage('SF')).toBe(12);
+    expect(maxMatchPointsForStage('THIRD_PLACE')).toBe(12);
     expect(maxMatchPointsForStage('FINAL')).toBe(18);
-    expect(maxMatchPointsForStage('THIRD_PLACE')).toBe(18);
   });
 });
 
