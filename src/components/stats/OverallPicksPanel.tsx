@@ -2,9 +2,8 @@ import { useState } from 'react';
 import { OverallPicksResponse } from '../../types';
 import { OverallPicksConsensus } from './OverallPicksConsensus';
 import { OverallPicksMatrix } from './OverallPicksMatrix';
-import { OverallPicksPodiumCards } from './OverallPicksPodiumCards';
 
-type OverallLayout = 'table' | 'cards' | 'consensus';
+type OverallLayout = 'table' | 'consensus';
 
 interface OverallPicksPanelProps {
   data: OverallPicksResponse;
@@ -33,15 +32,6 @@ export function OverallPicksPanel({ data }: OverallPicksPanelProps) {
           <button
             type="button"
             role="tab"
-            aria-selected={layout === 'cards'}
-            className={layout === 'cards' ? 'active-tab' : undefined}
-            onClick={() => setLayout('cards')}
-          >
-            Cards
-          </button>
-          <button
-            type="button"
-            role="tab"
             aria-selected={layout === 'consensus'}
             className={layout === 'consensus' ? 'active-tab' : undefined}
             onClick={() => setLayout('consensus')}
@@ -54,13 +44,6 @@ export function OverallPicksPanel({ data }: OverallPicksPanelProps) {
       <article className="card overall-picks-content">
         {layout === 'table' && (
           <OverallPicksMatrix
-            entries={entries}
-            actualPlacings={meta.actualPlacings}
-            revealNames={revealNames}
-          />
-        )}
-        {layout === 'cards' && (
-          <OverallPicksPodiumCards
             entries={entries}
             actualPlacings={meta.actualPlacings}
             revealNames={revealNames}

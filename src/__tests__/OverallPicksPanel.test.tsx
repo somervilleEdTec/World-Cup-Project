@@ -72,17 +72,15 @@ describe('OverallPicksPanel', () => {
     expect(hiddenCells.length).toBeGreaterThan(0);
   });
 
-  it('switches to cards and consensus layouts', () => {
+  it('switches to consensus layout', () => {
     render(
       <MemoryRouter>
         <OverallPicksPanel data={sampleData} />
       </MemoryRouter>
     );
 
-    fireEvent.click(screen.getByRole('tab', { name: 'Cards' }));
-    expect(document.querySelector('.overall-podium-cards')).toBeTruthy();
-
     fireEvent.click(screen.getByRole('tab', { name: 'Consensus' }));
     expect(document.querySelector('.overall-consensus-grid')).toBeTruthy();
+    expect(screen.queryByRole('tab', { name: 'Cards' })).toBeNull();
   });
 });

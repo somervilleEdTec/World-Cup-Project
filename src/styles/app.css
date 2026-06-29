@@ -1717,10 +1717,11 @@ td {
 
 .overall-col-player {
   text-align: left;
+  width: 38%;
+  min-width: 4.5rem;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  max-width: 0;
 }
 
 .overall-col-pick {
@@ -1761,75 +1762,6 @@ td {
   margin: 0;
   font-size: 0.85rem;
   color: #8a9aab;
-}
-
-.overall-podium-cards {
-  display: grid;
-  gap: 0.75rem;
-}
-
-@media (min-width: 540px) {
-  .overall-podium-cards {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (min-width: 900px) {
-  .overall-podium-cards {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-}
-
-.overall-podium-card {
-  border: 1px solid #dce5ef;
-  border-radius: 0.65rem;
-  padding: 0.65rem 0.75rem;
-  background: #f8fbfe;
-}
-
-.overall-podium-card-you {
-  background: #eef8f3;
-  border-color: #9fd4b8;
-}
-
-.overall-podium-card-header {
-  display: flex;
-  align-items: baseline;
-  gap: 0.4rem;
-  margin-bottom: 0.5rem;
-}
-
-.overall-podium-card-rank {
-  font-size: 0.8rem;
-  color: #4a6278;
-}
-
-.overall-podium-card-name {
-  font-weight: 600;
-  color: #0f2f56;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.overall-podium-steps {
-  margin-top: 0.25rem;
-}
-
-.overall-podium-slot-label {
-  display: block;
-  font-size: 0.7rem;
-  color: #4a6278;
-  margin-bottom: 0.15rem;
-}
-
-.overall-podium-flag-wrap {
-  display: flex;
-  justify-content: center;
-}
-
-.overall-podium-flag {
-  width: 1.5rem;
 }
 
 .overall-consensus-grid {
@@ -1887,6 +1819,10 @@ td {
 @media (min-width: 480px) {
   .overall-picks-matrix {
     font-size: 0.9rem;
+  }
+
+  .overall-col-player {
+    width: 42%;
   }
 
   .overall-pick-flag {
