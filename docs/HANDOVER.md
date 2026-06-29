@@ -35,7 +35,7 @@ Friends-and-family prediction app for **FIFA World Cup 2026** (48 teams, 12 grou
 |------|--------|
 | Group — correct W/D/L | +2 |
 | Group — exact score bonus | +4 (total **6** when both) |
-| Knockout — correct **advancing team** | +2 base (×1 R32/R16, ×1.5 QF, ×2 SF, ×3 final/3rd) |
+| Knockout — correct **advancing team** | +2 base (×1 R32/R16, ×1.5 QF, ×2 SF/3rd, ×3 final) |
 | Knockout — exact **90-minute** score bonus | +4 base (same KO multiplier; ET/pens goals excluded) |
 | Exact group finishing position (per team) | +1 |
 | Preselected champion | +6 |

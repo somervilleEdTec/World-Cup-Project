@@ -61,7 +61,7 @@ export function classifyPickAccuracy(
   return 'miss';
 }
 
-/** Match-level points (+2/+4 base; QF 1.5×, SF 2×, final/third-place 3×). */
+/** Match-level points (+2/+4 base; QF 1.5×, SF/third-place 2×, final 3×). */
 export function computeMatchPoints(
   pick: MatchPick | undefined,
   actual: ActualResult | undefined,

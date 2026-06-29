@@ -23,9 +23,9 @@ export function knockoutStagePointsMultiplier(stage: Stage): number {
     case 'QF':
       return 1.5;
     case 'SF':
+    case 'THIRD_PLACE':
       return 2;
     case 'FINAL':
-    case 'THIRD_PLACE':
       return 3;
     default:
       return 1;
