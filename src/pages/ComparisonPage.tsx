@@ -3,10 +3,12 @@ import { useSearchParams } from 'react-router-dom';
 import { teams } from '../data/tournament';
 import { TeamLabel } from '../components/TeamLabel';
 import { CrowdStatsPanel } from '../components/stats/CrowdStatsPanel';
+import { OverallPicksPanel } from '../components/stats/OverallPicksPanel';
 import {
   fetchComparisonFixtures,
   fetchMatchComparison,
   fetchNextMatchComparison,
+  fetchOverallPicks,
   fetchStatistics,
   userFacingError
 } from '../services/apiClient';
@@ -18,9 +20,9 @@ import {
   formatFixtureStageLabel
 } from '../lib/fixtureLabels';
 import { classifyPickAccuracy } from '../lib/matchScoring';
-import { MatchComparisonView, Stage, StatisticsResponse } from '../types';
+import { MatchComparisonView, OverallPicksResponse, Stage, StatisticsResponse } from '../types';
 
-type StatsTab = 'fixture' | 'crowd';
+type StatsTab = 'fixture' | 'crowd' | 'overall';
 
 function formatPick(entry: MatchComparisonView['entries'][number], stage: string): string {
   if (entry.hidden) {
@@ -67,6 +69,7 @@ export function ComparisonPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [data, setData] = useState<MatchComparisonView | null>(null);
   const [statsData, setStatsData] = useState<StatisticsResponse | null>(null);
+  const [overallData, setOverallData] = useState<OverallPicksResponse | null>(null);
   const [fixtures, setFixtures] = useState<
     Array<{
       id: string;
@@ -79,8 +82,10 @@ export function ComparisonPage() {
   >([]);
   const [error, setError] = useState<string | null>(null);
   const [statsError, setStatsError] = useState<string | null>(null);
+  const [overallError, setOverallError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [statsLoading, setStatsLoading] = useState(true);
+  const [overallLoading, setOverallLoading] = useState(false);
   const [statsShuffling, setStatsShuffling] = useState(false);
 
   const loadCrowdStats = useCallback((shuffling = false) => {
@@ -102,7 +107,12 @@ export function ComparisonPage() {
   }, []);
 
   const selectedMatchId = searchParams.get('matchId') ?? '';
-  const activeTab = (searchParams.get('tab') === 'fixture' ? 'fixture' : 'crowd') as StatsTab;
+  const activeTab = (() => {
+    const tab = searchParams.get('tab');
+    if (tab === 'fixture') return 'fixture';
+    if (tab === 'overall') return 'overall';
+    return 'crowd';
+  })() as StatsTab;
 
   const setTab = (tab: StatsTab) => {
     const next = new URLSearchParams(searchParams);
@@ -142,6 +152,18 @@ export function ComparisonPage() {
     loadCrowdStats();
   }, [loadCrowdStats]);
 
+  useEffect(() => {
+    if (activeTab !== 'overall') return;
+    setOverallLoading(true);
+    fetchOverallPicks()
+      .then((response) => {
+        setOverallData(response);
+        setOverallError(null);
+      })
+      .catch((err) => setOverallError(userFacingError(err, 'Unable to load overall picks')))
+      .finally(() => setOverallLoading(false));
+  }, [activeTab]);
+
   if (loading && activeTab === 'fixture') {
     return <section className="card">Loading stats…</section>;
   }
@@ -178,7 +200,7 @@ export function ComparisonPage() {
     <section className="stack">
       <article className="card">
         <h2>Stats</h2>
-        <p className="kicker">Compare picks by fixture or explore crowd predictions</p>
+        <p className="kicker">Compare picks by fixture, explore crowd predictions, or view tournament podium picks</p>
         <div className="picks-phase-tabs stats-page-tabs">
           <button
             type="button"
@@ -193,6 +215,13 @@ export function ComparisonPage() {
             onClick={() => setTab('fixture')}
           >
             By Fixture
+          </button>
+          <button
+            type="button"
+            className={activeTab === 'overall' ? 'active-tab' : undefined}
+            onClick={() => setTab('overall')}
+          >
+            Overall
           </button>
         </div>
       </article>
@@ -212,6 +241,18 @@ export function ComparisonPage() {
               onShuffle={() => loadCrowdStats(true)}
             />
           )}
+        </>
+      )}
+
+      {activeTab === 'overall' && (
+        <>
+          {overallLoading && <section className="card">Loading overall picks…</section>}
+          {overallError && (
+            <section className="card">
+              <p className="warning">{overallError}</p>
+            </section>
+          )}
+          {overallData && !overallLoading && <OverallPicksPanel data={overallData} />}
         </>
       )}
 

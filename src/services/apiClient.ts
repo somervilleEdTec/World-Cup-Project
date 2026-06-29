@@ -1,4 +1,10 @@
-import { LeaderboardResponse, StatisticsResponse, TournamentBonusPick, Pick } from '../types';
+import {
+  LeaderboardResponse,
+  OverallPicksResponse,
+  StatisticsResponse,
+  TournamentBonusPick,
+  Pick
+} from '../types';
 
 /** Same-origin — Express in prod, Vite /api proxy in dev. Override only when API is on another host. */
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? '';
@@ -175,6 +181,10 @@ export async function fetchLeaderboard() {
 
 export async function fetchStatistics() {
   return request<StatisticsResponse>('/api/statistics');
+}
+
+export async function fetchOverallPicks() {
+  return request<OverallPicksResponse>('/api/statistics/overall');
 }
 
 export async function runSync() {
