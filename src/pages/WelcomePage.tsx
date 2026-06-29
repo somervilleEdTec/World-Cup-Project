@@ -60,9 +60,9 @@ export function WelcomePage() {
             scoreline matches the official result. Extra time and penalty-shootout goals are not
             included in this bonus.
           </li>
-          <li>Quarter-finals: 1.5× match points</li>
-          <li>Semi-finals and third-place play-off: 2× match points</li>
-          <li>Final: 3× match points</li>
+          <li>Quarter-finals: 1.5× points</li>
+          <li>Semi-finals and third-place play-off: 2× points</li>
+          <li>Final: 3× points</li>
         </ul>
       </article>
 

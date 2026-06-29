@@ -15,7 +15,7 @@ describe('knockoutStagePointsMultiplier', () => {
   });
 
   it('formats stage heading with multiplier', () => {
-    expect(knockoutStageHeading('QF')).toBe('Quarter-final (1.5× match points)');
+    expect(knockoutStageHeading('QF')).toBe('Quarter-final (1.5× points)');
     expect(knockoutStageHeading('R32')).toBe('R32');
   });
 

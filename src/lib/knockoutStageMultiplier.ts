@@ -11,7 +11,7 @@ export function knockoutStageHeading(stage: Stage): string {
   if (stage === 'GROUP') return 'Group';
   const label = STAGE_LABELS[stage] ?? stage;
   const mult = knockoutStageMultiplierLabel(stage);
-  return mult ? `${label} (${mult} match points)` : label;
+  return mult ? `${label} (${mult} points)` : label;
 }
 
 export const BASE_RESULT_POINTS = 2;
