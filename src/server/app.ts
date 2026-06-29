@@ -24,6 +24,7 @@ import {
 } from './services/predictions';
 import { computeLeaderboard, getResultsMap } from './services/leaderboard';
 import { computeStatistics } from './services/statistics';
+import { computeOverallPicks } from './services/overallPicks';
 import { getFootballDataToken } from '../lib/runtimeConfig';
 import { buildMappingDiagnostics } from './services/mappingDiagnostics';
 import {
@@ -340,6 +341,26 @@ export function createApp(): Express {
       return res
         .status(500)
         .json({ error: error instanceof Error ? error.message : 'Unable to load statistics' });
+    }
+  });
+
+  app.get('/api/statistics/overall', async (req: Request, res: Response) => {
+    try {
+      let currentUserId: string | undefined;
+      const token = authToken(req);
+      if (token) {
+        try {
+          const user = await requireUser(token);
+          currentUserId = user.id;
+        } catch {
+          currentUserId = undefined;
+        }
+      }
+      return res.json(await computeOverallPicks(new Date().toISOString(), currentUserId));
+    } catch (error) {
+      return res
+        .status(500)
+        .json({ error: error instanceof Error ? error.message : 'Unable to load overall picks' });
     }
   });
 

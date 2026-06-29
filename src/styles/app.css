@@ -1683,3 +1683,225 @@ td {
   color: #4a6278;
   white-space: nowrap;
 }
+
+.overall-picks-layout-tabs {
+  margin-top: 0.75rem;
+}
+
+.overall-picks-content {
+  padding-top: 0.5rem;
+}
+
+.overall-picks-matrix-wrap {
+  width: 100%;
+}
+
+.overall-picks-matrix {
+  table-layout: fixed;
+  width: 100%;
+  font-size: 0.82rem;
+}
+
+.overall-picks-matrix th,
+.overall-picks-matrix td {
+  padding: 0.35rem 0.15rem;
+  vertical-align: middle;
+}
+
+.overall-col-rank {
+  width: 1.6rem;
+  text-align: center;
+  font-size: 0.75rem;
+  color: #4a6278;
+}
+
+.overall-col-player {
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 0;
+}
+
+.overall-col-pick {
+  width: 2rem;
+  text-align: center;
+}
+
+.overall-slot-label-full {
+  display: none;
+}
+
+.overall-slot-label-short {
+  display: inline;
+  font-size: 0.72rem;
+  color: #4a6278;
+}
+
+.overall-pick-flag {
+  width: 0.9rem;
+  height: auto;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.overall-pick-correct {
+  outline: 2px solid #2d8a4e;
+  outline-offset: 1px;
+  border-radius: 2px;
+}
+
+.overall-pick-hidden,
+.overall-pick-missing {
+  color: #8a9aab;
+  font-size: 0.8rem;
+}
+
+.overall-pick-hidden-note {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #8a9aab;
+}
+
+.overall-podium-cards {
+  display: grid;
+  gap: 0.75rem;
+}
+
+@media (min-width: 540px) {
+  .overall-podium-cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 900px) {
+  .overall-podium-cards {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.overall-podium-card {
+  border: 1px solid #dce5ef;
+  border-radius: 0.65rem;
+  padding: 0.65rem 0.75rem;
+  background: #f8fbfe;
+}
+
+.overall-podium-card-you {
+  background: #eef8f3;
+  border-color: #9fd4b8;
+}
+
+.overall-podium-card-header {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  margin-bottom: 0.5rem;
+}
+
+.overall-podium-card-rank {
+  font-size: 0.8rem;
+  color: #4a6278;
+}
+
+.overall-podium-card-name {
+  font-weight: 600;
+  color: #0f2f56;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.overall-podium-steps {
+  margin-top: 0.25rem;
+}
+
+.overall-podium-slot-label {
+  display: block;
+  font-size: 0.7rem;
+  color: #4a6278;
+  margin-bottom: 0.15rem;
+}
+
+.overall-podium-flag-wrap {
+  display: flex;
+  justify-content: center;
+}
+
+.overall-podium-flag {
+  width: 1.5rem;
+}
+
+.overall-consensus-grid {
+  margin-top: 0;
+}
+
+.overall-consensus-column h4 {
+  margin: 0 0 0.5rem;
+}
+
+.overall-consensus-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.65rem;
+}
+
+.overall-consensus-item {
+  padding: 0.5rem 0.55rem;
+  border-radius: 0.5rem;
+  background: #f4f8fc;
+}
+
+.overall-consensus-team {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.overall-consensus-team .team-label span:last-child {
+  font-size: 0.85rem;
+}
+
+.overall-consensus-meta {
+  font-size: 0.8rem;
+  color: #4a6278;
+  white-space: nowrap;
+}
+
+.overall-consensus-players {
+  margin: 0.35rem 0 0;
+  font-size: 0.78rem;
+  color: #4a6278;
+  line-height: 1.35;
+}
+
+.overall-consensus-empty {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #8a9aab;
+}
+
+@media (min-width: 480px) {
+  .overall-picks-matrix {
+    font-size: 0.9rem;
+  }
+
+  .overall-pick-flag {
+    width: 1.1rem;
+  }
+
+  .overall-col-pick {
+    width: 2.4rem;
+  }
+
+  .overall-slot-label-full {
+    display: inline;
+  }
+
+  .overall-slot-label-short {
+    display: none;
+  }
+}

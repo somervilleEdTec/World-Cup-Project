@@ -320,6 +320,24 @@ export interface StatisticsResponse {
   crowdCards: CrowdStatCard[];
 }
 
+export interface OverallPicksEntry {
+  rank: number;
+  userId: string;
+  name: string;
+  bonus?: TournamentBonusPick;
+  hidden: boolean;
+  isCurrentUser?: boolean;
+}
+
+export interface OverallPicksResponse {
+  meta: {
+    groupPhaseLocked: boolean;
+    message: string;
+    actualPlacings?: TournamentBonusPick;
+  };
+  entries: OverallPicksEntry[];
+}
+
 export interface MatchComparisonView {
   actualResult?: {
     homeScore: number;
