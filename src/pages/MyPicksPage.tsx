@@ -35,6 +35,8 @@ import {
 } from '../lib/tournamentLogic';
 import { actualStandingsOptions, predictedStandingsOptions } from '../lib/fairPlay';
 import type { KnockoutUnlockSummary } from '../lib/knockoutFixtureAvailability';
+import { formatFixtureStageLabel } from '../lib/fixtureLabels';
+import { knockoutStageHeading } from '../lib/knockoutStageMultiplier';
 import { ActualResult, Match, Pick, Stage, TournamentBonusPick } from '../types';
 
 const groupSequence = ALL_GROUP_IDS;
@@ -51,6 +53,15 @@ type PicksPhase = 'bonus' | 'group' | (typeof KNOCKOUT_PHASES)[number]['id'];
 
 function isKnockoutPhase(phase: PicksPhase): phase is (typeof KNOCKOUT_PHASES)[number]['id'] {
   return KNOCKOUT_PHASES.some((entry) => entry.id === phase);
+}
+
+const FINALS_PANEL_STAGES: Stage[] = ['THIRD_PLACE', 'FINAL'];
+
+function knockoutPanelTitle(phase: (typeof KNOCKOUT_PHASES)[number]): string {
+  if (phase.id === 'qf' || phase.id === 'sf') {
+    return knockoutStageHeading(phase.stages[0]!);
+  }
+  return phase.label;
 }
 
 function knockoutFixturesForPhase(phase: PicksPhase, fixtures: Match[]): Match[] {
@@ -284,6 +295,39 @@ export function MyPicksPage() {
       }
     },
     [handleAuthFailure]
+  );
+
+  const renderKnockoutFixtureCards = (fixtures: Match[]) =>
+    fixtures.map((match) => {
+      const actual = officialResults[match.id];
+      const koFixtureLocked = isKnockoutFixtureLocked(match, nowIso, actual);
+      return (
+        <FixturePickCard
+          key={match.id}
+          match={match}
+          pick={mergedPicks[match.id]}
+          actual={actual}
+          nowIso={nowIso}
+          inputsDisabled={!koPicksAllowed}
+          showLockedSummary={koFixtureLocked}
+          onSave={saveMatchPick}
+        />
+      );
+    });
+
+  const renderKnockoutSharedIntro = () => (
+    <>
+      <p>
+        Only officially confirmed fixtures are listed — not projected from your group predictions.
+      </p>
+      {knockoutUnlockMessage && <p className="warning">{knockoutUnlockMessage}</p>}
+      {!koPicksAllowed && (
+        <p className="warning">
+          Complete and save all 72 group-stage match scores before knockout predictions can be
+          saved ({state.groupPicksCommittedCount ?? 0}/{state.groupPicksRequired ?? 72} saved).
+        </p>
+      )}
+    </>
   );
 
   const handleGroupScoreChange = useCallback((matchId: string, updated: Pick) => {
@@ -650,44 +694,34 @@ export function MyPicksPage() {
         </article>
       )}
 
-      {activeKoPhase && (
-        <article className="card">
-          <h3>{activeKoPhase.label}</h3>
-          <p>
-            Only officially confirmed fixtures are listed — not projected from your group
-            predictions.
-          </p>
-          {knockoutUnlockMessage && (
-            <p className="warning">{knockoutUnlockMessage}</p>
-          )}
-          {!koPicksAllowed && (
-            <p className="warning">
-              Complete and save all 72 group-stage match scores before knockout predictions can be
-              saved ({state.groupPicksCommittedCount ?? 0}/{state.groupPicksRequired ?? 72} saved).
-            </p>
-          )}
-          {activeKoFixtures.length === 0 ? (
-            <p className="warning">No fixtures are confirmed for this round yet.</p>
-          ) : (
-            activeKoFixtures.map((match) => {
-              const actual = officialResults[match.id];
-              const koFixtureLocked = isKnockoutFixtureLocked(match, nowIso, actual);
-              return (
-                <FixturePickCard
-                  key={match.id}
-                  match={match}
-                  pick={mergedPicks[match.id]}
-                  actual={actual}
-                  nowIso={nowIso}
-                  inputsDisabled={!koPicksAllowed}
-                  showLockedSummary={koFixtureLocked}
-                  onSave={saveMatchPick}
-                />
-              );
-            })
-          )}
-        </article>
-      )}
+      {activeKoPhase &&
+        (activeKoPhase.id === 'finals' ? (
+          FINALS_PANEL_STAGES.map((stage, index) => {
+            const stageFixtures = activeKoFixtures.filter((match) => match.stage === stage);
+            const stageLabel = formatFixtureStageLabel(stage);
+            return (
+              <article key={stage} className="card">
+                <h3>{knockoutStageHeading(stage)}</h3>
+                {index === 0 && renderKnockoutSharedIntro()}
+                {stageFixtures.length === 0 ? (
+                  <p className="warning">No fixtures are confirmed for the {stageLabel} yet.</p>
+                ) : (
+                  renderKnockoutFixtureCards(stageFixtures)
+                )}
+              </article>
+            );
+          })
+        ) : (
+          <article className="card">
+            <h3>{knockoutPanelTitle(activeKoPhase)}</h3>
+            {renderKnockoutSharedIntro()}
+            {activeKoFixtures.length === 0 ? (
+              <p className="warning">No fixtures are confirmed for this round yet.</p>
+            ) : (
+              renderKnockoutFixtureCards(activeKoFixtures)
+            )}
+          </article>
+        ))}
     </section>
   );
 }
